@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:utils="clr-namespace:WorkoutTracker.Utils"
+    x:Class="WorkoutTracker.Views.CardioSessionPage"
+    Title="Cardio Session">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <!-- Converter to invert a bool -->
+            <utils:InverseBoolConverter x:Key="InverseBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+    <VerticalStackLayout Padding="20" Spacing="15">
+        <Label Text="Cardio Session" FontSize="24" HorizontalOptions="Center" />
+        <Label Text="Steps:" FontAttributes="Bold" />
+        <Label Text="{Binding SessionSteps}" FontSize="20" HorizontalOptions="Center" />
+        <!-- Show Start when not tracking -->
+        <Button Text="Start" Command="{Binding StartSessionCommand}" 
+                IsVisible="{Binding IsTracking, Converter={StaticResource InverseBoolConverter}}" />
+        <!-- Show Stop when tracking -->
+        <Button Text="Stop" Command="{Binding StopSessionCommand}" 
+                IsVisible="{Binding IsTracking}" />
+    </VerticalStackLayout>
+</ContentPage>
