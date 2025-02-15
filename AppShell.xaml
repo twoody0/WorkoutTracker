@@ -6,4 +6,6 @@
     <ShellContent Title="Home" ContentTemplate="{DataTemplate views:HomePage}" />
     <ShellContent Title="Add Workout" ContentTemplate="{DataTemplate views:WorkoutPage}" />
     <ShellContent Title="View Workouts" ContentTemplate="{DataTemplate views:ViewWorkoutPage}" />
+    <ShellContent Title="Cardio Session" ContentTemplate="{DataTemplate views:CardioSessionPage}" />
+    <ShellContent Title="Workout Library" ContentTemplate="{DataTemplate views:WeightliftingLibraryPage}" />
 </Shell>
