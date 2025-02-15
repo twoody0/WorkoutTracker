@@ -11,89 +11,97 @@ public class WorkoutViewModel : BaseViewModel
     public WorkoutViewModel(IWorkoutService workoutService)
     {
         _workoutService = workoutService;
+        // Populate the list of workout types from the enum:
+        WorkoutTypes = Enum.GetValues(typeof(WorkoutType)).Cast<WorkoutType>().ToList();
+        // Set a default type:
+        SelectedWorkoutType = WorkoutType.WeightLifting;
     }
 
-    // Properties bound to the UI
+    public List<WorkoutType> WorkoutTypes { get; set; }
+
+    private WorkoutType _selectedWorkoutType;
+    public WorkoutType SelectedWorkoutType
+    {
+        get => _selectedWorkoutType;
+        set
+        {
+            if (_selectedWorkoutType != value)
+            {
+                _selectedWorkoutType = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    // Common property
     private string _name;
     public string Name
     {
         get => _name;
-        set
-        {
-            if (_name != value)
-            {
-                _name = value;
-                OnPropertyChanged();
-            }
-        }
+        set { _name = value; OnPropertyChanged(); }
     }
 
+    // Weight lifting fields:
     private double _weight;
     public double Weight
     {
         get => _weight;
-        set
-        {
-            if (_weight != value)
-            {
-                _weight = value;
-                OnPropertyChanged();
-            }
-        }
+        set { _weight = value; OnPropertyChanged(); }
     }
 
     private int _reps;
     public int Reps
     {
         get => _reps;
-        set
-        {
-            if (_reps != value)
-            {
-                _reps = value;
-                OnPropertyChanged();
-            }
-        }
+        set { _reps = value; OnPropertyChanged(); }
     }
 
     private int _sets;
     public int Sets
     {
         get => _sets;
-        set
-        {
-            if (_sets != value)
-            {
-                _sets = value;
-                OnPropertyChanged();
-            }
-        }
+        set { _sets = value; OnPropertyChanged(); }
+    }
+
+    // Cardio field:
+    private int _steps;
+    public int Steps
+    {
+        get => _steps;
+        set { _steps = value; OnPropertyChanged(); }
     }
 
     // Command to add the workout
     private ICommand _addWorkoutCommand;
-    public ICommand AddWorkoutCommand
-        => _addWorkoutCommand ??= new Command(async () => await AddWorkoutAsync());
+    public ICommand AddWorkoutCommand => _addWorkoutCommand ??= new Command(async () => await AddWorkoutAsync());
 
     private async Task AddWorkoutAsync()
     {
-        // Build a new Workout object
         var workout = new Workout
         {
             Name = Name,
-            Weight = Weight,
-            Reps = Reps,
-            Sets = Sets,
+            Type = SelectedWorkoutType,
             StartTime = DateTime.Now
         };
 
-        // Call service to save it
+        if (SelectedWorkoutType == WorkoutType.WeightLifting)
+        {
+            workout.Weight = Weight;
+            workout.Reps = Reps;
+            workout.Sets = Sets;
+        }
+        else if (SelectedWorkoutType == WorkoutType.Cardio)
+        {
+            workout.Steps = Steps;
+        }
+
         await _workoutService.AddWorkout(workout);
 
-        // Clear the fields after adding
+        // Clear fields after adding:
         Name = string.Empty;
         Weight = 0;
         Reps = 0;
         Sets = 0;
+        Steps = 0;
     }
 }

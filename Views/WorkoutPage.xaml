@@ -1,29 +1,80 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="WorkoutTracker.Views.WorkoutPage"
-             Title="Add Workout">
-    <VerticalStackLayout Padding="20" Spacing="15">
+<ContentPage 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:models="clr-namespace:WorkoutTracker.Models"
+    x:Class="WorkoutTracker.Views.WorkoutPage"
+    Title="Add Workout">
 
-        <Label Text="Add a Workout" FontSize="20" HorizontalOptions="Center" />
+    <ContentPage.Resources>
+        <!-- Style for WeightLifting fields -->
+        <Style x:Key="WeightLiftingVisibilityStyle" TargetType="View">
+            <Style.Triggers>
+                <DataTrigger TargetType="View"
+                             Binding="{Binding SelectedWorkoutType}"
+                             Value="{x:Static models:WorkoutType.WeightLifting}">
+                    <Setter Property="IsVisible" Value="True"/>
+                </DataTrigger>
+                <DataTrigger TargetType="View"
+                             Binding="{Binding SelectedWorkoutType}"
+                             Value="{x:Static models:WorkoutType.Cardio}">
+                    <Setter Property="IsVisible" Value="False"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
 
-        <Entry Placeholder="Name" Text="{Binding Name}" />
+        <!-- Style for Cardio field -->
+        <Style x:Key="CardioVisibilityStyle" TargetType="View">
+            <Style.Triggers>
+                <DataTrigger TargetType="View"
+                             Binding="{Binding SelectedWorkoutType}"
+                             Value="{x:Static models:WorkoutType.Cardio}">
+                    <Setter Property="IsVisible" Value="True"/>
+                </DataTrigger>
+                <DataTrigger TargetType="View"
+                             Binding="{Binding SelectedWorkoutType}"
+                             Value="{x:Static models:WorkoutType.WeightLifting}">
+                    <Setter Property="IsVisible" Value="False"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </ContentPage.Resources>
 
-        <Entry Placeholder="Weight (lbs or kg)" 
-               Keyboard="Numeric" 
-               Text="{Binding Weight}" />
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
+            <Label Text="Add a Workout" FontSize="20" HorizontalOptions="Center" />
 
-        <Entry Placeholder="Reps" 
-               Keyboard="Numeric" 
-               Text="{Binding Reps}" />
+            <!-- Picker to select workout type -->
+            <Picker Title="Workout Type"
+                    ItemsSource="{Binding WorkoutTypes}"
+                    SelectedItem="{Binding SelectedWorkoutType}" />
 
-        <Entry Placeholder="Sets" 
-               Keyboard="Numeric" 
-               Text="{Binding Sets}" />
+            <!-- Common field for a workout name -->
+            <Entry Placeholder="Workout Name" Text="{Binding Name}" />
 
-        <Button Text="Add Workout" 
-                Command="{Binding AddWorkoutCommand}" 
-                HorizontalOptions="Center" />
+            <!-- Fields for weight lifting (visible when type is WeightLifting) -->
+            <Entry Placeholder="Weight (lbs or kg)" 
+                   Keyboard="Numeric" 
+                   Text="{Binding Weight}" 
+                   Style="{StaticResource WeightLiftingVisibilityStyle}" />
+            <Entry Placeholder="Reps" 
+                   Keyboard="Numeric" 
+                   Text="{Binding Reps}" 
+                   Style="{StaticResource WeightLiftingVisibilityStyle}" />
+            <Entry Placeholder="Sets" 
+                   Keyboard="Numeric" 
+                   Text="{Binding Sets}" 
+                   Style="{StaticResource WeightLiftingVisibilityStyle}" />
 
-    </VerticalStackLayout>
+            <!-- Field for cardio (visible when type is Cardio) -->
+            <Entry Placeholder="Steps" 
+                   Keyboard="Numeric" 
+                   Text="{Binding Steps}" 
+                   Style="{StaticResource CardioVisibilityStyle}" />
+
+            <Button Text="Add Workout" 
+                    Command="{Binding AddWorkoutCommand}" 
+                    HorizontalOptions="Center" />
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

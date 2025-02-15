@@ -4,7 +4,6 @@
        xmlns:views="clr-namespace:WorkoutTracker.Views"
        x:Class="WorkoutTracker.AppShell">
     <ShellContent Title="Home" ContentTemplate="{DataTemplate views:HomePage}" />
-    <ShellContent 
-        Title="Workouts" 
-        ContentTemplate="{DataTemplate views:WorkoutPage}" />
+    <ShellContent Title="Add Workout" ContentTemplate="{DataTemplate views:WorkoutPage}" />
+    <ShellContent Title="View Workouts" ContentTemplate="{DataTemplate views:ViewWorkoutPage}" />
 </Shell>
