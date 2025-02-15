@@ -19,12 +19,15 @@ public static class MauiProgram
 
         // Register your services
         builder.Services.AddSingleton<IWorkoutService, WorkoutService>();
+
         // Register your ViewModels
         builder.Services.AddTransient<HomeViewModel>();
-        // Register your Views
+        builder.Services.AddTransient<WorkoutViewModel>();
+
+        // Register your Pages
+        builder.Services.AddTransient<WorkoutPage>();
         builder.Services.AddTransient<HomePage>();
 
         return builder.Build();
     }
 }
-
