@@ -4,9 +4,10 @@ namespace WorkoutTracker.Views;
 
 public partial class HomePage : ContentPage
 {
-	public HomePage()
-	{
-		InitializeComponent();
-        BindingContext = new HomeViewModel();
+    // Use constructor injection
+    public HomePage(HomeViewModel viewModel)
+    {
+        InitializeComponent();
+        BindingContext = viewModel;
     }
 }

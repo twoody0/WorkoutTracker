@@ -4,6 +4,10 @@
        xmlns:views="clr-namespace:WorkoutTracker.Views"
        x:Class="WorkoutTracker.AppShell">
     <ShellContent Title="Home" ContentTemplate="{DataTemplate views:HomePage}" />
+    <ShellContent Title="Login" Route="LoginPage" ContentTemplate="{DataTemplate views:LoginPage}" />
+    <ShellContent Title="Sign Up" Route="SignupPage" ContentTemplate="{DataTemplate views:SignupPage}" />
+    <ShellContent Title="Dashboard" Route="DashboardPage" ContentTemplate="{DataTemplate views:DashboardPage}" />
+    <ShellContent Title="Leaderboard" Route="LeaderboardPage" ContentTemplate="{DataTemplate views:LeaderboardPage}" />
     <ShellContent Title="Add Workout" ContentTemplate="{DataTemplate views:WorkoutPage}" />
     <ShellContent Title="View Workouts" ContentTemplate="{DataTemplate views:ViewWorkoutPage}" />
     <ShellContent Title="Cardio Session" ContentTemplate="{DataTemplate views:CardioSessionPage}" />

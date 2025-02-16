@@ -1,11 +1,53 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="WorkoutTracker.Views.HomePage"
-             Title="HomePage">
-    <VerticalStackLayout Padding="20">
-        <Label Text="{Binding Title}"
-               FontSize="24"
-               HorizontalOptions="Center" />
-    </VerticalStackLayout>
+<ContentPage 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="WorkoutTracker.Views.HomePage"
+    Title="Home">
+    <StackLayout Padding="20" VerticalOptions="Center" Spacing="15">
+        <!-- Display welcome message if logged in -->
+        <Label Text="{Binding WelcomeMessage}" FontSize="20" HorizontalOptions="Center">
+            <Label.Triggers>
+                <DataTrigger TargetType="Label" Binding="{Binding WelcomeMessage}" Value="">
+                    <Setter Property="IsVisible" Value="False"/>
+                </DataTrigger>
+            </Label.Triggers>
+        </Label>
+
+        <!-- Show login and sign up if no welcome message -->
+        <Button Text="Login" Command="{Binding NavigateToLoginCommand}">
+            <Button.Triggers>
+                <DataTrigger TargetType="Button" Binding="{Binding WelcomeMessage}" Value="">
+                    <Setter Property="IsVisible" Value="True"/>
+                </DataTrigger>
+                <DataTrigger TargetType="Button" Binding="{Binding WelcomeMessage}" Value="{x:Null}">
+                    <Setter Property="IsVisible" Value="True"/>
+                </DataTrigger>
+            </Button.Triggers>
+        </Button>
+        <Button Text="Sign Up" Command="{Binding NavigateToSignupCommand}">
+            <Button.Triggers>
+                <DataTrigger TargetType="Button" Binding="{Binding WelcomeMessage}" Value="">
+                    <Setter Property="IsVisible" Value="True"/>
+                </DataTrigger>
+                <!-- Similar triggers as above -->
+            </Button.Triggers>
+        </Button>
+
+        <!-- If logged in, show Dashboard and Leaderboard -->
+        <Button Text="Dashboard" Command="{Binding NavigateToDashboardCommand}">
+            <Button.Triggers>
+                <DataTrigger TargetType="Button" Binding="{Binding WelcomeMessage}" Value="">
+                    <Setter Property="IsVisible" Value="False"/>
+                </DataTrigger>
+            </Button.Triggers>
+        </Button>
+        <Button Text="Leaderboard" Command="{Binding NavigateToLeaderboardCommand}">
+            <Button.Triggers>
+                <DataTrigger TargetType="Button" Binding="{Binding WelcomeMessage}" Value="">
+                    <Setter Property="IsVisible" Value="False"/>
+                </DataTrigger>
+            </Button.Triggers>
+        </Button>
+    </StackLayout>
 </ContentPage>

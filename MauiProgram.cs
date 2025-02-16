@@ -30,9 +30,14 @@ public static class MauiProgram
 
         // Register the Workout Library service
         builder.Services.AddSingleton<IWorkoutLibraryService, WorkoutLibraryService>();
+        builder.Services.AddSingleton<IAuthService, AuthService>();
 
         // Register ViewModels
         builder.Services.AddTransient<HomeViewModel>();
+        builder.Services.AddTransient<LoginViewModel>();
+        builder.Services.AddTransient<SignupViewModel>();
+        builder.Services.AddTransient<DashboardViewModel>();
+        builder.Services.AddTransient<LeaderboardViewModel>();
         builder.Services.AddTransient<WorkoutViewModel>();
         builder.Services.AddTransient<ViewWorkoutViewModel>();
         builder.Services.AddTransient<CardioWorkoutViewModel>();
@@ -40,6 +45,10 @@ public static class MauiProgram
 
         // Register Pages
         builder.Services.AddTransient<HomePage>();
+        builder.Services.AddTransient<LoginPage>();
+        builder.Services.AddTransient<SignupPage>();
+        builder.Services.AddTransient<DashboardPage>();
+        builder.Services.AddTransient<LeaderboardPage>();
         builder.Services.AddTransient<WorkoutPage>();
         builder.Services.AddTransient<ViewWorkoutPage>();
         builder.Services.AddTransient<CardioSessionPage>();
