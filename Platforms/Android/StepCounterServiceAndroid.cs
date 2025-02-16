@@ -2,6 +2,7 @@
 using Android.Content;
 using Android.Hardware;
 using Android.Runtime;
+using Android.Util;
 using WorkoutTracker.Services;
 using System;
 using Application = Android.App.Application;
@@ -21,7 +22,6 @@ public class StepCounterServiceAndroid : Java.Lang.Object, IStepCounterService, 
 
     public StepCounterServiceAndroid()
     {
-        // Fully qualify Application to use the Android version
         var context = Application.Context;
         _sensorManager = (SensorManager)context.GetSystemService(Context.SensorService);
 
@@ -38,6 +38,7 @@ public class StepCounterServiceAndroid : Java.Lang.Object, IStepCounterService, 
             _usingStepCounter = false;
         }
         _sessionStepCount = 0;
+        Log.Debug("StepCounterService", $"Initialized. Using StepCounter: {_usingStepCounter}");
     }
 
     public void StartTracking()
@@ -49,6 +50,7 @@ public class StepCounterServiceAndroid : Java.Lang.Object, IStepCounterService, 
         _baselineStepCount = -1;
         _sensorManager.RegisterListener(this, _stepSensor, SensorDelay.Normal);
         _isTracking = true;
+        Log.Debug("StepCounterService", "Started tracking.");
     }
 
     public void StopTracking()
@@ -58,6 +60,7 @@ public class StepCounterServiceAndroid : Java.Lang.Object, IStepCounterService, 
 
         _sensorManager.UnregisterListener(this, _stepSensor);
         _isTracking = false;
+        Log.Debug("StepCounterService", $"Stopped tracking. Final steps: {_sessionStepCount}");
         StepsUpdated?.Invoke(this, _sessionStepCount);
     }
 
@@ -68,9 +71,9 @@ public class StepCounterServiceAndroid : Java.Lang.Object, IStepCounterService, 
 
     public void OnSensorChanged(SensorEvent e)
     {
+        Log.Debug("StepCounterService", $"Sensor event: {e.Values[0]}");
         if (_usingStepCounter)
         {
-            // For Step Counter, subtract the baseline value
             float currentValue = e.Values[0];
             if (_baselineStepCount < 0)
             {
@@ -80,15 +83,16 @@ public class StepCounterServiceAndroid : Java.Lang.Object, IStepCounterService, 
             if (sessionSteps != _sessionStepCount)
             {
                 _sessionStepCount = sessionSteps;
+                Log.Debug("StepCounterService", $"Session steps updated to: {_sessionStepCount}");
                 StepsUpdated?.Invoke(this, _sessionStepCount);
             }
         }
         else
         {
-            // For Step Detector, each event represents one step
             if (e.Values[0] == 1.0f)
             {
                 _sessionStepCount++;
+                Log.Debug("StepCounterService", $"Step detected. Count: {_sessionStepCount}");
                 StepsUpdated?.Invoke(this, _sessionStepCount);
             }
         }
