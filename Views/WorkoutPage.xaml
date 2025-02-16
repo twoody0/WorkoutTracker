@@ -11,17 +11,23 @@
                    FontSize="20" 
                    HorizontalOptions="Center" />
 
-            <!-- Muscle Group Picker with a default prompt -->
+            <!-- Muscle Group Picker -->
             <Picker Title="Select Muscle Group"
                     ItemsSource="{Binding MuscleGroups}"
                     SelectedItem="{Binding SelectedMuscleGroup}" />
 
-            <!-- Entry for exercise name search -->
-            <Entry Placeholder="Type exercise name..."
-                   Text="{Binding ExerciseSearchQuery}" />
+            <!-- Entry for exercise name search.
+                 When focused, the event handlers in code-behind will update IsNameFieldFocused. -->
+            <Entry x:Name="ExerciseEntry"
+                   Placeholder="Type exercise name..."
+                   Text="{Binding ExerciseSearchQuery}" 
+                   Focused="ExerciseEntry_Focused"
+                   Unfocused="ExerciseEntry_Unfocused" />
 
-            <!-- CollectionView for dynamic exercise suggestions -->
+            <!-- CollectionView for suggestions.
+                 Visible only when the name Entry is focused. -->
             <CollectionView ItemsSource="{Binding ExerciseSuggestions}"
+                            IsVisible="{Binding IsNameFieldFocused}"
                             SelectionMode="Single"
                             SelectionChanged="OnExerciseSelected">
                 <CollectionView.ItemTemplate>
