@@ -66,7 +66,8 @@ namespace WorkoutTracker.ViewModels
                 {
                     _exerciseSearchQuery = value;
                     OnPropertyChanged();
-                    UpdateExerciseSuggestions();
+                    // Fire and forget (or await if you make the setter async) update.
+                    _ = UpdateExerciseSuggestionsAsync();
                 }
             }
         }
@@ -147,7 +148,7 @@ namespace WorkoutTracker.ViewModels
         }
 
         // Update suggestions: if the search query is empty, show all exercises in alphabetical order.
-        private async void UpdateExerciseSuggestions()
+        public async Task UpdateExerciseSuggestionsAsync()
         {
             if (SelectedMuscleGroup != "Select Muscle Group")
             {

@@ -12,11 +12,12 @@ namespace WorkoutTracker.Views
             BindingContext = vm;
         }
 
-        private void ExerciseEntry_Focused(object sender, FocusEventArgs e)
+        private async void ExerciseEntry_Focused(object sender, FocusEventArgs e)
         {
             if (BindingContext is WorkoutViewModel vm)
             {
                 vm.IsNameFieldFocused = true;
+                await vm.UpdateExerciseSuggestionsAsync();
             }
         }
 

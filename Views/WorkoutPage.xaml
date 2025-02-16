@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage 
+    x:Name="Page"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     x:Class="WorkoutTracker.Views.WorkoutPage"
@@ -16,23 +17,25 @@
                     ItemsSource="{Binding MuscleGroups}"
                     SelectedItem="{Binding SelectedMuscleGroup}" />
 
-            <!-- Entry for exercise name search.
-                 When focused, the event handlers in code-behind will update IsNameFieldFocused. -->
+            <!-- Entry for exercise name search -->
             <Entry x:Name="ExerciseEntry"
                    Placeholder="Type exercise name..."
                    Text="{Binding ExerciseSearchQuery}" 
                    Focused="ExerciseEntry_Focused"
                    Unfocused="ExerciseEntry_Unfocused" />
 
-            <!-- CollectionView for suggestions.
-                 Visible only when the name Entry is focused. -->
+            <!-- CollectionView for suggestions -->
             <CollectionView ItemsSource="{Binding ExerciseSuggestions}"
                             IsVisible="{Binding IsNameFieldFocused}"
-                            SelectionMode="Single"
-                            SelectionChanged="OnExerciseSelected">
+                            SelectionMode="None">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
                         <Frame Padding="10" Margin="5" BorderColor="LightGray" CornerRadius="5">
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer 
+                                    Command="{Binding Source={x:Reference Page}, Path=BindingContext.SelectExerciseCommand}"
+                                    CommandParameter="{Binding .}" />
+                            </Frame.GestureRecognizers>
                             <Label Text="{Binding Name}" />
                         </Frame>
                     </DataTemplate>
