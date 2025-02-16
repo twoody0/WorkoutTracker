@@ -126,5 +126,101 @@
     {
         "Name": "Front Squat",
         "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Overhead Press",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Lateral Raise",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Front Raise",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Face Pulls",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Dumbbell Shoulder Press",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Arnold Press",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Cable Lateral Raise",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Reverse Pec Deck Fly",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Close-Grip Bench Press",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Triceps Dip",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Skull Crushers",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Overhead Triceps Extension",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Cable Triceps Pushdown",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Diamond Push-Ups",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Dumbbell Kickback",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Single-Arm Cable Triceps Extension",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Crunches",
+        "MuscleGroup": "Abs"
+    },
+    {
+        "Name": "Hanging Leg Raise",
+        "MuscleGroup": "Abs"
+    },
+    {
+        "Name": "Plank",
+        "MuscleGroup": "Abs"
+    },
+    {
+        "Name": "Russian Twists",
+        "MuscleGroup": "Abs"
+    },
+    {
+        "Name": "Bicycle Crunches",
+        "MuscleGroup": "Abs"
+    },
+    {
+        "Name": "Cable Woodchopper",
+        "MuscleGroup": "Abs"
+    },
+    {
+        "Name": "Ab Rollout",
+        "MuscleGroup": "Abs"
+    },
+    {
+        "Name": "Flutter Kicks",
+        "MuscleGroup": "Abs"
     }
 ]

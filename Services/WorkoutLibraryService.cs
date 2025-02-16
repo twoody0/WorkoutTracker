@@ -1,4 +1,9 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
 using WorkoutTracker.Models;
 
 namespace WorkoutTracker.Services;
@@ -17,9 +22,14 @@ public class WorkoutLibraryService : IWorkoutLibraryService
         return _exercises;
     }
 
-    public async Task<IEnumerable<WeightliftingExercise>> SearchExercises(string muscleGroup)
+    public async Task<IEnumerable<WeightliftingExercise>> SearchExercisesByName(string muscleGroup, string query)
     {
         var exercises = await GetExercises();
-        return exercises.Where(e => e.MuscleGroup.Equals(muscleGroup, StringComparison.OrdinalIgnoreCase));
+        var filtered = exercises.Where(e => e.MuscleGroup.Equals(muscleGroup, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            filtered = filtered.Where(e => e.Name.StartsWith(query, StringComparison.OrdinalIgnoreCase));
+        }
+        return filtered;
     }
 }

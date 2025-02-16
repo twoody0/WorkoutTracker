@@ -1,38 +1,59 @@
 ﻿using System.Collections.ObjectModel;
-using System.Linq;
 using System.Windows.Input;
 using System.Threading.Tasks;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 
-namespace WorkoutTracker.ViewModels
+namespace WorkoutTracker.ViewModels;
+
+public class WeightliftingLibraryViewModel : BaseViewModel
 {
-    public class WeightliftingLibraryViewModel : BaseViewModel
+    private readonly IWorkoutLibraryService _libraryService;
+    public WeightliftingLibraryViewModel(IWorkoutLibraryService libraryService)
     {
-        private readonly IWorkoutLibraryService _libraryService;
-        public WeightliftingLibraryViewModel(IWorkoutLibraryService libraryService)
+        _libraryService = libraryService;
+        Exercises = new ObservableCollection<WeightliftingExercise>();
+
+        // Optionally, initialize with a default muscle group.
+        SelectedMuscleGroup = "Back";  // or set it to an empty string if you want the user to select.
+    }
+
+    public ObservableCollection<WeightliftingExercise> Exercises { get; set; }
+
+    // The text entered by the user for searching.
+    private string _searchText;
+    public string SearchText
+    {
+        get => _searchText;
+        set { _searchText = value; OnPropertyChanged(); }
+    }
+
+    // The selected muscle group. This can be bound to a Picker.
+    private string _selectedMuscleGroup;
+    public string SelectedMuscleGroup
+    {
+        get => _selectedMuscleGroup;
+        set { _selectedMuscleGroup = value; OnPropertyChanged(); }
+    }
+
+    // Command to perform the search.
+    public ICommand SearchCommand => new Command(async () => await SearchExercises());
+
+    private async Task SearchExercises()
+    {
+        // If no muscle group is selected, optionally clear the list and exit.
+        if (string.IsNullOrWhiteSpace(SelectedMuscleGroup))
         {
-            _libraryService = libraryService;
-            Exercises = new ObservableCollection<WeightliftingExercise>();
-        }
-
-        public ObservableCollection<WeightliftingExercise> Exercises { get; set; }
-
-        private string _searchText;
-        public string SearchText
-        {
-            get => _searchText;
-            set { _searchText = value; OnPropertyChanged(); }
-        }
-
-        public ICommand SearchCommand => new Command(async () => await SearchExercises());
-
-        private async Task SearchExercises()
-        {
-            var results = await _libraryService.SearchExercises(SearchText);
             Exercises.Clear();
-            foreach (var exercise in results)
-                Exercises.Add(exercise);
+            return;
+        }
+
+        // Call the new service method that requires both parameters.
+        var results = await _libraryService.SearchExercisesByName(SelectedMuscleGroup, SearchText);
+        Exercises.Clear();
+        foreach (var exercise in results)
+        {
+            Exercises.Add(exercise);
         }
     }
 }
