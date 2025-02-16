@@ -1,9 +1,12 @@
+using WorkoutTracker.ViewModels;
+
 namespace WorkoutTracker.Views;
 
 public partial class LoginPage : ContentPage
 {
-	public LoginPage()
+	public LoginPage(SignupViewModel viewModel)
 	{
 		InitializeComponent();
+		BindingContext = viewModel;
 	}
 }
