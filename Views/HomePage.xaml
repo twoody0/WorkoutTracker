@@ -2,52 +2,30 @@
 <ContentPage 
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:conv="clr-namespace:WorkoutTracker.Converters"
     x:Class="WorkoutTracker.Views.HomePage"
     Title="Home">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
     <StackLayout Padding="20" VerticalOptions="Center" Spacing="15">
-        <!-- Display welcome message if logged in -->
-        <Label Text="{Binding WelcomeMessage}" FontSize="20" HorizontalOptions="Center">
-            <Label.Triggers>
-                <DataTrigger TargetType="Label" Binding="{Binding WelcomeMessage}" Value="">
-                    <Setter Property="IsVisible" Value="False"/>
-                </DataTrigger>
-            </Label.Triggers>
-        </Label>
+        <!-- Welcome Message (visible when logged in) -->
+        <Label Text="{Binding WelcomeMessage}" FontSize="20" HorizontalOptions="Center" 
+               IsVisible="{Binding IsUserLoggedIn}" />
 
-        <!-- Show login and sign up if no welcome message -->
-        <Button Text="Login" Command="{Binding NavigateToLoginCommand}">
-            <Button.Triggers>
-                <DataTrigger TargetType="Button" Binding="{Binding WelcomeMessage}" Value="">
-                    <Setter Property="IsVisible" Value="True"/>
-                </DataTrigger>
-                <DataTrigger TargetType="Button" Binding="{Binding WelcomeMessage}" Value="{x:Null}">
-                    <Setter Property="IsVisible" Value="True"/>
-                </DataTrigger>
-            </Button.Triggers>
-        </Button>
-        <Button Text="Sign Up" Command="{Binding NavigateToSignupCommand}">
-            <Button.Triggers>
-                <DataTrigger TargetType="Button" Binding="{Binding WelcomeMessage}" Value="">
-                    <Setter Property="IsVisible" Value="True"/>
-                </DataTrigger>
-                <!-- Similar triggers as above -->
-            </Button.Triggers>
-        </Button>
+        <!-- Login and Sign Up Buttons (visible when NOT logged in) -->
+        <StackLayout IsVisible="{Binding IsUserLoggedIn, Converter={StaticResource InverseBooleanConverter}}">
+            <Button Text="Login" Command="{Binding NavigateToLoginCommand}" />
+            <Button Text="Sign Up" Command="{Binding NavigateToSignupCommand}" />
+        </StackLayout>
 
-        <!-- If logged in, show Dashboard and Leaderboard -->
-        <Button Text="Dashboard" Command="{Binding NavigateToDashboardCommand}">
-            <Button.Triggers>
-                <DataTrigger TargetType="Button" Binding="{Binding WelcomeMessage}" Value="">
-                    <Setter Property="IsVisible" Value="False"/>
-                </DataTrigger>
-            </Button.Triggers>
-        </Button>
-        <Button Text="Leaderboard" Command="{Binding NavigateToLeaderboardCommand}">
-            <Button.Triggers>
-                <DataTrigger TargetType="Button" Binding="{Binding WelcomeMessage}" Value="">
-                    <Setter Property="IsVisible" Value="False"/>
-                </DataTrigger>
-            </Button.Triggers>
-        </Button>
+        <!-- Sign Out Button (visible when logged in) -->
+        <Button Text="Sign Out" Command="{Binding SignOutCommand}" IsVisible="{Binding IsUserLoggedIn}" />
+
+        <!-- Optionally, additional navigation -->
+        <Button Text="Dashboard" Command="{Binding NavigateToDashboardCommand}" IsVisible="{Binding IsUserLoggedIn}" />
+        <Button Text="Leaderboard" Command="{Binding NavigateToLeaderboardCommand}" IsVisible="{Binding IsUserLoggedIn}" />
     </StackLayout>
 </ContentPage>

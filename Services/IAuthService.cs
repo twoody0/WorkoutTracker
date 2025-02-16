@@ -9,4 +9,5 @@ public interface IAuthService
     Task<bool> SignupAsync(User user);
 
     User CurrentUser { get; }
+    void SignOut();
 }

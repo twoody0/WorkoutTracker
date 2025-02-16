@@ -38,7 +38,7 @@ namespace WorkoutTracker.ViewModels
                 if (success)
                 {
                     // Automatically logged in because AuthService.CurrentUser is set.
-                    await Shell.Current.GoToAsync("//DashboardPage");
+                    await Shell.Current.GoToAsync("//HomePage");
                 }
                 else
                 {

@@ -3,7 +3,7 @@
        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
        xmlns:views="clr-namespace:WorkoutTracker.Views"
        x:Class="WorkoutTracker.AppShell">
-    <ShellContent Title="Home" ContentTemplate="{DataTemplate views:HomePage}" />
+    <ShellContent Title="Home" Route="HomePage" ContentTemplate="{DataTemplate views:HomePage}" />
     <ShellContent Title="Login" Route="LoginPage" ContentTemplate="{DataTemplate views:LoginPage}" />
     <ShellContent Title="Sign Up" Route="SignupPage" ContentTemplate="{DataTemplate views:SignupPage}" />
     <ShellContent Title="Dashboard" Route="DashboardPage" ContentTemplate="{DataTemplate views:DashboardPage}" />
