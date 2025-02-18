@@ -17,5 +17,5 @@ public class Workout
 
     public int Steps { get; set; } 
     public WorkoutType Type { get; set; }
-    public string GymLocation { get; set; }  // New property
+    public string GymLocation { get; set; }
 }

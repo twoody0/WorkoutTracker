@@ -37,22 +37,22 @@ public class HomeViewModel : BaseViewModel
 
     public ICommand NavigateToLoginCommand => new Command(async () =>
     {
-        await Shell.Current.GoToAsync("//LoginPage");
+        await Shell.Current.GoToAsync("LoginPage");
     });
 
     public ICommand NavigateToSignupCommand => new Command(async () =>
     {
-        await Shell.Current.GoToAsync("//SignupPage");
+        await Shell.Current.GoToAsync("SignupPage");
     });
 
     public ICommand NavigateToDashboardCommand => new Command(async () =>
     {
-        await Shell.Current.GoToAsync("//DashboardPage");
+        await Shell.Current.GoToAsync("DashboardPage");
     });
 
     public ICommand NavigateToLeaderboardCommand => new Command(async () =>
     {
-        await Shell.Current.GoToAsync("//LeaderboardPage");
+        await Shell.Current.GoToAsync("LeaderboardPage");
     });
 
     public ICommand SignOutCommand => new Command(async () =>
@@ -60,6 +60,6 @@ public class HomeViewModel : BaseViewModel
         _authService.SignOut();
         UpdateWelcomeMessage();
         // Optionally, navigate to HomePage.
-        await Shell.Current.GoToAsync("//HomePage");
+        await Shell.Current.GoToAsync("HomePage");
     });
 }

@@ -1,10 +1,127 @@
-﻿namespace WorkoutTracker
+﻿using Microsoft.Maui.Controls;
+using WorkoutTracker.Services;
+using WorkoutTracker.Views;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace WorkoutTracker;
+
+public partial class AppShell : Shell
 {
-    public partial class AppShell : Shell
+    private readonly IAuthService _authService;
+
+    public AppShell()
     {
-        public AppShell()
+        InitializeComponent();
+
+        // Resolve IAuthService from DI.
+        _authService = App.Services.GetRequiredService<IAuthService>();
+        UpdateShellItems();
+
+        // Register routes explicitly.
+        Routing.RegisterRoute("SignupPage", typeof(SignupPage));
+        Routing.RegisterRoute("LoginPage", typeof(LoginPage));
+        Routing.RegisterRoute("DashboardPage", typeof(DashboardPage));
+        Routing.RegisterRoute("LeaderboardPage", typeof(LeaderboardPage));
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        UpdateShellItems();
+    }
+
+    private void UpdateShellItems()
+    {
+        // Clear existing items.
+        this.Items.Clear();
+
+        // Always add the Home page.
+        var homeFlyout = new FlyoutItem
         {
-            InitializeComponent();
+            Title = "Home",
+            Route = "HomePage",
+            Icon = "home.png" // (optional)
+        };
+        homeFlyout.Items.Add(new ShellContent
+        {
+            ContentTemplate = new DataTemplate(typeof(HomePage))
+        });
+        this.Items.Add(homeFlyout);
+
+        // If the user is signed in, add additional items.
+        if (_authService.CurrentUser != null)
+        {
+            var dashboardFlyout = new FlyoutItem
+            {
+                Title = "Dashboard",
+                Route = "DashboardPage",
+                Icon = "dashboard.png" // (optional)
+            };
+            dashboardFlyout.Items.Add(new ShellContent
+            {
+                ContentTemplate = new DataTemplate(typeof(DashboardPage))
+            });
+            this.Items.Add(dashboardFlyout);
+
+            var leaderboardFlyout = new FlyoutItem
+            {
+                Title = "Leaderboard",
+                Route = "LeaderboardPage",
+                Icon = "leaderboard.png"
+            };
+            leaderboardFlyout.Items.Add(new ShellContent
+            {
+                ContentTemplate = new DataTemplate(typeof(LeaderboardPage))
+            });
+            this.Items.Add(leaderboardFlyout);
+
+            var addWorkoutFlyout = new FlyoutItem
+            {
+                Title = "Add Workout",
+                Route = "WorkoutPage",
+                Icon = "addworkout.png"
+            };
+            addWorkoutFlyout.Items.Add(new ShellContent
+            {
+                ContentTemplate = new DataTemplate(typeof(WorkoutPage))
+            });
+            this.Items.Add(addWorkoutFlyout);
+
+            var viewWorkoutsFlyout = new FlyoutItem
+            {
+                Title = "View Workouts",
+                Route = "ViewWorkoutPage",
+                Icon = "viewworkouts.png"
+            };
+            viewWorkoutsFlyout.Items.Add(new ShellContent
+            {
+                ContentTemplate = new DataTemplate(typeof(ViewWorkoutPage))
+            });
+            this.Items.Add(viewWorkoutsFlyout);
+
+            var cardioSessionFlyout = new FlyoutItem
+            {
+                Title = "Cardio Session",
+                Route = "CardioSessionPage",
+                Icon = "cardio.png"
+            };
+            cardioSessionFlyout.Items.Add(new ShellContent
+            {
+                ContentTemplate = new DataTemplate(typeof(CardioSessionPage))
+            });
+            this.Items.Add(cardioSessionFlyout);
+
+            var libraryFlyout = new FlyoutItem
+            {
+                Title = "Workout Library",
+                Route = "WeightliftingLibraryPage",
+                Icon = "library.png"
+            };
+            libraryFlyout.Items.Add(new ShellContent
+            {
+                ContentTemplate = new DataTemplate(typeof(WeightliftingLibraryPage))
+            });
+            this.Items.Add(libraryFlyout);
         }
     }
 }
