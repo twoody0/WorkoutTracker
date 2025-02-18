@@ -32,7 +32,7 @@ public class LoginViewModel : BaseViewModel
         if (user != null)
         {
             // Navigate to Dashboard (the calendar view)
-            await Shell.Current.GoToAsync("HomePage");
+            await Shell.Current.GoToAsync("///HomePage");
         }
         else
         {

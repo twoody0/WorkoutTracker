@@ -13,7 +13,7 @@ public class HomeViewModel : BaseViewModel
         UpdateWelcomeMessage();
     }
 
-    private void UpdateWelcomeMessage()
+    public void UpdateWelcomeMessage()
     {
         if (_authService.CurrentUser != null)
             WelcomeMessage = $"Welcome, {_authService.CurrentUser.Username}";
@@ -60,6 +60,6 @@ public class HomeViewModel : BaseViewModel
         _authService.SignOut();
         UpdateWelcomeMessage();
         // Optionally, navigate to HomePage.
-        await Shell.Current.GoToAsync("HomePage");
+        await Shell.Current.GoToAsync("///HomePage");
     });
 }

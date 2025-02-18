@@ -10,4 +10,12 @@ public partial class HomePage : ContentPage
         InitializeComponent();
         BindingContext = viewModel;
     }
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        if (BindingContext is HomeViewModel vm)
+        {
+            vm.UpdateWelcomeMessage();
+        }
+    }
 }
