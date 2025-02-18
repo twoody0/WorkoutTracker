@@ -16,7 +16,7 @@
                IsVisible="{Binding IsUserLoggedIn}" />
 
         <!-- Login and Sign Up Buttons (visible when NOT logged in) -->
-        <StackLayout IsVisible="{Binding IsUserLoggedIn, Converter={StaticResource InverseBooleanConverter}}">
+        <StackLayout IsVisible="{Binding IsUserLoggedIn, Converter={StaticResource InverseBooleanConverter}}" Spacing="20">
             <Button Text="Login" Command="{Binding NavigateToLoginCommand}" />
             <Button Text="Sign Up" Command="{Binding NavigateToSignupCommand}" />
         </StackLayout>
