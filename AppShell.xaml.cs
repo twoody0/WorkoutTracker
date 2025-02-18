@@ -30,7 +30,7 @@ public partial class AppShell : Shell
         UpdateShellItems();
     }
 
-    private void UpdateShellItems()
+    public void UpdateShellItems()
     {
         // Clear existing items.
         this.Items.Clear();

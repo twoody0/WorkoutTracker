@@ -38,6 +38,7 @@ public class SignupViewModel : BaseViewModel
             if (success)
             {
                 // Automatically logged in because AuthService.CurrentUser is set.
+                ((AppShell)Shell.Current).UpdateShellItems();
                 await Shell.Current.GoToAsync("///HomePage");
             }
             else
