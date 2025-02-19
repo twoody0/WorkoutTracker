@@ -3,16 +3,4 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     x:Class="WorkoutTracker.AppShell">
-    <!-- xmlns:views="clr-namespace:WorkoutTracker.Views" -->
-    <!-- These are for a static naviagtion bar
-    <ShellContent Title="Home" Route="HomePage" ContentTemplate="{DataTemplate views:HomePage}" />
-    <ShellContent Title="Login" Route="LoginPage" ContentTemplate="{DataTemplate views:LoginPage}" />
-    <ShellContent Title="Sign Up" Route="SignupPage" ContentTemplate="{DataTemplate views:SignupPage}" />
-    <ShellContent Title="Dashboard" Route="DashboardPage" ContentTemplate="{DataTemplate views:DashboardPage}" />
-    <ShellContent Title="Leaderboard" Route="LeaderboardPage" ContentTemplate="{DataTemplate views:LeaderboardPage}" />
-    <ShellContent Title="Add Workout" ContentTemplate="{DataTemplate views:WorkoutPage}" />
-    <ShellContent Title="View Workouts" ContentTemplate="{DataTemplate views:ViewWorkoutPage}" />
-    <ShellContent Title="Cardio Session" ContentTemplate="{DataTemplate views:CardioSessionPage}" />
-    <ShellContent Title="Workout Library" ContentTemplate="{DataTemplate views:WeightliftingLibraryPage}" />
-    -->
 </Shell>

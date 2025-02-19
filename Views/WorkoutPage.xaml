@@ -30,14 +30,14 @@
                             SelectionMode="None">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
-                        <Frame Padding="10" Margin="5" BorderColor="LightGray" CornerRadius="5">
-                            <Frame.GestureRecognizers>
+                        <Border Padding="10" Margin="5" Stroke="LightGray" StrokeShape="RoundRectangle 5">
+                            <Border.GestureRecognizers>
                                 <TapGestureRecognizer 
                                     Command="{Binding Source={x:Reference Page}, Path=BindingContext.SelectExerciseCommand}"
                                     CommandParameter="{Binding .}" />
-                            </Frame.GestureRecognizers>
+                            </Border.GestureRecognizers>
                             <Label Text="{Binding Name}" />
-                        </Frame>
+                        </Border>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>

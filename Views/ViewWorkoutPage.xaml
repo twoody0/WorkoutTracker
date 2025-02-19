@@ -9,7 +9,7 @@
     <CollectionView ItemsSource="{Binding Workouts}">
         <CollectionView.ItemTemplate>
             <DataTemplate>
-                <Frame Padding="10" Margin="5" BorderColor="LightGray" CornerRadius="5">
+                <Border Padding="10" Margin="5" Stroke="LightGray" StrokeShape="RoundRectangle 5">
                     <StackLayout>
                         <Label Text="{Binding Name}" FontAttributes="Bold" />
                         <Label Text="{Binding Type}" />
@@ -44,7 +44,7 @@
                             <Label Text="{Binding Steps}" />
                         </StackLayout>
                     </StackLayout>
-                </Frame>
+                </Border>
             </DataTemplate>
         </CollectionView.ItemTemplate>
     </CollectionView>

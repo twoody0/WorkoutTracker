@@ -10,7 +10,7 @@
         <CollectionView ItemsSource="{Binding Workouts}">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Frame Padding="10" Margin="5" BorderColor="LightGray" CornerRadius="5">
+                    <Border Padding="10" Margin="5" Stroke="LightGray" StrokeShape="RoundRectangle 5">
                         <StackLayout>
                             <Label Text="{Binding Name}" FontAttributes="Bold" />
                             <Label Text="{Binding StartTime, StringFormat='{0:HH:mm}'}" />
@@ -18,7 +18,7 @@
                             <Label Text="{Binding Reps}" />
                             <Label Text="{Binding Sets}" />
                         </StackLayout>
-                    </Frame>
+                    </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
