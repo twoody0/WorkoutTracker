@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace WorkoutTracker.Services;
+﻿namespace WorkoutTracker.Services;
 
 public interface IStepCounterService
 {

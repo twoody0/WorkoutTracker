@@ -1,10 +1,8 @@
-﻿using Android.App;
-using Android.Content;
+﻿using Android.Content;
 using Android.Hardware;
 using Android.Runtime;
 using Android.Util;
 using WorkoutTracker.Services;
-using System;
 using Application = Android.App.Application;
 
 namespace WorkoutTracker.Platforms.Android;
