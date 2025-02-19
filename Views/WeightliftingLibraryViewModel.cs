@@ -13,9 +13,6 @@ public class WeightliftingLibraryViewModel : BaseViewModel
     {
         _libraryService = libraryService;
         Exercises = new ObservableCollection<WeightliftingExercise>();
-
-        // Optionally, initialize with a default muscle group.
-        SelectedMuscleGroup = "Back";  // or set it to an empty string if you want the user to select.
     }
 
     public ObservableCollection<WeightliftingExercise> Exercises { get; set; }

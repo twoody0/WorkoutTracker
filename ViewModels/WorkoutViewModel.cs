@@ -24,10 +24,7 @@ namespace WorkoutTracker.ViewModels
             ExerciseSuggestions = new ObservableCollection<WeightliftingExercise>();
 
             // Define muscle groups with a default prompt.
-            MuscleGroups = new List<string> { "Select Muscle Group", "Back", "Biceps", "Chest", "Legs", "Shoulders", "Triceps", "Abs" };
-
-            // Set default muscle group.
-            SelectedMuscleGroup = MuscleGroups.First(); // "Select Muscle Group" by default
+            MuscleGroups = new List<string> { "Back", "Biceps", "Chest", "Legs", "Shoulders", "Triceps", "Abs" };
 
             // Initialize numeric fields as empty strings.
             Weight = string.Empty;
