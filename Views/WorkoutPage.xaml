@@ -7,7 +7,7 @@
     Title="Add Workout">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="15">
+        <VerticalStackLayout Padding="20" Spacing="5">
             <Label Text="Add a Weightlifting Workout" 
                    FontSize="20" 
                    HorizontalOptions="Center" />

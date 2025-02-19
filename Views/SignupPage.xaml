@@ -5,7 +5,7 @@
     x:Class="WorkoutTracker.Views.SignupPage"
     Title="Sign Up">
     <ScrollView>
-        <StackLayout Padding="20" Spacing="15">
+        <StackLayout Padding="20" Spacing="5">
             <Entry Placeholder="Name" Text="{Binding Name}" />
             <Entry Placeholder="Age" Keyboard="Numeric" Text="{Binding Age}" />
             <Entry Placeholder="Weight" Keyboard="Numeric" Text="{Binding Weight}" />
