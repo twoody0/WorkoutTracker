@@ -110,7 +110,41 @@ namespace WorkoutTracker.ViewModels
 
         private async Task AddWorkoutAsync()
         {
-            // Parse the numeric fields; default to 0 if parsing fails.
+            // Validate that a muscle group is selected.
+            if (SelectedMuscleGroup == "Select Muscle Group")
+            {
+                await Application.Current.MainPage.DisplayAlert("Error", "Please select a muscle group.", "OK");
+                return;
+            }
+
+            // Validate that an exercise name is entered.
+            if (string.IsNullOrWhiteSpace(Name))
+            {
+                await Application.Current.MainPage.DisplayAlert("Error", "Please enter an exercise name.", "OK");
+                return;
+            }
+
+            // Validate that reps are entered.
+            if (string.IsNullOrWhiteSpace(Reps))
+            {
+                await Application.Current.MainPage.DisplayAlert("Error", "Please enter the number of reps.", "OK");
+                return;
+            }
+
+            // Validate that sets are entered.
+            if (string.IsNullOrWhiteSpace(Sets))
+            {
+                await Application.Current.MainPage.DisplayAlert("Error", "Please enter the number of sets.", "OK");
+                return;
+            }
+
+            // If no weight is entered, default it to "0"
+            if (string.IsNullOrWhiteSpace(Weight))
+            {
+                Weight = "0";
+            }
+
+            // Parse the numeric fields (if parsing fails, TryParse leaves the values as 0).
             double parsedWeight = 0;
             int parsedReps = 0;
             int parsedSets = 0;
@@ -118,6 +152,7 @@ namespace WorkoutTracker.ViewModels
             int.TryParse(Reps, out parsedReps);
             int.TryParse(Sets, out parsedSets);
 
+            // Create the workout.
             Workout workout = new Workout
             {
                 Name = Name,
@@ -138,6 +173,7 @@ namespace WorkoutTracker.ViewModels
             Sets = string.Empty;
             ExerciseSuggestions.Clear();
         }
+
 
         // Update suggestions: if the search query is empty, show all exercises in alphabetical order.
         public async Task UpdateExerciseSuggestionsAsync()
