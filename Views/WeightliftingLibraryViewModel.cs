@@ -1,6 +1,5 @@
 ﻿using System.Collections.ObjectModel;
 using System.Windows.Input;
-using System.Threading.Tasks;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 
@@ -46,7 +45,7 @@ public class WeightliftingLibraryViewModel : BaseViewModel
         }
 
         // Call the new service method that requires both parameters.
-        var results = await _libraryService.SearchExercisesByName(SelectedMuscleGroup, SearchText);
+        IEnumerable<WeightliftingExercise> results = await _libraryService.SearchExercisesByName(SelectedMuscleGroup, SearchText);
         Exercises.Clear();
         foreach (var exercise in results)
         {

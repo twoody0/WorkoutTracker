@@ -16,7 +16,7 @@ public class WorkoutLibraryService : IWorkoutLibraryService
     {
         if (_exercises == null)
         {
-            using var stream = await FileSystem.OpenAppPackageFileAsync("exercises.json");
+            using Stream stream = await FileSystem.OpenAppPackageFileAsync("exercises.json");
             _exercises = await JsonSerializer.DeserializeAsync<List<WeightliftingExercise>>(stream);
         }
         return _exercises;
@@ -24,8 +24,8 @@ public class WorkoutLibraryService : IWorkoutLibraryService
 
     public async Task<IEnumerable<WeightliftingExercise>> SearchExercisesByName(string muscleGroup, string query)
     {
-        var exercises = await GetExercises();
-        var filtered = exercises.Where(e => e.MuscleGroup.Equals(muscleGroup, StringComparison.OrdinalIgnoreCase));
+        IEnumerable<WeightliftingExercise> exercises = await GetExercises();
+        IEnumerable<WeightliftingExercise> filtered = exercises.Where(e => e.MuscleGroup.Equals(muscleGroup, StringComparison.OrdinalIgnoreCase));
         if (!string.IsNullOrWhiteSpace(query))
         {
             filtered = filtered.Where(e => e.Name.StartsWith(query, StringComparison.OrdinalIgnoreCase));

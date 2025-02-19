@@ -1,5 +1,4 @@
 ﻿using System.Windows.Input;
-using Microsoft.Maui.Controls;
 using WorkoutTracker.Services;
 
 namespace WorkoutTracker.ViewModels;

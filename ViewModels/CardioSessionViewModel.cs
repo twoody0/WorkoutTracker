@@ -1,8 +1,6 @@
-﻿using System;
-using System.Windows.Input;
+﻿using System.Windows.Input;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
-using Microsoft.Maui.Controls;
 
 namespace WorkoutTracker.ViewModels
 {
@@ -52,7 +50,7 @@ namespace WorkoutTracker.ViewModels
             IsTracking = false;
 
             // Create a Cardio workout entry automatically
-            var workout = new Workout
+            Workout workout = new Workout
             {
                 Name = "Cardio Session",
                 Type = WorkoutType.Cardio,

@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.ObjectModel;
 using System.Windows.Input;
-using Microsoft.Maui.Controls;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 
@@ -123,7 +118,7 @@ namespace WorkoutTracker.ViewModels
             int.TryParse(Reps, out parsedReps);
             int.TryParse(Sets, out parsedSets);
 
-            var workout = new Workout
+            Workout workout = new Workout
             {
                 Name = Name,
                 Weight = parsedWeight,
@@ -149,8 +144,8 @@ namespace WorkoutTracker.ViewModels
         {
             if (SelectedMuscleGroup != "Select Muscle Group")
             {
-                var exercises = await _workoutLibraryService.SearchExercisesByName(SelectedMuscleGroup, ExerciseSearchQuery);
-                var sorted = exercises.OrderBy(e => e.Name);
+                IEnumerable<WeightliftingExercise> exercises = await _workoutLibraryService.SearchExercisesByName(SelectedMuscleGroup, ExerciseSearchQuery);
+                IOrderedEnumerable<WeightliftingExercise> sorted = exercises.OrderBy(e => e.Name);
 
                 ExerciseSuggestions.Clear();
                 foreach (var ex in sorted)

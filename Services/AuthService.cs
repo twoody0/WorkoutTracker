@@ -38,7 +38,7 @@ namespace WorkoutTracker.Services
 
         public void SignOut()
         {
-            CurrentUser = null;
+            CurrentUser = null!;
         }
     }
 }

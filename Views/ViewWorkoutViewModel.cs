@@ -1,5 +1,4 @@
 ﻿using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 
@@ -20,7 +19,7 @@ public class ViewWorkoutViewModel : BaseViewModel
 
     private async Task LoadWorkouts()
     {
-        var workouts = await _workoutService.GetWorkouts();
+        IEnumerable<Workout> workouts = await _workoutService.GetWorkouts();
         Workouts.Clear();
         foreach (var workout in workouts)
         {

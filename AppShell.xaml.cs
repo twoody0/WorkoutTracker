@@ -1,7 +1,5 @@
-﻿using Microsoft.Maui.Controls;
-using WorkoutTracker.Services;
+﻿using WorkoutTracker.Services;
 using WorkoutTracker.Views;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace WorkoutTracker;
 
@@ -36,7 +34,7 @@ public partial class AppShell : Shell
         this.Items.Clear();
 
         // Always add the Home page.
-        var homeFlyout = new FlyoutItem
+        FlyoutItem homeFlyout = new FlyoutItem
         {
             Title = "Home",
             Route = "HomePage",
@@ -51,7 +49,7 @@ public partial class AppShell : Shell
         // If the user is signed in, add additional items.
         if (_authService.CurrentUser != null)
         {
-            var dashboardFlyout = new FlyoutItem
+            FlyoutItem dashboardFlyout = new FlyoutItem
             {
                 Title = "Dashboard",
                 Route = "DashboardPage",
@@ -63,7 +61,7 @@ public partial class AppShell : Shell
             });
             this.Items.Add(dashboardFlyout);
 
-            var leaderboardFlyout = new FlyoutItem
+            FlyoutItem leaderboardFlyout = new FlyoutItem
             {
                 Title = "Leaderboard",
                 Route = "LeaderboardPage",
@@ -75,7 +73,7 @@ public partial class AppShell : Shell
             });
             this.Items.Add(leaderboardFlyout);
 
-            var addWorkoutFlyout = new FlyoutItem
+            FlyoutItem addWorkoutFlyout = new FlyoutItem
             {
                 Title = "Add Workout",
                 Route = "WorkoutPage",
@@ -87,7 +85,7 @@ public partial class AppShell : Shell
             });
             this.Items.Add(addWorkoutFlyout);
 
-            var viewWorkoutsFlyout = new FlyoutItem
+            FlyoutItem viewWorkoutsFlyout = new FlyoutItem
             {
                 Title = "View Workouts",
                 Route = "ViewWorkoutPage",
@@ -99,7 +97,7 @@ public partial class AppShell : Shell
             });
             this.Items.Add(viewWorkoutsFlyout);
 
-            var cardioSessionFlyout = new FlyoutItem
+            FlyoutItem cardioSessionFlyout = new FlyoutItem
             {
                 Title = "Cardio Session",
                 Route = "CardioSessionPage",
@@ -111,7 +109,7 @@ public partial class AppShell : Shell
             });
             this.Items.Add(cardioSessionFlyout);
 
-            var libraryFlyout = new FlyoutItem
+            FlyoutItem libraryFlyout = new FlyoutItem
             {
                 Title = "Workout Library",
                 Route = "WeightliftingLibraryPage",

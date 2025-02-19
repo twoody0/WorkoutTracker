@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.ObjectModel;
 using System.Windows.Input;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
-using Microsoft.Maui.Controls;
 
 namespace WorkoutTracker.ViewModels;
 
@@ -41,8 +37,8 @@ public class DashboardViewModel : BaseViewModel
 
     private async Task LoadWorkoutsAsync()
     {
-        var allWorkouts = await _workoutService.GetWorkouts();
-        var filtered = allWorkouts.Where(w => w.StartTime.Date == SelectedDate.Date);
+        IEnumerable<Workout> allWorkouts = await _workoutService.GetWorkouts();
+        IEnumerable<Workout> filtered = allWorkouts.Where(w => w.StartTime.Date == SelectedDate.Date);
         Workouts.Clear();
         foreach (var w in filtered)
         {

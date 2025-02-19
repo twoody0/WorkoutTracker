@@ -1,5 +1,4 @@
 ﻿using System.Windows.Input;
-using Microsoft.Maui.Controls;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 
@@ -25,7 +24,7 @@ public class SignupViewModel : BaseViewModel
     {
         if (int.TryParse(Age, out int age) && double.TryParse(Weight, out double weight))
         {
-            var user = new User
+            User user = new User
             {
                 Name = Name,
                 Age = age,
@@ -34,7 +33,7 @@ public class SignupViewModel : BaseViewModel
                 Password = Password,
                 Email = Email
             };
-            var success = await _authService.SignupAsync(user);
+            bool success = await _authService.SignupAsync(user);
             if (success)
             {
                 // Automatically logged in because AuthService.CurrentUser is set.
