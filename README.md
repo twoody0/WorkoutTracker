@@ -49,7 +49,7 @@ A cross-platform fitness tracker built with **.NET MAUI**, designed to help user
 ### Setup
 
 ```bash
-git clone https://github.com/yourusername/WorkoutTracker.git
+git clone https://github.com/twoody0/WorkoutTracker.git
 cd WorkoutTracker
 dotnet build
 dotnet run
