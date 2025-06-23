@@ -24,9 +24,9 @@ public static class MauiProgram
         builder.Services.AddSingleton<IWorkoutService, WorkoutService>();
 
         // Register platform-specific service for step counting on Android:
-#if ANDROID
+        #if ANDROID
         builder.Services.AddSingleton<IStepCounterService, StepCounterServiceAndroid>();
-#endif
+        #endif
 
         // Register the Workout Library service
         builder.Services.AddSingleton<IWorkoutLibraryService, WorkoutLibraryService>();
