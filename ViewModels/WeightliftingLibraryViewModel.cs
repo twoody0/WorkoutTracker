@@ -7,11 +7,14 @@ namespace WorkoutTracker.ViewModels;
 
 public class WeightliftingLibraryViewModel : BaseViewModel
 {
+    public List<string> MuscleGroups { get; set; }
+
     private readonly IWorkoutLibraryService _libraryService;
     public WeightliftingLibraryViewModel(IWorkoutLibraryService libraryService)
     {
         _libraryService = libraryService;
         Exercises = new ObservableCollection<WeightliftingExercise>();
+        MuscleGroups = new List<string> { "Chest", "Back", "Legs", "Shoulders", "Biceps", "Triceps", "Abs" };
     }
 
     public ObservableCollection<WeightliftingExercise> Exercises { get; set; }
@@ -29,7 +32,12 @@ public class WeightliftingLibraryViewModel : BaseViewModel
     public string SelectedMuscleGroup
     {
         get => _selectedMuscleGroup;
-        set { _selectedMuscleGroup = value; OnPropertyChanged(); }
+        set
+        {
+            _selectedMuscleGroup = value;
+            OnPropertyChanged();
+            _ = SearchExercises();
+        }
     }
 
     // Command to perform the search.
@@ -37,15 +45,17 @@ public class WeightliftingLibraryViewModel : BaseViewModel
 
     private async Task SearchExercises()
     {
-        // If no muscle group is selected, optionally clear the list and exit.
+        // If no muscle group is selected, clear and exit
         if (string.IsNullOrWhiteSpace(SelectedMuscleGroup))
         {
             Exercises.Clear();
             return;
         }
 
-        // Call the new service method that requires both parameters.
-        IEnumerable<WeightliftingExercise> results = await _libraryService.SearchExercisesByName(SelectedMuscleGroup, SearchText);
+        // Always fetch exercises for the selected muscle group
+        IEnumerable<WeightliftingExercise> results =
+            await _libraryService.SearchExercisesByName(SelectedMuscleGroup, SearchText ?? string.Empty);
+
         Exercises.Clear();
         foreach (var exercise in results)
         {

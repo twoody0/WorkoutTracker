@@ -7,8 +7,14 @@ namespace WorkoutTracker.ViewModels;
 
 public class WorkoutViewModel : BaseViewModel
 {
+    // List of muscle groups.
+    public List<string> MuscleGroups { get; set; }
+
     private readonly IWorkoutService _workoutService;
     private readonly IWorkoutLibraryService _workoutLibraryService;
+    private string _selectedMuscleGroup;
+    // Holds what the user types to search for an exercise.
+    private string _exerciseSearchQuery;
 
     public WorkoutViewModel(IWorkoutService workoutService, IWorkoutLibraryService workoutLibraryService)
     {
@@ -26,11 +32,7 @@ public class WorkoutViewModel : BaseViewModel
         Reps = string.Empty;
         Sets = string.Empty;
     }
-
-    // List of muscle groups.
-    public List<string> MuscleGroups { get; set; }
-
-    private string _selectedMuscleGroup;
+    
     public string SelectedMuscleGroup
     {
         get => _selectedMuscleGroup;
@@ -47,8 +49,6 @@ public class WorkoutViewModel : BaseViewModel
         }
     }
 
-    // Holds what the user types to search for an exercise.
-    private string _exerciseSearchQuery;
     public string ExerciseSearchQuery
     {
         get => _exerciseSearchQuery;

@@ -4,23 +4,42 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     x:Class="WorkoutTracker.Views.DashboardPage"
     Title="Dashboard">
-    <StackLayout Padding="20">
+
+    <StackLayout Padding="20" Spacing="15">
         <Label Text="Select Date:" />
         <DatePicker Date="{Binding SelectedDate}" />
+
         <CollectionView ItemsSource="{Binding Workouts}">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
                     <Border Padding="10" Margin="5" Stroke="LightGray" StrokeShape="RoundRectangle 5">
                         <StackLayout>
-                            <Label Text="{Binding Name}" FontAttributes="Bold" />
-                            <Label Text="{Binding StartTime, StringFormat='{0:HH:mm}'}" />
-                            <Label Text="{Binding Weight}" />
-                            <Label Text="{Binding Reps}" />
-                            <Label Text="{Binding Sets}" />
+                            <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="16"/>
+                            <Label Text="{Binding StartTime, StringFormat='Time: {0:HH:mm}'}" />
+                            <Label Text="{Binding Sets, StringFormat='Sets: {0}'}" />
+                            <Label Text="{Binding Reps, StringFormat='Reps: {0}'}" />
+                            <Label Text="{Binding Weight, StringFormat='Weight: {0} lbs'}" />
                         </StackLayout>
                     </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+        <!-- Total Weight Lifted -->
+        <Label 
+            Text="{Binding TotalWeightLifted, StringFormat='🏋️ Total Weight Lifted Today: {0:N0} lbs'}"
+            FontAttributes="Bold"
+            FontSize="18"
+            HorizontalOptions="Center"
+            Margin="0,20,0,10"
+            IsVisible="{Binding HasWeightlifting}" />
+
+        <!-- Calories Burned -->
+        <Label 
+            Text="{Binding CaloriesBurned, StringFormat='🔥 Calories Burned Today: {0:N0} kcal'}"
+            FontAttributes="Bold"
+            FontSize="18"
+            HorizontalOptions="Center"
+            Margin="0,0,0,10"
+            IsVisible="{Binding HasCardio}" />
     </StackLayout>
 </ContentPage>
