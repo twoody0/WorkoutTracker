@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Windows.Input;
+using WorkoutTracker.Helpers;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 
@@ -12,6 +13,7 @@ public class WorkoutViewModel : BaseViewModel
 
     private readonly IWorkoutService _workoutService;
     private readonly IWorkoutLibraryService _workoutLibraryService;
+    private bool _hasWorkouts;
     private string _selectedMuscleGroup;
     // Holds what the user types to search for an exercise.
     private string _exerciseSearchQuery;
@@ -21,18 +23,44 @@ public class WorkoutViewModel : BaseViewModel
         _workoutService = workoutService;
         _workoutLibraryService = workoutLibraryService;
 
-        // Initialize the suggestions collection first.
         ExerciseSuggestions = new ObservableCollection<WeightliftingExercise>();
-
-        // Define muscle groups with a default prompt.
         MuscleGroups = new List<string> { "Back", "Biceps", "Chest", "Legs", "Shoulders", "Triceps", "Abs" };
 
-        // Initialize numeric fields as empty strings.
         Weight = string.Empty;
         Reps = string.Empty;
         Sets = string.Empty;
+
+        _ = CheckForExistingWorkouts();
+
+        // Load from copied workout
+        if (WorkoutTemplateCache.Template != null)
+        {
+            var workout = WorkoutTemplateCache.Template;
+            Name = workout.Name;
+            ExerciseSearchQuery = workout.Name;
+            Weight = workout.Weight.ToString();
+            Reps = workout.Reps.ToString();
+            Sets = workout.Sets.ToString();
+            SelectedMuscleGroup = workout.MuscleGroup;
+
+            _ = UpdateExerciseSuggestionsAsync();
+
+            WorkoutTemplateCache.Template = null;
+        }
     }
-    
+    private string InferMuscleGroupFromName(string name)
+    {
+        var lower = name.ToLower();
+        if (lower.Contains("chest")) return "Chest";
+        if (lower.Contains("leg")) return "Legs";
+        if (lower.Contains("back")) return "Back";
+        if (lower.Contains("tricep")) return "Triceps";
+        if (lower.Contains("bicep")) return "Biceps";
+        if (lower.Contains("shoulder")) return "Shoulders";
+        if (lower.Contains("abs") || lower.Contains("core")) return "Abs";
+        return string.Empty;
+    }
+
     public string SelectedMuscleGroup
     {
         get => _selectedMuscleGroup;
@@ -70,6 +98,17 @@ public class WorkoutViewModel : BaseViewModel
     {
         get => _isNameFieldFocused;
         set { _isNameFieldFocused = value; OnPropertyChanged(); }
+    }
+    public bool HasWorkouts
+    {
+        get => _hasWorkouts;
+        set { _hasWorkouts = value; OnPropertyChanged(); }
+    }
+
+    private async Task CheckForExistingWorkouts()
+    {
+        var all = await _workoutService.GetWorkouts();
+        HasWorkouts = all.Any();
     }
 
     // Collection for suggestions.
@@ -165,6 +204,8 @@ public class WorkoutViewModel : BaseViewModel
 
         await _workoutService.AddWorkout(workout);
 
+        HasWorkouts = true;
+
         // Clear fields after adding.
         Name = string.Empty;
         ExerciseSearchQuery = string.Empty;
@@ -204,5 +245,9 @@ public class WorkoutViewModel : BaseViewModel
             ExerciseSearchQuery = exercise.Name;
             ExerciseSuggestions.Clear();
         }
+    });
+    public ICommand NavigateToViewWorkoutsCommand => new Command(async () =>
+    {
+        await Shell.Current.GoToAsync("///ViewWorkoutPage");
     });
 }

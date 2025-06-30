@@ -56,6 +56,11 @@
             <Button Text="Add Workout" 
                     Command="{Binding AddWorkoutCommand}" 
                     HorizontalOptions="Center" />
+            <Button
+                    Text="View Workouts"
+                    Command="{Binding NavigateToViewWorkoutsCommand}"
+                    IsVisible="{Binding HasWorkouts}"
+                    HorizontalOptions="Center" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

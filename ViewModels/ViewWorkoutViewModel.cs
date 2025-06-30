@@ -1,4 +1,6 @@
 ﻿using System.Collections.ObjectModel;
+using System.Windows.Input;
+using WorkoutTracker.Helpers;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 
@@ -26,4 +28,21 @@ public class ViewWorkoutViewModel : BaseViewModel
             Workouts.Add(workout);
         }
     }
+    public ICommand CopyWorkoutCommand => new Command<Workout>(async (workout) =>
+    {
+        if (workout != null)
+        {
+            // Pass values to the WorkoutPage via query or static helper
+            WorkoutTemplateCache.Template = new Workout
+            {
+                Name = workout.Name,
+                Weight = workout.Weight,
+                Reps = workout.Reps,
+                Sets = workout.Sets,
+                Type = workout.Type
+            };
+
+            await Shell.Current.GoToAsync("///WorkoutPage");
+        }
+    });
 }
