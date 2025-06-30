@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:conv="clr-namespace:WorkoutTracker.Converters"
+    x:Class="WorkoutTracker.Views.HomePage"
+    Title="Home">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+    <StackLayout Padding="20" VerticalOptions="Center" Spacing="15">
+        <!-- Welcome Message (visible when logged in) -->
+        <Label Text="{Binding WelcomeMessage}" FontSize="20" HorizontalOptions="Center" 
+               IsVisible="{Binding IsUserLoggedIn}" />
+
+        <!-- Login and Sign Up Buttons (visible when NOT logged in) -->
+        <StackLayout IsVisible="{Binding IsUserLoggedIn, Converter={StaticResource InverseBooleanConverter}}" Spacing="20">
+            <Button Text="Login" Command="{Binding NavigateToLoginCommand}" />
+            <Button Text="Sign Up" Command="{Binding NavigateToSignupCommand}" />
+        </StackLayout>
+
+        <!-- Sign Out Button (visible when logged in) -->
+        <Button Text="Sign Out" Command="{Binding SignOutCommand}" IsVisible="{Binding IsUserLoggedIn}" />
+
+        <!-- Optionally, additional navigation -->
+        <Button Text="Dashboard" Command="{Binding NavigateToDashboardCommand}" IsVisible="{Binding IsUserLoggedIn}" />
+        <Button Text="Leaderboard" Command="{Binding NavigateToLeaderboardCommand}" IsVisible="{Binding IsUserLoggedIn}" />
+    </StackLayout>
+</ContentPage>

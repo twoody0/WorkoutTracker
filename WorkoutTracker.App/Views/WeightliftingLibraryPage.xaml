@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="WorkoutTracker.Views.WeightliftingLibraryPage"
+    Title="Workout Library">
+
+    <VerticalStackLayout Padding="20" Spacing="15">
+
+        <!-- Muscle Group Picker -->
+        <Label Text="Select Muscle Group" FontAttributes="Bold" />
+        <Picker 
+            ItemsSource="{Binding MuscleGroups}" 
+            SelectedItem="{Binding SelectedMuscleGroup}" />
+
+        <!-- Search bar -->
+        <Entry 
+            Placeholder="Search exercises..." 
+            Text="{Binding SearchText}" />
+
+        <Button 
+            Text="Search"
+            Command="{Binding SearchCommand}" />
+
+        <!-- Exercise List -->
+        <CollectionView ItemsSource="{Binding Exercises}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Padding="10" Margin="5" Stroke="LightGray" StrokeShape="RoundRectangle 5">
+                        <VerticalStackLayout>
+                            <Label Text="{Binding Name}" FontAttributes="Bold" />
+                            <Label Text="{Binding MuscleGroup}" FontSize="12" TextColor="Gray"/>
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+    </VerticalStackLayout>
+</ContentPage>

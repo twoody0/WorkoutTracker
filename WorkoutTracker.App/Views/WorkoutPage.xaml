@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage 
+    x:Name="Page"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="WorkoutTracker.Views.WorkoutPage"
+    Title="Add Workout">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="5">
+            <Label Text="Add a Weightlifting Workout" 
+                   FontSize="20" 
+                   HorizontalOptions="Center" />
+
+            <!-- Muscle Group Picker -->
+            <Picker Title="Select Muscle Group"
+                    ItemsSource="{Binding MuscleGroups}"
+                    SelectedItem="{Binding SelectedMuscleGroup}" />
+
+            <!-- Entry for exercise name search -->
+            <Entry x:Name="ExerciseEntry"
+                   Placeholder="Type exercise name..."
+                   Text="{Binding ExerciseSearchQuery}" 
+                   Focused="ExerciseEntry_Focused"
+                   Unfocused="ExerciseEntry_Unfocused" />
+
+            <!-- CollectionView for suggestions -->
+            <CollectionView ItemsSource="{Binding ExerciseSuggestions}"
+                            IsVisible="{Binding IsNameFieldFocused}"
+                            SelectionMode="None">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Padding="10" Margin="5" Stroke="LightGray" StrokeShape="RoundRectangle 5">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer 
+                                    Command="{Binding Source={x:Reference Page}, Path=BindingContext.SelectExerciseCommand}"
+                                    CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+                            <Label Text="{Binding Name}" />
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- Fields for weight, reps, and sets -->
+            <Entry Placeholder="Enter weight (lbs or kg)" 
+                   Keyboard="Numeric" 
+                   Text="{Binding Weight}" />
+            <Entry Placeholder="Enter reps" 
+                   Keyboard="Numeric" 
+                   Text="{Binding Reps}" />
+            <Entry Placeholder="Enter sets" 
+                   Keyboard="Numeric" 
+                   Text="{Binding Sets}" />
+
+            <Button Text="Add Workout" 
+                    Command="{Binding AddWorkoutCommand}" 
+                    HorizontalOptions="Center" />
+            <Button
+                    Text="View Workouts"
+                    Command="{Binding NavigateToViewWorkoutsCommand}"
+                    IsVisible="{Binding HasWorkouts}"
+                    HorizontalOptions="Center" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

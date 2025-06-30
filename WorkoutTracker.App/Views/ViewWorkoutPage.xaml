@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+    xmlns:models="clr-namespace:WorkoutTracker.Models"
+    x:Class="WorkoutTracker.Views.ViewWorkoutPage"
+    Title="View Workouts">
+
+    <CollectionView ItemsSource="{Binding Workouts}">
+        <CollectionView.ItemTemplate>
+            <DataTemplate>
+                <Border Padding="10" Margin="5" Stroke="LightGray" StrokeShape="RoundRectangle 5">
+                    <StackLayout>
+                        <Label Text="{Binding Name}" FontAttributes="Bold" />
+                        <Label Text="{Binding Type}" />
+
+                        <!-- WeightLifting Section -->
+                        <StackLayout x:Name="WeightLiftingSection" IsVisible="False">
+                            <StackLayout.Triggers>
+                                <DataTrigger TargetType="StackLayout"
+                                             Binding="{Binding Type}"
+                                             Value="{x:Static models:WorkoutType.WeightLifting}">
+                                    <Setter Property="IsVisible" Value="True"/>
+                                </DataTrigger>
+                            </StackLayout.Triggers>
+                            <Label Text="Weight:" FontAttributes="Bold" />
+                            <Label Text="{Binding Weight}" />
+                            <Label Text="Reps:" FontAttributes="Bold" />
+                            <Label Text="{Binding Reps}" />
+                            <Label Text="Sets:" FontAttributes="Bold" />
+                            <Label Text="{Binding Sets}" />
+                        </StackLayout>
+
+                        <!-- Cardio Section -->
+                        <StackLayout x:Name="CardioSection" IsVisible="False">
+                            <StackLayout.Triggers>
+                                <DataTrigger TargetType="StackLayout"
+                                             Binding="{Binding Type}"
+                                             Value="{x:Static models:WorkoutType.Cardio}">
+                                    <Setter Property="IsVisible" Value="True"/>
+                                </DataTrigger>
+                            </StackLayout.Triggers>
+                            <Label Text="Steps:" FontAttributes="Bold" />
+                            <Label Text="{Binding Steps}" />
+                        </StackLayout>
+                        <Button
+                            Text="Copy to Add"
+                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ViewWorkoutViewModel}}, Path=CopyWorkoutCommand}"
+                            CommandParameter="{Binding}" />
+                    </StackLayout>
+                </Border>
+            </DataTemplate>
+        </CollectionView.ItemTemplate>
+    </CollectionView>
+</ContentPage>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="WorkoutTracker.Views.LeaderboardPage"
+    Title="Leaderboard">
+    <StackLayout Padding="20" Spacing="15">
+        <Entry Placeholder="Enter Gym Location" Text="{Binding GymLocation}" />
+        <Button Text="Load Leaderboard" Command="{Binding LoadLeaderboardCommand}" />
+        <CollectionView ItemsSource="{Binding LeaderboardWorkouts}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Padding="10" Margin="5" Stroke="LightGray" StrokeShape="RoundRectangle 5">
+                        <StackLayout>
+                            <Label Text="{Binding Name}" FontAttributes="Bold" />
+                            <Label Text="{Binding StartTime, StringFormat='{0:MM/dd/yyyy HH:mm}'}" />
+                            <Label Text="Weight: {Binding Weight}" />
+                            <Label Text="Reps: {Binding Reps}" />
+                            <Label Text="Sets: {Binding Sets}" />
+                            <Label Text="Gym: {Binding GymLocation}" />
+                        </StackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </StackLayout>
+</ContentPage>

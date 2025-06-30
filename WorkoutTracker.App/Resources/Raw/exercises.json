@@ -1,0 +1,226 @@
+[
+    {
+        "Name": "Deadlift",
+        "MuscleGroup": "Back"
+    },
+    {
+        "Name": "Pull-Up",
+        "MuscleGroup": "Back"
+    },
+    {
+        "Name": "Bent-Over Row",
+        "MuscleGroup": "Back"
+    },
+    {
+        "Name": "Lat Pulldown",
+        "MuscleGroup": "Back"
+    },
+    {
+        "Name": "Seated Row",
+        "MuscleGroup": "Back"
+    },
+    {
+        "Name": "T-Bar Row",
+        "MuscleGroup": "Back"
+    },
+    {
+        "Name": "Face Pulls",
+        "MuscleGroup": "Back"
+    },
+    {
+        "Name": "Single-Arm Dumbbell Row",
+        "MuscleGroup": "Back"
+    },
+    {
+        "Name": "Barbell Curl",
+        "MuscleGroup": "Biceps"
+    },
+    {
+        "Name": "Dumbbell Curl",
+        "MuscleGroup": "Biceps"
+    },
+    {
+        "Name": "Hammer Curl",
+        "MuscleGroup": "Biceps"
+    },
+    {
+        "Name": "Preacher Curl",
+        "MuscleGroup": "Biceps"
+    },
+    {
+        "Name": "Concentration Curl",
+        "MuscleGroup": "Biceps"
+    },
+    {
+        "Name": "Incline Dumbbell Curl",
+        "MuscleGroup": "Biceps"
+    },
+    {
+        "Name": "Cable Curl",
+        "MuscleGroup": "Biceps"
+    },
+    {
+        "Name": "Reverse Curl",
+        "MuscleGroup": "Biceps"
+    },
+    {
+        "Name": "Bench Press",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Incline Dumbbell Press",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Dumbbell Fly",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Cable Crossover",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Push-Up",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Chest Dip",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Machine Chest Press",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Decline Bench Press",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Squat",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Leg Press",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Lunges",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Romanian Deadlift",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Leg Extension",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Leg Curl",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Calf Raise",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Front Squat",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Overhead Press",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Lateral Raise",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Front Raise",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Face Pulls",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Dumbbell Shoulder Press",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Arnold Press",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Cable Lateral Raise",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Reverse Pec Deck Fly",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Close-Grip Bench Press",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Triceps Dip",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Skull Crushers",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Overhead Triceps Extension",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Cable Triceps Pushdown",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Diamond Push-Ups",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Dumbbell Kickback",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Single-Arm Cable Triceps Extension",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Crunches",
+        "MuscleGroup": "Abs"
+    },
+    {
+        "Name": "Hanging Leg Raise",
+        "MuscleGroup": "Abs"
+    },
+    {
+        "Name": "Plank",
+        "MuscleGroup": "Abs"
+    },
+    {
+        "Name": "Russian Twists",
+        "MuscleGroup": "Abs"
+    },
+    {
+        "Name": "Bicycle Crunches",
+        "MuscleGroup": "Abs"
+    },
+    {
+        "Name": "Cable Woodchopper",
+        "MuscleGroup": "Abs"
+    },
+    {
+        "Name": "Ab Rollout",
+        "MuscleGroup": "Abs"
+    },
+    {
+        "Name": "Flutter Kicks",
+        "MuscleGroup": "Abs"
+    }
+]
