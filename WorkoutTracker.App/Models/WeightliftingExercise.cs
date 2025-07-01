@@ -2,8 +2,12 @@
 
 public class WeightliftingExercise
 {
-    public string Name { get; set; }
-    public string MuscleGroup { get; set; }
+    public required string Name { get; set; }
+    public required string MuscleGroup { get; set; }
+
+    // Required for data binding / deserialization
+    public WeightliftingExercise() { }
+
     public WeightliftingExercise(string name, string muscleGroup)
     {
         Name = name;
