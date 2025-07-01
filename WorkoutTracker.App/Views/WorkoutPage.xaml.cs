@@ -1,3 +1,4 @@
+using CommunityToolkit.Maui.Core.Platform;
 using System.Linq;
 using WorkoutTracker.Models;
 using WorkoutTracker.ViewModels;
@@ -40,5 +41,21 @@ public partial class WorkoutPage : ContentPage
         }
         // Clear the selection so that the same item can be selected again if needed.
         ((CollectionView)sender).SelectedItem = null;
+    }
+    private async void OnAddWorkoutClicked(object sender, EventArgs e)
+    {
+        if (BindingContext is WorkoutViewModel vm)
+        {
+            vm.Name = vm.ExerciseSearchQuery;
+
+            if (vm.AddWorkoutCommand.CanExecute(null))
+                vm.AddWorkoutCommand.Execute(null);
+        }
+
+        // Hide keyboard
+        await ExerciseEntry.HideKeyboardAsync();
+        await WeightEntry.HideKeyboardAsync();
+        await RepsEntry.HideKeyboardAsync();
+        await SetsEntry.HideKeyboardAsync();
     }
 }

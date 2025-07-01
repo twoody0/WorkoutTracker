@@ -59,7 +59,7 @@
                    Text="{Binding Sets}" />
 
             <Button Text="Add Workout" 
-                    Command="{Binding AddWorkoutCommand}" 
+                    Clicked="OnAddWorkoutClicked"
                     HorizontalOptions="Center" />
             <Button
                     Text="View Workouts"
