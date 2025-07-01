@@ -43,13 +43,18 @@
             </CollectionView>
 
             <!-- Fields for weight, reps, and sets -->
-            <Entry Placeholder="Enter weight (lbs or kg)" 
+            <Entry x:Name="WeightEntry"
+                   Placeholder="Enter weight (lbs or kg)" 
                    Keyboard="Numeric" 
                    Text="{Binding Weight}" />
-            <Entry Placeholder="Enter reps" 
+
+            <Entry x:Name="RepsEntry"
+                   Placeholder="Enter reps" 
                    Keyboard="Numeric" 
                    Text="{Binding Reps}" />
-            <Entry Placeholder="Enter sets" 
+
+            <Entry x:Name="SetsEntry"
+                   Placeholder="Enter sets" 
                    Keyboard="Numeric" 
                    Text="{Binding Sets}" />
 

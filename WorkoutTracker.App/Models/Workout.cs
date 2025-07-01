@@ -18,4 +18,15 @@ public class Workout
     public int Steps { get; set; } 
     public WorkoutType Type { get; set; }
     public string GymLocation { get; set; }
+    public Workout(string name, double weight, int reps, int sets, string muscleGroup, DateTime startTime, WorkoutType type, string gymLocation)
+    {
+        Name = name;
+        Weight = weight;
+        Reps = reps;
+        Sets = sets;
+        MuscleGroup = muscleGroup;
+        StartTime = startTime;
+        Type = type;
+        GymLocation = gymLocation;
+    }
 }

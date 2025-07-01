@@ -7,6 +7,7 @@ namespace WorkoutTracker.ViewModels;
 public class SignupViewModel : BaseViewModel
 {
     private readonly IAuthService _authService;
+
     public SignupViewModel(IAuthService authService)
     {
         _authService = authService;
@@ -22,32 +23,36 @@ public class SignupViewModel : BaseViewModel
 
     public ICommand SignupCommand => new Command(async () =>
     {
-        if (int.TryParse(Age, out int age) && double.TryParse(Weight, out double weight))
+        if (!int.TryParse(Age?.Trim(), out int age) || !double.TryParse(Weight?.Trim(), out double weight))
         {
-            User user = new User
-            {
-                Name = Name,
-                Age = age,
-                Weight = weight,
-                Username = Username,
-                Password = Password,
-                Email = Email
-            };
-            bool success = await _authService.SignupAsync(user);
-            if (success)
-            {
-                // Automatically logged in because AuthService.CurrentUser is set.
-                ((AppShell)Shell.Current).UpdateShellItems();
-                await Shell.Current.GoToAsync("///HomePage");
-            }
-            else
-            {
-                await Application.Current.MainPage.DisplayAlert("Signup Failed", "Username already exists", "OK");
-            }
+            await Application.Current.MainPage.DisplayAlert("Invalid Input", "Please enter a valid age and weight", "OK");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
+        {
+            await Application.Current.MainPage.DisplayAlert("Missing Fields", "Username and password are required", "OK");
+            return;
+        }
+
+        var user = new User(
+            name: Name?.Trim() ?? string.Empty,
+            age: age,
+            weight: weight,
+            username: Username?.Trim() ?? string.Empty,
+            password: Password,
+            email: Email?.Trim() ?? string.Empty
+        );
+
+        bool success = await _authService.SignupAsync(user);
+        if (success)
+        {
+            ((AppShell)Shell.Current).UpdateShellItems();
+            await Shell.Current.GoToAsync("///HomePage");
         }
         else
         {
-            await Application.Current.MainPage.DisplayAlert("Invalid Input", "Please enter a valid age and weight", "OK");
+            await Application.Current.MainPage.DisplayAlert("Signup Failed", "Username already exists", "OK");
         }
     });
 }
