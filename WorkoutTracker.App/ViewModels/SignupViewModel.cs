@@ -4,22 +4,73 @@ using WorkoutTracker.Services;
 
 namespace WorkoutTracker.ViewModels;
 
+/// <summary>
+/// ViewModel for handling user sign-up.
+/// </summary>
 public class SignupViewModel : BaseViewModel
 {
+    #region Private Fields
+
     private readonly IAuthService _authService;
+    private string _name;
+    private string _age;
+    private string _weight;
+    private string _username;
+    private string _password;
+    private string _email;
+
+    #endregion
+
+    #region Constructor
 
     public SignupViewModel(IAuthService authService)
     {
         _authService = authService;
     }
 
-    // Bound properties for the sign-up form.
-    public string Name { get; set; }
-    public string Age { get; set; }
-    public string Weight { get; set; }
-    public string Username { get; set; }
-    public string Password { get; set; }
-    public string Email { get; set; }
+    #endregion
+
+    #region Public Properties
+
+    public string Name
+    {
+        get => _name;
+        set => SetProperty(ref _name, value);
+    }
+
+    public string Age
+    {
+        get => _age;
+        set => SetProperty(ref _age, value);
+    }
+
+    public string Weight
+    {
+        get => _weight;
+        set => SetProperty(ref _weight, value);
+    }
+
+    public string Username
+    {
+        get => _username;
+        set => SetProperty(ref _username, value);
+    }
+
+    public string Password
+    {
+        get => _password;
+        set => SetProperty(ref _password, value);
+    }
+
+    public string Email
+    {
+        get => _email;
+        set => SetProperty(ref _email, value);
+    }
+
+    #endregion
+
+    #region Commands
 
     public ICommand SignupCommand => new Command(async () =>
     {
@@ -55,4 +106,6 @@ public class SignupViewModel : BaseViewModel
             await Application.Current.MainPage.DisplayAlert("Signup Failed", "Username already exists", "OK");
         }
     });
+
+    #endregion
 }

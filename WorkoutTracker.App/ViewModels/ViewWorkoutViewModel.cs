@@ -11,24 +11,38 @@ namespace WorkoutTracker.ViewModels;
 /// </summary>
 public class ViewWorkoutViewModel : BaseViewModel
 {
-    // ─────────────────────────────────────────────────────────────
-    // Private Fields
-    // ─────────────────────────────────────────────────────────────
+    #region Private Fields
 
     private readonly IWorkoutService _workoutService;
+    private ObservableCollection<Workout> _workouts;
 
-    // ─────────────────────────────────────────────────────────────
-    // Public Properties
-    // ─────────────────────────────────────────────────────────────
+    #endregion
+
+    #region Constructor
+
+    public ViewWorkoutViewModel(IWorkoutService workoutService)
+    {
+        _workoutService = workoutService;
+        Workouts = new ObservableCollection<Workout>();
+        _ = LoadWorkouts();
+    }
+
+    #endregion
+
+    #region Public Properties
 
     /// <summary>
     /// Collection of workouts loaded from the service.
     /// </summary>
-    public ObservableCollection<Workout> Workouts { get; set; }
+    public ObservableCollection<Workout> Workouts
+    {
+        get => _workouts;
+        set => SetProperty(ref _workouts, value);
+    }
 
-    // ─────────────────────────────────────────────────────────────
-    // Commands
-    // ─────────────────────────────────────────────────────────────
+    #endregion
+
+    #region Commands
 
     /// <summary>
     /// Command that copies the selected workout and navigates to the WorkoutPage to edit/add it.
@@ -37,7 +51,6 @@ public class ViewWorkoutViewModel : BaseViewModel
     {
         if (workout != null)
         {
-            // Use parameterized constructor to store the copied workout
             WorkoutTemplateCache.Template = new Workout(
                 name: workout.Name,
                 weight: workout.Weight,
@@ -53,20 +66,9 @@ public class ViewWorkoutViewModel : BaseViewModel
         }
     });
 
-    // ─────────────────────────────────────────────────────────────
-    // Constructor
-    // ─────────────────────────────────────────────────────────────
+    #endregion
 
-    public ViewWorkoutViewModel(IWorkoutService workoutService)
-    {
-        _workoutService = workoutService;
-        Workouts = new ObservableCollection<Workout>();
-        _ = LoadWorkouts();
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // Private Methods
-    // ─────────────────────────────────────────────────────────────
+    #region Private Methods
 
     /// <summary>
     /// Loads all workouts from the service into the observable collection.
@@ -80,4 +82,6 @@ public class ViewWorkoutViewModel : BaseViewModel
             Workouts.Add(workout);
         }
     }
+
+    #endregion
 }

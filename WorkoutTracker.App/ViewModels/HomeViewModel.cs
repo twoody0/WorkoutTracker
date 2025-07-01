@@ -3,36 +3,53 @@ using WorkoutTracker.Services;
 
 namespace WorkoutTracker.ViewModels;
 
+/// <summary>
+/// ViewModel for the Home page that handles welcome message, navigation, and session management.
+/// </summary>
 public class HomeViewModel : BaseViewModel
 {
+    #region Private Fields
+
     private readonly IAuthService _authService;
+    private string _welcomeMessage;
+
+    #endregion
+
+    #region Constructor
+
     public HomeViewModel(IAuthService authService)
     {
         _authService = authService;
         UpdateWelcomeMessage();
     }
 
-    public void UpdateWelcomeMessage()
-    {
-        if (_authService.CurrentUser != null)
-            WelcomeMessage = $"Welcome, {_authService.CurrentUser.Username}";
-        else
-            WelcomeMessage = string.Empty;
-    }
+    #endregion
 
-    private string _welcomeMessage;
+    #region Public Properties
+
+    /// <summary>
+    /// Welcome message displayed to the user.
+    /// </summary>
     public string WelcomeMessage
     {
         get => _welcomeMessage;
         set
         {
-            _welcomeMessage = value;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(IsUserLoggedIn));
+            if (SetProperty(ref _welcomeMessage, value))
+            {
+                OnPropertyChanged(nameof(IsUserLoggedIn));
+            }
         }
     }
 
+    /// <summary>
+    /// Indicates whether a user is currently logged in.
+    /// </summary>
     public bool IsUserLoggedIn => !string.IsNullOrWhiteSpace(WelcomeMessage);
+
+    #endregion
+
+    #region Commands
 
     public ICommand NavigateToLoginCommand => new Command(async () =>
     {
@@ -58,7 +75,21 @@ public class HomeViewModel : BaseViewModel
     {
         _authService.SignOut();
         UpdateWelcomeMessage();
-        // Optionally, navigate to HomePage.
         await Shell.Current.GoToAsync("///HomePage");
     });
+
+    #endregion
+
+    #region Public Methods
+
+    /// <summary>
+    /// Updates the welcome message based on the currently logged-in user.
+    /// </summary>
+    public void UpdateWelcomeMessage()
+    {
+        var user = _authService.CurrentUser;
+        WelcomeMessage = user != null ? $"Welcome, {user.Username}" : string.Empty;
+    }
+
+    #endregion
 }

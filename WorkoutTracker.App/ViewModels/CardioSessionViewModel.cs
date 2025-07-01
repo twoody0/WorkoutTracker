@@ -9,18 +9,31 @@ namespace WorkoutTracker.ViewModels;
 /// </summary>
 public class CardioWorkoutViewModel : BaseViewModel
 {
-    // ─────────────────────────────────────────────────────────────
-    // Private Fields
-    // ─────────────────────────────────────────────────────────────
+    #region Private Fields
 
     private readonly IWorkoutService _workoutService;
     private readonly IStepCounterService _stepCounterService;
     private int _sessionSteps;
     private bool _isTracking;
 
-    // ─────────────────────────────────────────────────────────────
-    // Public Properties
-    // ─────────────────────────────────────────────────────────────
+    #endregion
+
+    #region Constructor
+
+    public CardioWorkoutViewModel(IWorkoutService workoutService, IStepCounterService stepCounterService)
+    {
+        _workoutService = workoutService;
+        _stepCounterService = stepCounterService;
+
+        _stepCounterService.StepsUpdated += OnStepsUpdated;
+
+        SessionSteps = 0;
+        IsTracking = false;
+    }
+
+    #endregion
+
+    #region Public Properties
 
     /// <summary>
     /// The number of steps taken during the current cardio session.
@@ -28,7 +41,7 @@ public class CardioWorkoutViewModel : BaseViewModel
     public int SessionSteps
     {
         get => _sessionSteps;
-        set { _sessionSteps = value; OnPropertyChanged(); }
+        set => SetProperty(ref _sessionSteps, value);
     }
 
     /// <summary>
@@ -37,12 +50,12 @@ public class CardioWorkoutViewModel : BaseViewModel
     public bool IsTracking
     {
         get => _isTracking;
-        set { _isTracking = value; OnPropertyChanged(); }
+        set => SetProperty(ref _isTracking, value);
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Commands
-    // ─────────────────────────────────────────────────────────────
+    #endregion
+
+    #region Commands
 
     /// <summary>
     /// Starts a new cardio workout session and begins tracking steps.
@@ -62,7 +75,6 @@ public class CardioWorkoutViewModel : BaseViewModel
         _stepCounterService.StopTracking();
         IsTracking = false;
 
-        // Create cardio workout using the constructor
         var workout = new Workout(
             name: "Cardio Session",
             weight: 0,
@@ -79,29 +91,12 @@ public class CardioWorkoutViewModel : BaseViewModel
         };
 
         await _workoutService.AddWorkout(workout);
-
-        // Optionally reset session steps
         SessionSteps = 0;
     });
 
-    // ─────────────────────────────────────────────────────────────
-    // Constructor
-    // ─────────────────────────────────────────────────────────────
+    #endregion
 
-    public CardioWorkoutViewModel(IWorkoutService workoutService, IStepCounterService stepCounterService)
-    {
-        _workoutService = workoutService;
-        _stepCounterService = stepCounterService;
-
-        _stepCounterService.StepsUpdated += OnStepsUpdated;
-
-        SessionSteps = 0;
-        IsTracking = false;
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // Private Methods
-    // ─────────────────────────────────────────────────────────────
+    #region Private Methods
 
     /// <summary>
     /// Handles step count updates from the step counter service.
@@ -110,4 +105,6 @@ public class CardioWorkoutViewModel : BaseViewModel
     {
         SessionSteps = steps;
     }
+
+    #endregion
 }
