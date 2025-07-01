@@ -11,8 +11,8 @@ public class LoginViewModel : BaseViewModel
     #region Private Fields
 
     private readonly IAuthService _authService;
-    private string _username;
-    private string _password;
+    private string _username = string.Empty;
+    private string _password = string.Empty;
 
     #endregion
 

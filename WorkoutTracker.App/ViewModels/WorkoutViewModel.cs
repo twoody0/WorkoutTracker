@@ -13,14 +13,14 @@ public class WorkoutViewModel : BaseViewModel
     private readonly IWorkoutService _workoutService;
     private readonly IWorkoutLibraryService _workoutLibraryService;
 
-    private string _selectedMuscleGroup;
-    private string _exerciseSearchQuery;
+    private string _selectedMuscleGroup = string.Empty;
+    private string _exerciseSearchQuery = string.Empty;
     private bool _isNameFieldFocused;
     private bool _hasWorkouts;
-    private string _name;
-    private string _weight;
-    private string _reps;
-    private string _sets;
+    private string _name = string.Empty;
+    private string _weight = string.Empty;
+    private string _reps = string.Empty;
+    private string _sets = string.Empty;
 
     #endregion
 
@@ -206,7 +206,11 @@ public class WorkoutViewModel : BaseViewModel
 
     private async Task ShowError(string message)
     {
-        await Application.Current.MainPage.DisplayAlert("Error", message, "OK");
+        var currentWindow = Application.Current?.Windows.FirstOrDefault();
+        if (currentWindow?.Page is Page currentPage)
+        {
+            await currentPage.DisplayAlert("Error", message, "OK");
+        }
     }
 
     #endregion

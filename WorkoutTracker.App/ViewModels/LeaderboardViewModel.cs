@@ -13,7 +13,7 @@ public class LeaderboardViewModel : BaseViewModel
     #region Private Fields
 
     private readonly IWorkoutService _workoutService;
-    private string _gymLocation;
+    private string _gymLocation = string.Empty;
 
     #endregion
 

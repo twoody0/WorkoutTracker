@@ -11,7 +11,7 @@ public class HomeViewModel : BaseViewModel
     #region Private Fields
 
     private readonly IAuthService _authService;
-    private string _welcomeMessage;
+    private string _welcomeMessage = string.Empty;
 
     #endregion
 

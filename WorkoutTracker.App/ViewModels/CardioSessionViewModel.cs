@@ -101,7 +101,7 @@ public class CardioWorkoutViewModel : BaseViewModel
     /// <summary>
     /// Handles step count updates from the step counter service.
     /// </summary>
-    private void OnStepsUpdated(object sender, int steps)
+    private void OnStepsUpdated(object? sender, int steps)
     {
         SessionSteps = steps;
     }

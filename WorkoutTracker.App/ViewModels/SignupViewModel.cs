@@ -12,12 +12,12 @@ public class SignupViewModel : BaseViewModel
     #region Private Fields
 
     private readonly IAuthService _authService;
-    private string _name;
-    private string _age;
-    private string _weight;
-    private string _username;
-    private string _password;
-    private string _email;
+    private string _name = string.Empty;
+    private string _age = string.Empty;
+    private string _weight = string.Empty;
+    private string _username = string.Empty;
+    private string _password = string.Empty;
+    private string _email = string.Empty;
 
     #endregion
 
@@ -74,15 +74,19 @@ public class SignupViewModel : BaseViewModel
 
     public ICommand SignupCommand => new Command(async () =>
     {
+        var page = Application.Current?.Windows[0].Page;
+
         if (!int.TryParse(Age?.Trim(), out int age) || !double.TryParse(Weight?.Trim(), out double weight))
         {
-            await Application.Current.MainPage.DisplayAlert("Invalid Input", "Please enter a valid age and weight", "OK");
+            if (page != null)
+                await page.DisplayAlert("Invalid Input", "Please enter a valid age and weight", "OK");
             return;
         }
 
         if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
         {
-            await Application.Current.MainPage.DisplayAlert("Missing Fields", "Username and password are required", "OK");
+            if (page != null)
+                await page.DisplayAlert("Missing Fields", "Username and password are required", "OK");
             return;
         }
 
@@ -103,7 +107,8 @@ public class SignupViewModel : BaseViewModel
         }
         else
         {
-            await Application.Current.MainPage.DisplayAlert("Signup Failed", "Username already exists", "OK");
+            if (page != null)
+                await page.DisplayAlert("Signup Failed", "Username already exists", "OK");
         }
     });
 
