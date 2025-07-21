@@ -4,9 +4,15 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     x:Class="WorkoutTracker.Views.LoginPage"
     Title="Login">
-    <StackLayout Padding="20">
+    <StackLayout Padding="20" Spacing="10">
         <Entry Placeholder="Username" Text="{Binding Username}" />
         <Entry Placeholder="Password" IsPassword="True" Text="{Binding Password}" />
         <Button Text="Login" Command="{Binding LoginCommand}" />
+
+        <!-- Register button -->
+        <Button Text="Register"
+                Command="{Binding NavigateToRegisterCommand}"
+                BackgroundColor="LightGray"
+                TextColor="Black" />
     </StackLayout>
 </ContentPage>

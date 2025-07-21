@@ -1,6 +1,7 @@
 ﻿using System.Windows.Input;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
+using Microsoft.Maui.Dispatching;
 
 namespace WorkoutTracker.ViewModels;
 
@@ -74,43 +75,89 @@ public class SignupViewModel : BaseViewModel
 
     public ICommand SignupCommand => new Command(async () =>
     {
-        var page = Application.Current?.Windows[0].Page;
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
 
-        if (!int.TryParse(Age?.Trim(), out int age) || !double.TryParse(Weight?.Trim(), out double weight))
+        try
         {
-            if (page != null)
-                await page.DisplayAlert("Invalid Input", "Please enter a valid age and weight", "OK");
-            return;
+            if (!ValidateInput(out int parsedAge, out double parsedWeight, out string validationMessage))
+            {
+                if (page != null)
+                    await page.DisplayAlert("Validation Error", validationMessage, "OK");
+                return;
+            }
+
+            var user = new User(
+                name: Name?.Trim() ?? string.Empty,
+                age: parsedAge,
+                weight: parsedWeight,
+                username: Username?.Trim() ?? string.Empty,
+                password: Password,
+                email: Email?.Trim() ?? string.Empty
+            );
+
+            bool signupSuccess = await _authService.SignupAsync(user);
+            if (!signupSuccess)
+            {
+                if (page != null)
+                    await page.DisplayAlert("Signup Failed", "Username already exists", "OK");
+                return;
+            }
+
+            // Auto-login after signup
+            var loggedInUser = await _authService.LoginAsync(Username, Password);
+            if (loggedInUser == null)
+            {
+                if (page != null)
+                    await page.DisplayAlert("Login Failed", "Could not log in after signup. Please try logging in manually.", "OK");
+                return;
+            }
+
+            // Switch to AppShell on main thread
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                Application.Current.MainPage = new AppShell();
+            });
         }
+        catch (HttpRequestException ex)
+        {
+            await page.DisplayAlert("Network Error", "Please check your internet connection.", "OK");
+        }
+        catch (InvalidOperationException ex)
+        {
+            await page.DisplayAlert("Navigation Error", "Unable to navigate. Please try again.", "OK");
+        }
+    });
+
+    #endregion
+
+    #region Private Helpers
+
+    private bool ValidateInput(out int parsedAge, out double parsedWeight, out string message)
+    {
+        parsedAge = 0;
+        parsedWeight = 0;
+        message = string.Empty;
 
         if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
         {
-            if (page != null)
-                await page.DisplayAlert("Missing Fields", "Username and password are required", "OK");
-            return;
+            message = "Username and password are required.";
+            return false;
         }
 
-        var user = new User(
-            name: Name?.Trim() ?? string.Empty,
-            age: age,
-            weight: weight,
-            username: Username?.Trim() ?? string.Empty,
-            password: Password,
-            email: Email?.Trim() ?? string.Empty
-        );
+        if (!int.TryParse(Age?.Trim(), out parsedAge))
+        {
+            message = "Please enter a valid numeric age.";
+            return false;
+        }
 
-        bool success = await _authService.SignupAsync(user);
-        if (success)
+        if (!double.TryParse(Weight?.Trim(), out parsedWeight))
         {
-            ((AppShell)Shell.Current).UpdateShellItems();
-            await Shell.Current.GoToAsync("///HomePage");
+            message = "Please enter a valid numeric weight.";
+            return false;
         }
-        else
-        {
-            if (page != null)
-                await page.DisplayAlert("Signup Failed", "Username already exists", "OK");
-        }
-    });
+
+        return true;
+    }
 
     #endregion
 }

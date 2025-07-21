@@ -11,15 +11,20 @@ public partial class AppShell : Shell
     {
         InitializeComponent();
 
-        // Resolve IAuthService from DI.
         _authService = App.Services.GetRequiredService<IAuthService>();
+
+        // Initial navigation setup
         UpdateShellItems();
 
-        // Register routes explicitly.
-        Routing.RegisterRoute("SignupPage", typeof(SignupPage));
-        Routing.RegisterRoute("LoginPage", typeof(LoginPage));
-        Routing.RegisterRoute("DashboardPage", typeof(DashboardPage));
-        Routing.RegisterRoute("LeaderboardPage", typeof(LeaderboardPage));
+        // Register routes (optional since we’re using DI below)
+        Routing.RegisterRoute(nameof(SignupPage), typeof(SignupPage));
+        Routing.RegisterRoute(nameof(LoginPage), typeof(LoginPage));
+        Routing.RegisterRoute(nameof(DashboardPage), typeof(DashboardPage));
+        Routing.RegisterRoute(nameof(LeaderboardPage), typeof(LeaderboardPage));
+        Routing.RegisterRoute(nameof(ViewWorkoutPage), typeof(ViewWorkoutPage));
+        Routing.RegisterRoute(nameof(WorkoutPage), typeof(WorkoutPage));
+        Routing.RegisterRoute(nameof(CardioSessionPage), typeof(CardioSessionPage));
+        Routing.RegisterRoute(nameof(WeightliftingLibraryPage), typeof(WeightliftingLibraryPage));
     }
 
     protected override void OnAppearing()
@@ -30,96 +35,53 @@ public partial class AppShell : Shell
 
     public void UpdateShellItems()
     {
-        // Clear existing items.
         this.Items.Clear();
 
-        // Always add the Home page.
-        FlyoutItem homeFlyout = new FlyoutItem
-        {
-            Title = "Home",
-            Route = "HomePage",
-            Icon = "home.png" // (optional)
-        };
-        homeFlyout.Items.Add(new ShellContent
-        {
-            ContentTemplate = new DataTemplate(typeof(HomePage))
-        });
-        this.Items.Add(homeFlyout);
-
-        // If the user is signed in, add additional items.
         if (_authService.CurrentUser != null)
         {
-            FlyoutItem dashboardFlyout = new FlyoutItem
+            var tabBar = new TabBar();
+
+            tabBar.Items.Add(new ShellContent
+            {
+                Title = "Home",
+                ContentTemplate = new DataTemplate(() =>
+                    App.Services.GetRequiredService<HomePage>()),
+                Icon = "home.png"
+            });
+
+            tabBar.Items.Add(new ShellContent
             {
                 Title = "Dashboard",
-                Route = "DashboardPage",
-                Icon = "dashboard.png" // (optional)
-            };
-            dashboardFlyout.Items.Add(new ShellContent
-            {
-                ContentTemplate = new DataTemplate(typeof(DashboardPage))
+                ContentTemplate = new DataTemplate(() =>
+                    App.Services.GetRequiredService<DashboardPage>()),
+                Icon = "dashboard.png"
             });
-            this.Items.Add(dashboardFlyout);
 
-            FlyoutItem leaderboardFlyout = new FlyoutItem
-            {
-                Title = "Leaderboard",
-                Route = "LeaderboardPage",
-                Icon = "leaderboard.png"
-            };
-            leaderboardFlyout.Items.Add(new ShellContent
-            {
-                ContentTemplate = new DataTemplate(typeof(LeaderboardPage))
-            });
-            this.Items.Add(leaderboardFlyout);
-
-            FlyoutItem addWorkoutFlyout = new FlyoutItem
+            tabBar.Items.Add(new ShellContent
             {
                 Title = "Add Workout",
-                Route = "WorkoutPage",
+                ContentTemplate = new DataTemplate(() =>
+                    App.Services.GetRequiredService<WorkoutPage>()),
                 Icon = "addworkout.png"
-            };
-            addWorkoutFlyout.Items.Add(new ShellContent
-            {
-                ContentTemplate = new DataTemplate(typeof(WorkoutPage))
             });
-            this.Items.Add(addWorkoutFlyout);
 
-            FlyoutItem viewWorkoutsFlyout = new FlyoutItem
+            tabBar.Items.Add(new ShellContent
             {
-                Title = "View Workouts",
-                Route = "ViewWorkoutPage",
-                Icon = "viewworkouts.png"
-            };
-            viewWorkoutsFlyout.Items.Add(new ShellContent
-            {
-                ContentTemplate = new DataTemplate(typeof(ViewWorkoutPage))
+                Title = "Leaderboard",
+                ContentTemplate = new DataTemplate(() =>
+                    App.Services.GetRequiredService<LeaderboardPage>()),
+                Icon = "leaderboard.png"
             });
-            this.Items.Add(viewWorkoutsFlyout);
 
-            FlyoutItem cardioSessionFlyout = new FlyoutItem
+            this.Items.Add(tabBar);
+        }
+        else
+        {
+            var window = Application.Current?.Windows.FirstOrDefault();
+            if (window != null)
             {
-                Title = "Cardio Session",
-                Route = "CardioSessionPage",
-                Icon = "cardio.png"
-            };
-            cardioSessionFlyout.Items.Add(new ShellContent
-            {
-                ContentTemplate = new DataTemplate(typeof(CardioSessionPage))
-            });
-            this.Items.Add(cardioSessionFlyout);
-
-            FlyoutItem libraryFlyout = new FlyoutItem
-            {
-                Title = "Workout Library",
-                Route = "WeightliftingLibraryPage",
-                Icon = "library.png"
-            };
-            libraryFlyout.Items.Add(new ShellContent
-            {
-                ContentTemplate = new DataTemplate(typeof(WeightliftingLibraryPage))
-            });
-            this.Items.Add(libraryFlyout);
+                window.Page = App.Services.GetRequiredService<SignedOutShell>();
+            }
         }
     }
 }

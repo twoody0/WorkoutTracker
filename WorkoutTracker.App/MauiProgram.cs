@@ -2,6 +2,8 @@
 using WorkoutTracker.ViewModels;
 using WorkoutTracker.Views;
 using WorkoutTracker;
+using CommunityToolkit.Maui;
+
 
 #if ANDROID
 using WorkoutTracker.Platforms.Android;
@@ -14,6 +16,7 @@ public static class MauiProgram
         MauiAppBuilder builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
+            .UseMauiCommunityToolkit()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -33,6 +36,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IAuthService, AuthService>();
 
         // Register ViewModels
+        builder.Services.AddTransient<AuthViewModel>();
         builder.Services.AddTransient<HomeViewModel>();
         builder.Services.AddTransient<LoginViewModel>();
         builder.Services.AddTransient<SignupViewModel>();
@@ -44,6 +48,7 @@ public static class MauiProgram
         builder.Services.AddTransient<WeightliftingLibraryViewModel>();
 
         // Register Pages
+        builder.Services.AddTransient<AuthPage>();
         builder.Services.AddTransient<HomePage>();
         builder.Services.AddTransient<LoginPage>();
         builder.Services.AddTransient<SignupPage>();
@@ -53,6 +58,9 @@ public static class MauiProgram
         builder.Services.AddTransient<ViewWorkoutPage>();
         builder.Services.AddTransient<CardioSessionPage>();
         builder.Services.AddTransient<WeightliftingLibraryPage>();
+
+        // Register shell
+        builder.Services.AddSingleton<SignedOutShell>();
 
         return builder.Build();
     }

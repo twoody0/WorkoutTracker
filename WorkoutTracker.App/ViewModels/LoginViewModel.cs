@@ -1,5 +1,6 @@
 ﻿using System.Windows.Input;
 using WorkoutTracker.Services;
+using WorkoutTracker.Views;
 
 namespace WorkoutTracker.ViewModels;
 
@@ -58,7 +59,7 @@ public class LoginViewModel : BaseViewModel
         if (user != null)
         {
             ((AppShell)Shell.Current).UpdateShellItems(); // Refresh the shell based on login state
-            await Shell.Current.GoToAsync("///HomePage"); // Navigate to root home page
+            await Shell.Current.GoToAsync("//HomePage"); // Navigate to root home page
         }
         else
         {
@@ -66,5 +67,12 @@ public class LoginViewModel : BaseViewModel
         }
     });
 
+    /// <summary>
+    /// Command to navigate to the registration page.
+    /// </summary>
+    public ICommand NavigateToRegisterCommand => new Command(async () =>
+    {
+        await Shell.Current.GoToAsync(nameof(SignupPage));
+    });
     #endregion
 }
