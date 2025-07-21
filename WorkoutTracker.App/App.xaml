@@ -11,6 +11,8 @@
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
+            <converters:BoolToTextColorConverter x:Key="BoolToTextColorConverter" />
+            <converters:BoolToFontAttributesConverter x:Key="BoolToFontAttributesConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

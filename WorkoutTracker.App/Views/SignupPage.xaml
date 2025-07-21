@@ -2,6 +2,7 @@
 <ContentPage 
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:WorkoutTracker.Controls"
     x:Class="WorkoutTracker.Views.SignupPage"
     Title="Sign Up">
     <ScrollView>
@@ -10,7 +11,7 @@
             <Entry Placeholder="Age" Keyboard="Numeric" Text="{Binding Age}" />
             <Entry Placeholder="Weight" Keyboard="Numeric" Text="{Binding Weight}" />
             <Entry Placeholder="Username" Text="{Binding Username}" />
-            <Entry Placeholder="Password" IsPassword="True" Text="{Binding Password}" />
+            <controls:PasswordEntry Password="{Binding Password, Mode=TwoWay}" Placeholder="Password" />
             <Entry Placeholder="Email" Keyboard="Email" Text="{Binding Email}" />
             <Button Text="Sign Up" Command="{Binding SignupCommand}" />
         </StackLayout>
