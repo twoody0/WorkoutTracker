@@ -9,6 +9,14 @@ public class AuthViewModel : BaseViewModel
 {
     private readonly IAuthService _authService;
 
+    // Backing fields for properties
+    private string _username;
+    private string _password;
+    private string _name;
+    private string _email;
+    private string _age;
+    private string _weight;
+
     public AuthViewModel()
     {
         _authService = App.Services.GetRequiredService<IAuthService>();
@@ -28,16 +36,76 @@ public class AuthViewModel : BaseViewModel
         }
     }
 
+    private bool _isFormValid;
+    public bool IsFormValid
+    {
+        get => _isFormValid;
+        set => SetProperty(ref _isFormValid, value);
+    }
+
     public bool IsRegisterMode => !IsLoginMode;
 
     public string SubmitButtonText => IsLoginMode ? "Login" : "Register";
 
-    public string Username { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string Age { get; set; } = string.Empty;
-    public string Weight { get; set; } = string.Empty;
+    public string Username
+    {
+        get => _username;
+        set
+        {
+            SetProperty(ref _username, value);
+            ValidateForm();
+        }
+    }
+
+    public string Password
+    {
+        get => _password;
+        set
+        {
+            SetProperty(ref _password, value);
+            ValidateForm();
+        }
+    }
+
+    public string Name
+    {
+        get => _name;
+        set
+        {
+            SetProperty(ref _name, value);
+            ValidateForm();
+        }
+    }
+
+    public string Email
+    {
+        get => _email;
+        set
+        {
+            SetProperty(ref _email, value);
+            ValidateForm();
+        }
+    }
+
+    public string Age
+    {
+        get => _age;
+        set
+        {
+            SetProperty(ref _age, value);
+            ValidateForm();
+        }
+    }
+
+    public string Weight
+    {
+        get => _weight;
+        set
+        {
+            SetProperty(ref _weight, value);
+            ValidateForm();
+        }
+    }
 
     #endregion
 
@@ -98,6 +166,24 @@ public class AuthViewModel : BaseViewModel
         else
         {
             await Application.Current.MainPage.DisplayAlert("Signup Failed", "Username already exists.", "OK");
+        }
+    }
+
+    private void ValidateForm()
+    {
+        if (IsLoginMode)
+        {
+            IsFormValid = !string.IsNullOrWhiteSpace(Username) &&
+                          !string.IsNullOrWhiteSpace(Password);
+        }
+        else // Register mode
+        {
+            IsFormValid = !string.IsNullOrWhiteSpace(Username) &&
+                          !string.IsNullOrWhiteSpace(Password) &&
+                          !string.IsNullOrWhiteSpace(Name) &&
+                          !string.IsNullOrWhiteSpace(Email) &&
+                          !string.IsNullOrWhiteSpace(Age) &&
+                          !string.IsNullOrWhiteSpace(Weight);
         }
     }
 

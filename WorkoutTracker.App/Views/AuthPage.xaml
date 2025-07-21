@@ -38,8 +38,27 @@
                     </StackLayout>
 
                     <!-- Submit Button -->
-                    <Button Text="{Binding SubmitButtonText}"
-                            Command="{Binding SubmitCommand}" />
+                    <Button x:Name="SubmitButton"
+                        Text="{Binding SubmitButtonText}"
+                        Command="{Binding SubmitCommand}"
+                        IsEnabled="{Binding IsFormValid}">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup Name="CommonStates">
+                                <VisualState Name="Normal">
+                                    <VisualState.Setters>
+                                        <Setter Property="BackgroundColor" Value="LightBlue" />
+                                        <Setter Property="TextColor" Value="White" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Property="BackgroundColor" Value="LightGray" />
+                                        <Setter Property="TextColor" Value="DarkGray" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Button>
 
                 </StackLayout>
             </ContentView.Content>
