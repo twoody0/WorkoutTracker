@@ -73,6 +73,14 @@ public partial class AppShell : Shell
                 Icon = "leaderboard.png"
             });
 
+            tabBar.Items.Add(new ShellContent
+            {
+                Title = "Workout Plans",
+                ContentTemplate = new DataTemplate(() =>
+                    App.Services.GetRequiredService<WorkoutPlanPage>()),
+                Icon = "workoutplans.png"
+            });
+
             this.Items.Add(tabBar);
         }
         else

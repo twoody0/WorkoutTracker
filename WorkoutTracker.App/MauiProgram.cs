@@ -34,6 +34,9 @@ public static class MauiProgram
         // Register the Workout Library service
         builder.Services.AddSingleton<IWorkoutLibraryService, WorkoutLibraryService>();
         builder.Services.AddSingleton<IAuthService, AuthService>();
+        builder.Services.AddSingleton<IWorkoutPlanService, WorkoutPlanService>();
+        builder.Services.AddSingleton<WorkoutPlanViewModel>();
+        builder.Services.AddSingleton<WorkoutPlanPage>();
 
         // Register ViewModels
         builder.Services.AddTransient<AuthViewModel>();

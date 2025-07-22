@@ -1,0 +1,76 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.WorkoutPlanPage"
+             Title="Workout Plans">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+
+            <!-- Header -->
+            <Label Text="Available Workout Plans"
+                   FontSize="24"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+
+            <!-- Workout Plans List -->
+            <CollectionView ItemsSource="{Binding WorkoutPlans}"
+                            SelectionMode="None">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Stroke="LightGray"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 8"
+                                Padding="15"
+                                Margin="0,0,0,10">
+                            <VerticalStackLayout>
+                                <Label Text="{Binding Name}"
+                                       FontSize="18"
+                                       FontAttributes="Bold" />
+                                <Label Text="{Binding Description}"
+                                       FontSize="14"
+                                       TextColor="Gray"
+                                       Margin="0,5,0,0" />
+                                <Label Text="{Binding IsCustom, StringFormat='Custom Plan: {0}'}"
+                                       FontSize="12"
+                                       TextColor="DarkGray" />
+
+                                <!-- Select Plan Button -->
+                                <Button Text="View Plan"
+                                        Margin="0,10,0,0"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:WorkoutPlanViewModel}}, Path=SelectWorkoutPlanCommand}"
+                                        CommandParameter="{Binding .}" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- Divider -->
+            <BoxView HeightRequest="1" BackgroundColor="LightGray" Margin="0,10,0,10" />
+
+            <!-- Create New Workout Plan -->
+            <Label Text="Create Your Own Plan"
+                   FontSize="20"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+
+            <Entry Placeholder="Plan Name"
+                   Text="{Binding NewPlanName}"
+                   Margin="0,5,0,0" />
+
+            <Editor Placeholder="Plan Description"
+                    Text="{Binding NewPlanDescription}"
+                    AutoSize="TextChanges"
+                    HeightRequest="100"
+                    Margin="0,5,0,0" />
+
+            <Button Text="Add Plan"
+                    Command="{Binding AddWorkoutPlanCommand}"
+                    Margin="0,10,0,0"
+                    BackgroundColor="#4CAF50"
+                    TextColor="White"
+                    CornerRadius="8" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
