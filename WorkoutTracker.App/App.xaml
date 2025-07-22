@@ -13,6 +13,8 @@
             <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
             <converters:BoolToTextColorConverter x:Key="BoolToTextColorConverter" />
             <converters:BoolToFontAttributesConverter x:Key="BoolToFontAttributesConverter" />
+            <converters:IsWeightLiftingConverter x:Key="IsWeightLiftingConverter" />
+            <converters:IsCardioConverter x:Key="IsCardioConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

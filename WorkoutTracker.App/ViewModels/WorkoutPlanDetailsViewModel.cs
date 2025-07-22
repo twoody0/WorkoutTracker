@@ -15,12 +15,41 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
 
     public ICommand ToggleExpandCommand { get; }
     public ICommand StartPlanCommand { get; }
+    public ICommand ChangeWorkoutDayCommand { get; }
 
     public WorkoutPlanDetailsViewModel(IWorkoutScheduleService scheduleService)
     {
         _scheduleService = scheduleService;
         ToggleExpandCommand = new Command<WorkoutDisplay>(ToggleExpand);
         StartPlanCommand = new Command(StartPlan);
+        ChangeWorkoutDayCommand = new Command<WorkoutDisplay>(ChangeWorkoutDay);
+    }
+    private async void ChangeWorkoutDay(WorkoutDisplay workoutDisplay)
+    {
+        if (workoutDisplay == null)
+            return;
+
+        var days = Enum.GetNames(typeof(DayOfWeek));
+        string selectedDay = await Application.Current.MainPage.DisplayActionSheet(
+            "Move Workout To:",
+            "Cancel",
+            null,
+            days);
+
+        if (!string.IsNullOrWhiteSpace(selectedDay) && Enum.TryParse(selectedDay, out DayOfWeek newDay))
+        {
+            // Update the workout's DayOfWeek
+            workoutDisplay.Workout.Day = newDay;
+
+            // Refresh the grouped workouts by day
+            LoadPlan(SelectedPlan);
+
+            // Optionally notify user
+            await Application.Current.MainPage.DisplayAlert(
+                "Workout Moved",
+                $"{workoutDisplay.Workout.Name} is now scheduled for {newDay}.",
+                "OK");
+        }
     }
 
     public void LoadPlan(WorkoutPlan plan)

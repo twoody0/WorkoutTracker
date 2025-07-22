@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Windows.Input;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 
@@ -8,20 +9,46 @@ public class WeeklyScheduleViewModel : BaseViewModel
 {
     private readonly IWorkoutScheduleService _scheduleService;
 
+    public ICommand ChangeWorkoutDayCommand { get; }
     public ObservableCollection<KeyValuePair<DayOfWeek, List<Workout>>> WeeklySchedule { get; } = new();
 
     public WeeklyScheduleViewModel(IWorkoutScheduleService scheduleService)
     {
         _scheduleService = scheduleService;
+        ChangeWorkoutDayCommand = new Command<Workout>(ChangeWorkoutDay);
         LoadSchedule();
+    }
+
+    private async void ChangeWorkoutDay(Workout workout)
+    {
+        if (workout == null) return;
+
+        var days = Enum.GetNames(typeof(DayOfWeek));
+        string selectedDay = await Application.Current.MainPage.DisplayActionSheet(
+            "Move Workout To:",
+            "Cancel",
+            null,
+            days);
+
+        if (!string.IsNullOrWhiteSpace(selectedDay) && Enum.TryParse(selectedDay, out DayOfWeek newDay))
+        {
+            workout.Day = newDay;
+            LoadSchedule(); // Refresh the schedule view
+            await Application.Current.MainPage.DisplayAlert("Workout Moved", $"{workout.Name} is now scheduled for {newDay}.", "OK");
+        }
     }
 
     private void LoadSchedule()
     {
         WeeklySchedule.Clear();
-        foreach (var day in _scheduleService.GetWeeklySchedule())
+
+        foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
         {
-            WeeklySchedule.Add(day);
+            var workouts = _scheduleService.GetWeeklySchedule().ContainsKey(day)
+                ? _scheduleService.GetWeeklySchedule()[day]
+                : new List<Workout>();
+
+            WeeklySchedule.Add(new KeyValuePair<DayOfWeek, List<Workout>>(day, workouts));
         }
     }
 }

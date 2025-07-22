@@ -20,10 +20,31 @@
                         <Border Stroke="LightGray" StrokeThickness="1" StrokeShape="RoundRectangle 8" Padding="10" Margin="0,0,0,10">
                             <VerticalStackLayout>
                                 <Label Text="{Binding Workout.Name}" FontAttributes="Bold" FontSize="16" />
-                                <Label Text="{Binding Workout.Sets, StringFormat='Sets: {0}'}" FontSize="14" />
-                                <Label Text="{Binding Workout.Reps, StringFormat='Reps: {0}'}" FontSize="14" />
+                                <Label Text="{Binding Workout.Day, StringFormat='Day: {0}'}" FontSize="14" TextColor="DarkSlateGray" />
+
+                                <!-- Weightlifting Info -->
+                                <StackLayout IsVisible="{Binding Workout.Type, Converter={StaticResource IsWeightLiftingConverter}}">
+                                    <Label Text="{Binding Workout.Sets, StringFormat='Sets: {0}'}" FontSize="14" />
+                                    <Label Text="{Binding Workout.Reps, StringFormat='Reps: {0}'}" FontSize="14" />
+                                </StackLayout>
+
+                                <!-- Cardio Info -->
+                                <StackLayout IsVisible="{Binding Workout.Type, Converter={StaticResource IsCardioConverter}}">
+                                    <Label Text="{Binding Workout.Sets, StringFormat='Sessions: {0}'}" FontSize="14" />
+                                    <Label Text="{Binding Workout.Steps, StringFormat='Steps: {0}'}" FontSize="14" />
+                                </StackLayout>
+
                                 <Label Text="{Binding Workout.MuscleGroup, StringFormat='Muscle Group: {0}'}" FontSize="12" TextColor="Gray" />
                                 <Label Text="{Binding Workout.Type, StringFormat='Type: {0}'}" FontSize="12" TextColor="Gray" />
+
+                                <Button Text="Change Day"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:WorkoutPlanDetailsViewModel}}, Path=ChangeWorkoutDayCommand}"
+                                    CommandParameter="{Binding .}"
+                                    Margin="0,5,0,0"
+                                    BackgroundColor="#2196F3"
+                                    TextColor="White"
+                                    CornerRadius="8" />
+
                             </VerticalStackLayout>
                         </Border>
                     </DataTemplate>
