@@ -58,18 +58,23 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
 
         _scheduleService.AddPlanToWeeklySchedule(SelectedPlan);
 
-        // Refresh the WorkoutPlansPage so it shows the new active plan
+        // Refresh WorkoutPlansPage
         var parentViewModel = App.Services.GetRequiredService<WorkoutPlanViewModel>();
         parentViewModel.RefreshActivePlan();
 
-        // Optional success confirmation
+        // Show success
         await Application.Current.MainPage.DisplayAlert(
             "Plan Started",
             $"'{SelectedPlan.Name}' is now your active workout plan!",
             "OK");
 
-        // Navigate to weekly schedule page
         var schedulePage = App.Services.GetRequiredService<WeeklySchedulePage>();
-        await Shell.Current.Navigation.PushAsync(schedulePage);
+
+        // Replace WorkoutPlanDetailsPage with WeeklySchedulePage
+        Shell.Current.Navigation.InsertPageBefore(schedulePage, Shell.Current.Navigation.NavigationStack[^1]);
+
+        // Go forward to WeeklySchedulePage and remove WorkoutPlanDetailsPage
+        await Shell.Current.Navigation.PopAsync();
     }
+
 }

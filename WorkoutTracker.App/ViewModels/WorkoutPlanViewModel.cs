@@ -11,13 +11,13 @@ public class WorkoutPlanViewModel : BaseViewModel
     private readonly IWorkoutScheduleService _scheduleService;
 
     public ObservableCollection<WorkoutPlan> WorkoutPlans { get; set; } = new();
-    public WorkoutPlan SelectedPlan { get; set; }
+    private List<WorkoutPlan> AllPlans { get; set; } = new();
+
     public WorkoutPlan CurrentPlan => _scheduleService.ActivePlan;
     public bool HasActivePlan => _scheduleService.ActivePlan != null;
 
     public string NewPlanName { get; set; }
     public string NewPlanDescription { get; set; }
-
     public Command AddWorkoutPlanCommand { get; }
     public Command SelectWorkoutPlanCommand { get; }
 
@@ -30,19 +30,48 @@ public class WorkoutPlanViewModel : BaseViewModel
         SelectWorkoutPlanCommand = new Command<WorkoutPlan>(SelectWorkoutPlan);
         LoadWorkoutPlans();
     }
-    public void RefreshActivePlan()
-    {
-        OnPropertyChanged(nameof(CurrentPlan));
-        OnPropertyChanged(nameof(HasActivePlan));
-    }
 
     private void LoadWorkoutPlans()
     {
-        var plans = _workoutPlanService.GetWorkoutPlans();
+        // Get all plans
+        AllPlans = _workoutPlanService.GetWorkoutPlans().ToList();
+
+        RefreshWorkoutPlans();
+    }
+
+    private void RefreshWorkoutPlans()
+    {
         WorkoutPlans.Clear();
-        foreach (var plan in plans)
+
+        // Add all plans EXCEPT the current active one
+        foreach (var plan in AllPlans)
         {
-            WorkoutPlans.Add(plan);
+            if (plan != _scheduleService.ActivePlan)
+            {
+                WorkoutPlans.Add(plan);
+            }
+        }
+
+        OnPropertyChanged(nameof(CurrentPlan));
+        OnPropertyChanged(nameof(HasActivePlan));
+    }
+    private async void SelectWorkoutPlan(WorkoutPlan plan)
+    {
+        if (plan == null)
+            return;
+
+        // If selected plan is already active, go straight to WeeklySchedulePage
+        if (_scheduleService.ActivePlan != null && _scheduleService.ActivePlan == plan)
+        {
+            var schedulePage = App.Services.GetRequiredService<WeeklySchedulePage>();
+            await Shell.Current.Navigation.PushAsync(schedulePage);
+        }
+        else
+        {
+            // Otherwise, show details page first
+            var detailsPage = new WorkoutPlanDetailsPage(
+                App.Services.GetRequiredService<WorkoutPlanDetailsViewModel>(), plan);
+            await Shell.Current.Navigation.PushAsync(detailsPage);
         }
     }
 
@@ -58,7 +87,9 @@ public class WorkoutPlanViewModel : BaseViewModel
         };
 
         _workoutPlanService.AddWorkoutPlan(newPlan);
-        WorkoutPlans.Add(newPlan);
+        AllPlans.Add(newPlan);
+
+        RefreshWorkoutPlans();
 
         NewPlanName = string.Empty;
         NewPlanDescription = string.Empty;
@@ -66,16 +97,8 @@ public class WorkoutPlanViewModel : BaseViewModel
         OnPropertyChanged(nameof(NewPlanDescription));
     }
 
-    private async void SelectWorkoutPlan(WorkoutPlan plan)
+    public void RefreshActivePlan()
     {
-        if (plan != null)
-        {
-            // Resolve the details page from DI and pass in the selected plan
-            var detailsPage = new WorkoutPlanDetailsPage(
-                App.Services.GetRequiredService<WorkoutPlanDetailsViewModel>(), plan);
-
-            // Navigate using PushAsync
-            await Shell.Current.Navigation.PushAsync(detailsPage);
-        }
+        RefreshWorkoutPlans();
     }
 }
