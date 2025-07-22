@@ -14,7 +14,15 @@
                             <CollectionView ItemsSource="{Binding Value}">
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate>
-                                        <Label Text="{Binding Name}" FontSize="14" />
+                                        <Border Stroke="LightGray" StrokeThickness="1" StrokeShape="RoundRectangle 8" Padding="10" Margin="0,0,0,10">
+                                            <VerticalStackLayout>
+                                                <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="16" />
+                                                <Label Text="{Binding Sets, StringFormat='Sets: {0}'}" FontSize="14" />
+                                                <Label Text="{Binding Reps, StringFormat='Reps: {0}'}" FontSize="14" />
+                                                <Label Text="{Binding MuscleGroup, StringFormat='Muscle Group: {0}'}" FontSize="12" TextColor="Gray" />
+                                                <Label Text="{Binding Type, StringFormat='Type: {0}'}" FontSize="12" TextColor="Gray" />
+                                            </VerticalStackLayout>
+                                        </Border>
                                     </DataTemplate>
                                 </CollectionView.ItemTemplate>
                             </CollectionView>
