@@ -2,6 +2,7 @@
 using System.Windows.Input;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
+using WorkoutTracker.Views;
 
 namespace WorkoutTracker.ViewModels;
 
@@ -41,8 +42,11 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
         }
     }
 
-    private void StartPlan()
+    private async void StartPlan()
     {
         _scheduleService.AddPlanToWeeklySchedule(SelectedPlan);
+
+        var schedulePage = App.Services.GetRequiredService<WeeklySchedulePage>();
+        await Shell.Current.Navigation.PushAsync(schedulePage);
     }
 }

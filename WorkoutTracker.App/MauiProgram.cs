@@ -35,11 +35,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IWorkoutLibraryService, WorkoutLibraryService>();
         builder.Services.AddSingleton<IAuthService, AuthService>();
         builder.Services.AddSingleton<IWorkoutPlanService, WorkoutPlanService>();
-        builder.Services.AddSingleton<WorkoutPlanViewModel>();
-        builder.Services.AddSingleton<WorkoutPlanPage>();
         builder.Services.AddSingleton<IWorkoutScheduleService, WorkoutScheduleService>();
-        builder.Services.AddTransient<WorkoutPlanDetailsViewModel>();
-        builder.Services.AddTransient<WorkoutPlanDetailsPage>();
 
         // Register ViewModels
         builder.Services.AddTransient<AuthViewModel>();
@@ -52,6 +48,9 @@ public static class MauiProgram
         builder.Services.AddTransient<ViewWorkoutViewModel>();
         builder.Services.AddTransient<CardioWorkoutViewModel>();
         builder.Services.AddTransient<WeightliftingLibraryViewModel>();
+        builder.Services.AddSingleton<WeeklyScheduleViewModel>();
+        builder.Services.AddTransient<WorkoutPlanDetailsViewModel>();
+        builder.Services.AddSingleton<WorkoutPlanViewModel>();
 
         // Register Pages
         builder.Services.AddTransient<AuthPage>();
@@ -64,6 +63,9 @@ public static class MauiProgram
         builder.Services.AddTransient<ViewWorkoutPage>();
         builder.Services.AddTransient<CardioSessionPage>();
         builder.Services.AddTransient<WeightliftingLibraryPage>();
+        builder.Services.AddTransient<WorkoutPlanDetailsPage>();
+        builder.Services.AddSingleton<WorkoutPlanPage>();
+        builder.Services.AddSingleton<WeeklySchedulePage>();
 
         // Register shell
         builder.Services.AddSingleton<SignedOutShell>();
