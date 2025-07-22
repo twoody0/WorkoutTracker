@@ -44,8 +44,31 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
 
     private async void StartPlan()
     {
+        if (_scheduleService.ActivePlan != null)
+        {
+            bool confirm = await Application.Current.MainPage.DisplayAlert(
+                "Replace Active Plan?",
+                $"You already have '{_scheduleService.ActivePlan.Name}' as your active plan.\n\nDo you want to replace it with '{SelectedPlan.Name}'?",
+                "Yes, Replace",
+                "Cancel");
+
+            if (!confirm)
+                return; // User cancelled
+        }
+
         _scheduleService.AddPlanToWeeklySchedule(SelectedPlan);
 
+        // Refresh the WorkoutPlansPage so it shows the new active plan
+        var parentViewModel = App.Services.GetRequiredService<WorkoutPlanViewModel>();
+        parentViewModel.RefreshActivePlan();
+
+        // Optional success confirmation
+        await Application.Current.MainPage.DisplayAlert(
+            "Plan Started",
+            $"'{SelectedPlan.Name}' is now your active workout plan!",
+            "OK");
+
+        // Navigate to weekly schedule page
         var schedulePage = App.Services.GetRequiredService<WeeklySchedulePage>();
         await Shell.Current.Navigation.PushAsync(schedulePage);
     }

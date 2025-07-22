@@ -8,9 +8,12 @@ namespace WorkoutTracker.ViewModels;
 public class WorkoutPlanViewModel : BaseViewModel
 {
     private readonly IWorkoutPlanService _workoutPlanService;
+    private readonly IWorkoutScheduleService _scheduleService;
 
     public ObservableCollection<WorkoutPlan> WorkoutPlans { get; set; } = new();
     public WorkoutPlan SelectedPlan { get; set; }
+    public WorkoutPlan CurrentPlan => _scheduleService.ActivePlan;
+    public bool HasActivePlan => _scheduleService.ActivePlan != null;
 
     public string NewPlanName { get; set; }
     public string NewPlanDescription { get; set; }
@@ -18,12 +21,19 @@ public class WorkoutPlanViewModel : BaseViewModel
     public Command AddWorkoutPlanCommand { get; }
     public Command SelectWorkoutPlanCommand { get; }
 
-    public WorkoutPlanViewModel(IWorkoutPlanService workoutPlanService)
+    public WorkoutPlanViewModel(IWorkoutPlanService workoutPlanService, IWorkoutScheduleService scheduleService)
     {
         _workoutPlanService = workoutPlanService;
+        _scheduleService = scheduleService;
+
         AddWorkoutPlanCommand = new Command(AddWorkoutPlan);
         SelectWorkoutPlanCommand = new Command<WorkoutPlan>(SelectWorkoutPlan);
         LoadWorkoutPlans();
+    }
+    public void RefreshActivePlan()
+    {
+        OnPropertyChanged(nameof(CurrentPlan));
+        OnPropertyChanged(nameof(HasActivePlan));
     }
 
     private void LoadWorkoutPlans()

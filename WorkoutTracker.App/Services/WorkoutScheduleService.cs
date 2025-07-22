@@ -5,6 +5,7 @@ namespace WorkoutTracker.Services;
 public class WorkoutScheduleService : IWorkoutScheduleService
 {
     private readonly Dictionary<DayOfWeek, List<Workout>> _weeklySchedule = new();
+    public WorkoutPlan? ActivePlan { get; private set; }
 
     public WorkoutScheduleService()
     {
@@ -16,6 +17,15 @@ public class WorkoutScheduleService : IWorkoutScheduleService
 
     public void AddPlanToWeeklySchedule(WorkoutPlan plan)
     {
+        ActivePlan = plan; // Track the active plan
+
+        // Clear existing schedule
+        foreach (var day in _weeklySchedule.Keys.ToList())
+        {
+            _weeklySchedule[day].Clear();
+        }
+
+        // Distribute workouts across the week
         int dayIndex = 0;
         foreach (var workout in plan.Workouts)
         {
@@ -28,7 +38,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
                 Reps = workout.Reps,
                 Sets = workout.Sets,
                 Type = workout.Type
-                // Weight left empty for user input
+                // Weight left blank for user to fill
             });
             dayIndex++;
         }
@@ -42,6 +52,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
 
 public interface IWorkoutScheduleService
 {
+    WorkoutPlan? ActivePlan { get; }
     void AddPlanToWeeklySchedule(WorkoutPlan plan);
     IReadOnlyDictionary<DayOfWeek, List<Workout>> GetWeeklySchedule();
 }
