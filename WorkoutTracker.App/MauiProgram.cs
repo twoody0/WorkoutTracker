@@ -37,6 +37,9 @@ public static class MauiProgram
         builder.Services.AddSingleton<IWorkoutPlanService, WorkoutPlanService>();
         builder.Services.AddSingleton<WorkoutPlanViewModel>();
         builder.Services.AddSingleton<WorkoutPlanPage>();
+        builder.Services.AddSingleton<IWorkoutScheduleService, WorkoutScheduleService>();
+        builder.Services.AddTransient<WorkoutPlanDetailsViewModel>();
+        builder.Services.AddTransient<WorkoutPlanDetailsPage>();
 
         // Register ViewModels
         builder.Services.AddTransient<AuthViewModel>();

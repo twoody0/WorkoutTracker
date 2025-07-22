@@ -25,6 +25,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(nameof(WorkoutPage), typeof(WorkoutPage));
         Routing.RegisterRoute(nameof(CardioSessionPage), typeof(CardioSessionPage));
         Routing.RegisterRoute(nameof(WeightliftingLibraryPage), typeof(WeightliftingLibraryPage));
+        Routing.RegisterRoute(nameof(WorkoutPlanDetailsPage), typeof(WorkoutPlanDetailsPage));
     }
 
     protected override void OnAppearing()
