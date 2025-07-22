@@ -65,10 +65,8 @@
                             </VisualStateGroup>
                         </VisualStateManager.VisualStateGroups>
                     </Button>
-
                 </StackLayout>
             </ContentView.Content>
         </ContentView>
-
     </StackLayout>
 </ContentPage>

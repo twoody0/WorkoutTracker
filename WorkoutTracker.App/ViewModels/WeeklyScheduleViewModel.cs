@@ -2,6 +2,7 @@
 using System.Windows.Input;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
+using WorkoutTracker.Views;
 
 namespace WorkoutTracker.ViewModels;
 
@@ -10,13 +11,19 @@ public class WeeklyScheduleViewModel : BaseViewModel
     private readonly IWorkoutScheduleService _scheduleService;
 
     public ICommand ChangeWorkoutDayCommand { get; }
+    public ICommand EditDayCommand { get; }
     public ObservableCollection<KeyValuePair<DayOfWeek, List<Workout>>> WeeklySchedule { get; } = new();
 
     public WeeklyScheduleViewModel(IWorkoutScheduleService scheduleService)
     {
         _scheduleService = scheduleService;
-        ChangeWorkoutDayCommand = new Command<Workout>(ChangeWorkoutDay);
+        EditDayCommand = new Command<DayOfWeek>(EditDay);
         LoadSchedule();
+    }
+    private async void EditDay(DayOfWeek day)
+    {
+        var editPage = new EditDayPage(day, _scheduleService);
+        await Shell.Current.Navigation.PushAsync(editPage);
     }
 
     private async void ChangeWorkoutDay(Workout workout)

@@ -37,10 +37,29 @@ public class WorkoutScheduleService : IWorkoutScheduleService
                 GymLocation = workout.GymLocation,
                 Reps = workout.Reps,
                 Sets = workout.Sets,
-                Type = workout.Type
-                // Weight left blank for user to fill
+                Type = workout.Type,
+                Day = day // Include day assignment
             });
             dayIndex++;
+        }
+    }
+
+    public void AddWorkoutToDay(DayOfWeek day, Workout workout)
+    {
+        if (!_weeklySchedule.ContainsKey(day))
+        {
+            _weeklySchedule[day] = new List<Workout>();
+        }
+
+        workout.Day = day;
+        _weeklySchedule[day].Add(workout);
+    }
+
+    public void RemoveWorkoutFromDay(DayOfWeek day, Workout workout)
+    {
+        if (_weeklySchedule.ContainsKey(day))
+        {
+            _weeklySchedule[day].Remove(workout);
         }
     }
 
@@ -54,5 +73,7 @@ public interface IWorkoutScheduleService
 {
     WorkoutPlan? ActivePlan { get; }
     void AddPlanToWeeklySchedule(WorkoutPlan plan);
+    void AddWorkoutToDay(DayOfWeek day, Workout workout);
+    void RemoveWorkoutFromDay(DayOfWeek day, Workout workout);
     IReadOnlyDictionary<DayOfWeek, List<Workout>> GetWeeklySchedule();
 }

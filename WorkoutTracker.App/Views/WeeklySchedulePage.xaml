@@ -13,8 +13,26 @@
                     <DataTemplate>
                         <Border Stroke="LightGray" StrokeThickness="1" StrokeShape="RoundRectangle 8" Padding="10" Margin="0,0,0,10">
                             <VerticalStackLayout>
-                                <!-- Day Header -->
-                                <Label Text="{Binding Key}" FontSize="18" FontAttributes="Bold" />
+                                <!-- Day Header with Edit Icon -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Label Text="{Binding Key}" FontSize="18" FontAttributes="Bold" Grid.Column="0" />
+
+                                    <Grid WidthRequest="24" HeightRequest="24"
+                                          VerticalOptions="Start"
+                                          HorizontalOptions="End"
+                                          Grid.Column="1">
+                                        <ImageButton Source="edit_icon.png"
+                                             Aspect="AspectFit"
+                                             BackgroundColor="Transparent"
+                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:WeeklyScheduleViewModel}}, Path=EditDayCommand}"
+                                             CommandParameter="{Binding Key}" />
+                                    </Grid>
+                                </Grid>
 
                                 <!-- Workouts For The Day -->
                                 <CollectionView ItemsSource="{Binding Value}">
@@ -27,29 +45,19 @@
                                                 <VerticalStackLayout>
                                                     <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="16" />
 
-                                                    <!-- Weightlifting Info -->
+                                                    <!-- Show Sets/Reps for Weightlifting -->
                                                     <StackLayout IsVisible="{Binding Type, Converter={StaticResource IsWeightLiftingConverter}}">
                                                         <Label Text="{Binding Sets, StringFormat='Sets: {0}'}" FontSize="14" />
                                                         <Label Text="{Binding Reps, StringFormat='Reps: {0}'}" FontSize="14" />
                                                     </StackLayout>
 
-                                                    <!-- Cardio Info -->
+                                                    <!-- Show Steps for Cardio -->
                                                     <StackLayout IsVisible="{Binding Type, Converter={StaticResource IsCardioConverter}}">
-                                                        <Label Text="{Binding Sets, StringFormat='Sessions: {0}'}" FontSize="14" />
                                                         <Label Text="{Binding Steps, StringFormat='Steps: {0}'}" FontSize="14" />
                                                     </StackLayout>
 
                                                     <Label Text="{Binding MuscleGroup, StringFormat='Muscle Group: {0}'}" FontSize="12" TextColor="Gray" />
                                                     <Label Text="{Binding Type, StringFormat='Type: {0}'}" FontSize="12" TextColor="Gray" />
-
-                                                    <!-- Change Day Button -->
-                                                    <Button Text="Change Day"
-                                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:WeeklyScheduleViewModel}}, Path=ChangeWorkoutDayCommand}"
-                                                            CommandParameter="{Binding .}"
-                                                            Margin="0,5,0,0"
-                                                            BackgroundColor="#2196F3"
-                                                            TextColor="White"
-                                                            CornerRadius="8" />
                                                 </VerticalStackLayout>
                                             </Border>
                                         </DataTemplate>

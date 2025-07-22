@@ -51,6 +51,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<WeeklyScheduleViewModel>();
         builder.Services.AddTransient<WorkoutPlanDetailsViewModel>();
         builder.Services.AddSingleton<WorkoutPlanViewModel>();
+        builder.Services.AddTransient<EditDayViewModel>();
 
         // Register Pages
         builder.Services.AddTransient<AuthPage>();
@@ -66,6 +67,7 @@ public static class MauiProgram
         builder.Services.AddTransient<WorkoutPlanDetailsPage>();
         builder.Services.AddSingleton<WorkoutPlanPage>();
         builder.Services.AddSingleton<WeeklySchedulePage>();
+        builder.Services.AddTransient<EditDayPage>();
 
         // Register shell
         builder.Services.AddSingleton<SignedOutShell>();

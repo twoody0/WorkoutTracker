@@ -1,0 +1,45 @@
+<ContentPage x:Class="WorkoutTracker.Views.EditDayPage"
+             x:Name="EditPageRoot"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             Title="{Binding Day, StringFormat='Edit {0}'}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="10">
+            <Label Text="{Binding Day, StringFormat='Editing {0}'}"
+                   FontSize="20"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+
+            <CollectionView ItemsSource="{Binding Workouts}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Stroke="Gray" StrokeThickness="1" StrokeShape="RoundRectangle 8" Padding="10" Margin="0,0,0,10">
+                            <VerticalStackLayout>
+                                <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="16" />
+                                <Entry Text="{Binding Sets, Mode=TwoWay}" Placeholder="Sets" Keyboard="Numeric" />
+                                <Entry Text="{Binding Reps, Mode=TwoWay}" Placeholder="Reps" Keyboard="Numeric" />
+
+                                <Button Text="Move to Another Day"
+                                        Command="{Binding BindingContext.MoveWorkoutCommand, Source={x:Reference EditDayPage}}"
+                                        CommandParameter="{Binding .}" />
+
+                                <Button Text="Remove Workout"
+                                        Command="{Binding BindingContext.RemoveWorkoutCommand, Source={x:Reference EditDayPage}}"
+                                        CommandParameter="{Binding .}"
+                                        BackgroundColor="Red" TextColor="White" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <Button Text="Add Workout"
+                    Command="{Binding BindingContext.AddWorkoutCommand, Source={x:Reference EditDayPage}}"
+                    BackgroundColor="#4CAF50"
+                    TextColor="White"
+                    CornerRadius="8" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
