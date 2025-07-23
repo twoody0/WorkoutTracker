@@ -1,0 +1,32 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
+             x:Class="WorkoutTracker.Views.AddWorkoutPage"
+             Title="Add Workout">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
+            <Label Text="Create New Workout" FontSize="24" FontAttributes="Bold" HorizontalOptions="Center" />
+
+            <Entry Placeholder="Workout Name" Text="{Binding Name}" />
+            <Entry Placeholder="Muscle Group" Text="{Binding MuscleGroup}" />
+
+            <!-- Workout Type Picker -->
+            <Picker Title="Workout Type" ItemsSource="{Binding WorkoutTypes}" SelectedItem="{Binding SelectedType}" />
+
+            <!-- Show Sets/Reps for Weightlifting -->
+            <StackLayout IsVisible="{Binding IsWeightLifting}">
+                <Entry Placeholder="Sets" Text="{Binding Sets}" Keyboard="Numeric" />
+                <Entry Placeholder="Reps" Text="{Binding Reps}" Keyboard="Numeric" />
+            </StackLayout>
+
+            <!-- Show Steps for Cardio -->
+            <StackLayout IsVisible="{Binding IsCardio}">
+                <Entry Placeholder="Steps" Text="{Binding Steps}" Keyboard="Numeric" />
+            </StackLayout>
+
+            <!-- Save Button -->
+            <Button Text="Save Workout" Command="{Binding SaveCommand}" BackgroundColor="#4CAF50" TextColor="White" CornerRadius="8" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -3,6 +3,7 @@ using System.Windows.Input;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 using WorkoutTracker.ViewModels;
+using WorkoutTracker.Views;
 
 public class EditDayViewModel : BaseViewModel
 {
@@ -33,21 +34,29 @@ public class EditDayViewModel : BaseViewModel
 
         if (!string.IsNullOrWhiteSpace(selectedDay) && Enum.TryParse(selectedDay, out DayOfWeek newDay))
         {
+            _scheduleService.RemoveWorkoutFromDay(Day, workout);
             workout.Day = newDay;
             _scheduleService.AddWorkoutToDay(newDay, workout);
+
             Workouts.Remove(workout);
         }
     }
 
     private void RemoveWorkout(Workout workout)
     {
+        if (workout == null)
+            return;
+
+        // Remove from service
         _scheduleService.RemoveWorkoutFromDay(Day, workout);
+
+        // Remove from ObservableCollection so UI updates
         Workouts.Remove(workout);
     }
 
     private async void AddWorkout()
     {
-        // TODO: Open a picker for user to choose from all exercises
-        await Application.Current.MainPage.DisplayAlert("Add Workout", "This feature is coming soon!", "OK");
+        var addPage = new AddWorkoutPage(Day, _scheduleService, Workouts);
+        await Application.Current.MainPage.Navigation.PushAsync(addPage);
     }
 }
