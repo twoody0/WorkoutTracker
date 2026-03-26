@@ -2,26 +2,40 @@
 <ContentPage
        xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-       xmlns:conv="clr-namespace:WorkoutTracker.Converters"
        x:Class="WorkoutTracker.Views.HomePage"
        Title="Home">
-       <ContentPage.Resources>
-              <ResourceDictionary>
-                     <conv:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
-              </ResourceDictionary>
-       </ContentPage.Resources>
 
        <ScrollView>
               <StackLayout Padding="20"
                            VerticalOptions="Center"
                            Spacing="15">
-                     <Label Text="{Binding WelcomeMessage}"
-                            FontSize="20"
-                            HorizontalOptions="Center"
-                            IsVisible="{Binding IsUserLoggedIn}"/>
+                      <Label Text="{Binding WelcomeMessage}"
+                             FontSize="20"
+                             HorizontalOptions="Center"/>
 
-                     <Border IsVisible="{Binding IsUserLoggedIn}"
-                             Stroke="#E4E6EB"
+                      <Label Text="{Binding ModeDescription}"
+                             HorizontalTextAlignment="Center"
+                             TextColor="Gray"
+                             FontSize="13"/>
+
+                      <Border Stroke="#E4E6EB"
+                              StrokeThickness="1"
+                              StrokeShape="RoundRectangle 16"
+                              BackgroundColor="#FFFFFF"
+                              Padding="14">
+                             <VerticalStackLayout Spacing="10">
+                                    <Label Text="Profile"
+                                           FontAttributes="Bold"
+                                           FontSize="18"/>
+                                    <Label Text="{Binding BodyWeightSummary}"
+                                           TextColor="#5A6472"/>
+                                    <Button Text="Edit Body Weight"
+                                            Clicked="OnEditBodyWeightClicked"/>
+                             </VerticalStackLayout>
+                      </Border>
+
+                      <Border IsVisible="{Binding IsUserLoggedIn}"
+                              Stroke="#E4E6EB"
                              StrokeThickness="1"
                              StrokeShape="RoundRectangle 20"
                              BackgroundColor="#FBFBFC"
@@ -185,23 +199,23 @@
                             </VerticalStackLayout>
                      </Border>
 
-                     <StackLayout IsVisible="{Binding IsUserLoggedIn, Converter={StaticResource InverseBooleanConverter}}"
-                                  Spacing="20">
-                            <Button Text="Login"
-                                    Command="{Binding NavigateToLoginCommand}"/>
-                            <Button Text="Sign Up"
-                                    Command="{Binding NavigateToSignupCommand}"/>
+                      <StackLayout IsVisible="{Binding ShowAuthenticationActions}"
+                                   Spacing="20">
+                             <Button Text="Login"
+                                     Command="{Binding NavigateToLoginCommand}"/>
+                             <Button Text="Sign Up"
+                                     Command="{Binding NavigateToSignupCommand}"/>
                      </StackLayout>
 
-                     <Button Text="Sign Out"
-                             Command="{Binding SignOutCommand}"
-                             IsVisible="{Binding IsUserLoggedIn}"/>
+                      <Button Text="Sign Out"
+                              Command="{Binding SignOutCommand}"
+                              IsVisible="{Binding CanSignOut}"/>
                      <Button Text="Dashboard"
                              Command="{Binding NavigateToDashboardCommand}"
                              IsVisible="{Binding IsUserLoggedIn}"/>
-                     <Button Text="Leaderboard"
-                             Command="{Binding NavigateToLeaderboardCommand}"
-                             IsVisible="{Binding IsUserLoggedIn}"/>
-              </StackLayout>
-       </ScrollView>
-</ContentPage>
+                      <Button Text="Leaderboard"
+                              Command="{Binding NavigateToLeaderboardCommand}"
+                              IsVisible="{Binding HasLeaderboard}"/>
+               </StackLayout>
+        </ScrollView>
+ </ContentPage>

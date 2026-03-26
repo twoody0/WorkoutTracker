@@ -8,7 +8,9 @@ public class HomeViewModel : BaseViewModel
 {
     private static readonly TimeSpan HeatFadeWindow = TimeSpan.FromHours(24);
 
+    private readonly IAppModeService _appModeService;
     private readonly IAuthService _authService;
+    private readonly IBodyWeightService _bodyWeightService;
     private readonly IWorkoutService _workoutService;
     private readonly IServiceProvider _services;
     private string _welcomeMessage = string.Empty;
@@ -29,9 +31,11 @@ public class HomeViewModel : BaseViewModel
     private double _backHamstringsOpacity;
     private double _backCalvesOpacity;
 
-    public HomeViewModel(IAuthService authService, IWorkoutService workoutService, IServiceProvider services)
+    public HomeViewModel(IAppModeService appModeService, IAuthService authService, IBodyWeightService bodyWeightService, IWorkoutService workoutService, IServiceProvider services)
     {
+        _appModeService = appModeService;
         _authService = authService;
+        _bodyWeightService = bodyWeightService;
         _workoutService = workoutService;
         _services = services;
         UpdateWelcomeMessage();
@@ -45,11 +49,36 @@ public class HomeViewModel : BaseViewModel
             if (SetProperty(ref _welcomeMessage, value))
             {
                 OnPropertyChanged(nameof(IsUserLoggedIn));
+                OnPropertyChanged(nameof(ShowAuthenticationActions));
+                OnPropertyChanged(nameof(CanSignOut));
+                OnPropertyChanged(nameof(HasBodyWeight));
+                OnPropertyChanged(nameof(BodyWeightSummary));
+                OnPropertyChanged(nameof(BodyWeightInputValue));
             }
         }
     }
 
     public bool IsUserLoggedIn => !string.IsNullOrWhiteSpace(WelcomeMessage);
+
+    public bool SupportsAccounts => _appModeService.SupportsAccountFeatures;
+
+    public bool HasLeaderboard => _appModeService.HasLeaderboard;
+
+    public bool CanSignOut => SupportsAccounts && _authService.CurrentUser != null;
+
+    public bool ShowAuthenticationActions => SupportsAccounts && !IsUserLoggedIn;
+
+    public string ModeDescription => _appModeService.UsesDeviceStorageOnly
+        ? "Free mode stores workouts only on this device and skips login, signup, and leaderboard features."
+        : "Premium mode includes accounts, signup, and leaderboard features.";
+
+    public bool HasBodyWeight => _bodyWeightService.HasBodyWeight();
+
+    public string BodyWeightSummary => HasBodyWeight
+        ? $"Body weight: {_bodyWeightService.GetBodyWeight():N0} lb"
+        : "Body weight not set yet";
+
+    public string BodyWeightInputValue => _bodyWeightService.GetBodyWeight()?.ToString("0.#") ?? string.Empty;
 
     public string TodaySummary
     {
@@ -177,26 +206,38 @@ public class HomeViewModel : BaseViewModel
         _authService.SignOut();
         UpdateWelcomeMessage();
         ResetHeatMap();
-        App.SetRootPage(_services.GetRequiredService<SignedOutShell>());
+        if (SupportsAccounts)
+        {
+            App.SetRootPage(_services.GetRequiredService<SignedOutShell>());
+        }
         await Task.CompletedTask;
     });
 
     public void UpdateWelcomeMessage()
     {
         var user = _authService.CurrentUser;
-        WelcomeMessage = user != null ? $"Welcome, {user.Username}" : string.Empty;
+        if (user == null)
+        {
+            WelcomeMessage = string.Empty;
+            return;
+        }
+
+        WelcomeMessage = SupportsAccounts
+            ? $"Welcome, {user.Username}"
+            : "Welcome to WorkoutTracker";
     }
 
     public async Task RefreshHeatMapAsync()
     {
-        if (_authService.CurrentUser == null)
+        var bodyWeight = _bodyWeightService.GetBodyWeight();
+        if (_authService.CurrentUser == null || !bodyWeight.HasValue || bodyWeight.Value <= 0)
         {
             ResetHeatMap();
             return;
         }
 
         var now = DateTime.Now;
-        var bodyWeight = Math.Max(_authService.CurrentUser?.Weight ?? 180, 1);
+        var effectiveBodyWeight = Math.Max(bodyWeight.Value, 1);
         var workouts = (await _workoutService.GetWorkouts())
             .Where(workout =>
                 workout.Type == WorkoutType.WeightLifting &&
@@ -209,7 +250,7 @@ public class HomeViewModel : BaseViewModel
             return;
         }
 
-        var volumeByRegion = BuildVolumeByRegion(workouts, bodyWeight, now);
+        var volumeByRegion = BuildVolumeByRegion(workouts, effectiveBodyWeight, now);
 
         FrontShouldersOpacity = GetHeatOpacity(volumeByRegion, "FrontShoulders");
         FrontChestOpacity = GetHeatOpacity(volumeByRegion, "FrontChest");
@@ -231,7 +272,23 @@ public class HomeViewModel : BaseViewModel
             ? string.Empty
             : GetRelativeAge(now - mostRecentWorkout.StartTime);
         TodaySummary = $"{workouts.Count} recent lift{(workouts.Count == 1 ? string.Empty : "s")}{lastWorkoutAge}.";
-        HeatInfoText = $"Heat uses your recent lifts, body weight, and a 24-hour fade window. Current body weight: {bodyWeight:N0} lb.";
+        HeatInfoText = $"Heat uses your recent lifts, body weight, and a 24-hour fade window. Current body weight: {effectiveBodyWeight:N0} lb.";
+    }
+
+    public async Task<bool> UpdateBodyWeightAsync(string? weightText)
+    {
+        if (!double.TryParse(weightText?.Trim(), out var weight) || weight <= 0)
+        {
+            return false;
+        }
+
+        await _bodyWeightService.SetBodyWeightAsync(weight);
+        OnPropertyChanged(nameof(HasBodyWeight));
+        OnPropertyChanged(nameof(BodyWeightSummary));
+        OnPropertyChanged(nameof(BodyWeightInputValue));
+        UpdateWelcomeMessage();
+        await RefreshHeatMapAsync();
+        return true;
     }
 
     private void ResetHeatMap()

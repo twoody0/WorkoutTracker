@@ -23,6 +23,9 @@ public static class MauiProgram
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
+        builder.Services.AddSingleton<IAppModeService, AppModeService>();
+        builder.Services.AddSingleton<IBodyWeightService, BodyWeightService>();
+
         // Existing services
         builder.Services.AddSingleton<IWorkoutService, WorkoutService>();
 
@@ -33,7 +36,11 @@ public static class MauiProgram
 
         // Register the Workout Library service
         builder.Services.AddSingleton<IWorkoutLibraryService, WorkoutLibraryService>();
+#if PREMIUM_EDITION
         builder.Services.AddSingleton<IAuthService, AuthService>();
+#else
+        builder.Services.AddSingleton<IAuthService, GuestAuthService>();
+#endif
         builder.Services.AddSingleton<IWorkoutPlanService, WorkoutPlanService>();
         builder.Services.AddSingleton<IWorkoutScheduleService, WorkoutScheduleService>();
 

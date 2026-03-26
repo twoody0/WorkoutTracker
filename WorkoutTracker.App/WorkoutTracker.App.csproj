@@ -20,6 +20,13 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<NoWarn>$(NoWarn);XC0022;XC0025</NoWarn>
+		<!-- App edition options:
+		     Free = local-only mode with no required login/signup/leaderboard
+		     Premium = account-based mode with login/signup/leaderboard enabled -->
+		<!-- Change Free to Premium below if you want premium mode by default while developing. -->
+		<AppEdition Condition="'$(AppEdition)' == ''">Free</AppEdition>
+		<!-- Premium builds add the PREMIUM_EDITION compile symbol, which turns on login/signup/leaderboard features. -->
+		<DefineConstants Condition="'$(AppEdition)' == 'Premium'">$(DefineConstants);PREMIUM_EDITION</DefineConstants>
 
 		<!-- Display name -->
 		<ApplicationTitle>WorkoutTracker</ApplicationTitle>

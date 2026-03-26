@@ -38,9 +38,10 @@ public partial class App : Application
 
     private static Page CreateRootPage()
     {
+        var appMode = Services.GetRequiredService<IAppModeService>();
         var auth = Services.GetRequiredService<IAuthService>();
 
-        return auth.CurrentUser != null
+        return !appMode.RequiresLoginOnLaunch || auth.CurrentUser != null
             ? Services.GetRequiredService<AppShell>()
             : Services.GetRequiredService<SignedOutShell>();
     }

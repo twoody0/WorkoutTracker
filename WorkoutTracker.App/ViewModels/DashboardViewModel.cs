@@ -14,6 +14,7 @@ public class DashboardViewModel : BaseViewModel
 
     private readonly IWorkoutService _workoutService;
     private readonly IAuthService _authService;
+    private readonly IBodyWeightService _bodyWeightService;
 
     private ObservableCollection<Workout> _workouts = new();
     private DateTime _selectedDate;
@@ -26,10 +27,11 @@ public class DashboardViewModel : BaseViewModel
 
     #region Constructor
 
-    public DashboardViewModel(IWorkoutService workoutService, IAuthService authService)
+    public DashboardViewModel(IWorkoutService workoutService, IAuthService authService, IBodyWeightService bodyWeightService)
     {
         _workoutService = workoutService;
         _authService = authService;
+        _bodyWeightService = bodyWeightService;
 
         LoadWorkoutsCommand = new Command(async () => await LoadWorkoutsAsync());
         SelectedDate = DateTime.Today;
@@ -104,6 +106,10 @@ public class DashboardViewModel : BaseViewModel
         set => SetProperty(ref _hasCardio, value);
     }
 
+    public string BodyWeightSummary => _bodyWeightService.HasBodyWeight()
+        ? $"Calories use body weight: {_bodyWeightService.GetBodyWeight():N0} lb"
+        : "Set your body weight on Home to improve calorie estimates.";
+
     #endregion
 
     #region Private Methods
@@ -138,9 +144,10 @@ public class DashboardViewModel : BaseViewModel
             .Where(w => w.Type == WorkoutType.Cardio)
             .Sum(w => w.Steps);
 
-        double weightLbs = _authService.CurrentUser?.Weight ?? 154;
+        double weightLbs = _bodyWeightService.GetBodyWeight() ?? _authService.CurrentUser?.Weight ?? 154;
         double weightKg = weightLbs * 0.453592;
         CaloriesBurned = totalSteps * 0.04 * (weightKg / 70);
+        OnPropertyChanged(nameof(BodyWeightSummary));
     }
 
     #endregion

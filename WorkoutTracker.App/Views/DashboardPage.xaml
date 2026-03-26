@@ -8,6 +8,9 @@
     <StackLayout Padding="20" Spacing="15">
         <Label Text="Select Date:" />
         <DatePicker Date="{Binding SelectedDate}" />
+        <Label Text="{Binding BodyWeightSummary}"
+               TextColor="Gray"
+               FontAttributes="Italic" />
 
         <CollectionView ItemsSource="{Binding Workouts}">
             <CollectionView.ItemTemplate>

@@ -1,15 +1,22 @@
-﻿using WorkoutTracker.Models;
+using System.Text.Json;
+using WorkoutTracker.Models;
 
 namespace WorkoutTracker.Services;
 
 /// <summary>
-/// Manages the user's workout history in memory. Replace with persistent storage for production.
+/// Manages workout history in local device storage so the app can run without a backend.
 /// </summary>
 public class WorkoutService : IWorkoutService
 {
     #region Fields
 
-    private readonly List<Workout> _workouts = new();
+    private readonly SemaphoreSlim _syncLock = new(1, 1);
+    private readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        WriteIndented = true
+    };
+    private readonly string _workoutsFilePath = Path.Combine(FileSystem.AppDataDirectory, "workouts.json");
+    private List<Workout>? _cachedWorkouts;
 
     #endregion
 
@@ -21,16 +28,67 @@ public class WorkoutService : IWorkoutService
     /// <param name="workout">The workout to add.</param>
     public async Task AddWorkout(Workout workout)
     {
-        _workouts.Add(workout);
-        await Task.CompletedTask; // Placeholder for async compatibility
+        await _syncLock.WaitAsync();
+        try
+        {
+            var workouts = await LoadWorkoutsAsync();
+            workouts.Add(workout);
+            await SaveWorkoutsAsync(workouts);
+        }
+        finally
+        {
+            _syncLock.Release();
+        }
     }
 
     /// <summary>
-    /// Retrieves all workouts saved in memory.
+    /// Retrieves all workouts saved on the device.
     /// </summary>
     /// <returns>A collection of workouts.</returns>
-    public Task<IEnumerable<Workout>> GetWorkouts() =>
-        Task.FromResult(_workouts.AsEnumerable());
+    public async Task<IEnumerable<Workout>> GetWorkouts()
+    {
+        await _syncLock.WaitAsync();
+        try
+        {
+            var workouts = await LoadWorkoutsAsync();
+            return workouts.ToList();
+        }
+        finally
+        {
+            _syncLock.Release();
+        }
+    }
+
+    #endregion
+
+    #region Private Methods
+
+    private async Task<List<Workout>> LoadWorkoutsAsync()
+    {
+        if (_cachedWorkouts != null)
+        {
+            return _cachedWorkouts;
+        }
+
+        if (!File.Exists(_workoutsFilePath))
+        {
+            _cachedWorkouts = new List<Workout>();
+            return _cachedWorkouts;
+        }
+
+        await using var stream = File.OpenRead(_workoutsFilePath);
+        _cachedWorkouts = await JsonSerializer.DeserializeAsync<List<Workout>>(stream, _jsonOptions) ?? new List<Workout>();
+        return _cachedWorkouts;
+    }
+
+    private async Task SaveWorkoutsAsync(List<Workout> workouts)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(_workoutsFilePath)!);
+
+        await using var stream = File.Create(_workoutsFilePath);
+        await JsonSerializer.SerializeAsync(stream, workouts, _jsonOptions);
+        _cachedWorkouts = workouts;
+    }
 
     #endregion
 }

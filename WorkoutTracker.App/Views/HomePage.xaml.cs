@@ -4,6 +4,8 @@ namespace WorkoutTracker.Views;
 
 public partial class HomePage : ContentPage
 {
+    private bool _hasCheckedForInitialBodyWeight;
+
     // Use constructor injection
     public HomePage(HomeViewModel viewModel)
     {
@@ -26,8 +28,45 @@ public partial class HomePage : ContentPage
         base.OnAppearing();
         if (BindingContext is HomeViewModel vm)
         {
+            if (!_hasCheckedForInitialBodyWeight && !vm.HasBodyWeight)
+            {
+                _hasCheckedForInitialBodyWeight = true;
+                await PromptForBodyWeightAsync(vm, "Enter your body weight in pounds so workout calculations can stay accurate.");
+            }
+
             vm.UpdateWelcomeMessage();
             await vm.RefreshHeatMapAsync();
+        }
+    }
+
+    private async void OnEditBodyWeightClicked(object sender, EventArgs e)
+    {
+        if (BindingContext is HomeViewModel vm)
+        {
+            await PromptForBodyWeightAsync(vm, "Update your current body weight in pounds.");
+        }
+    }
+
+    private async Task PromptForBodyWeightAsync(HomeViewModel vm, string message)
+    {
+        var result = await DisplayPromptAsync(
+            "Body Weight",
+            message,
+            accept: "Save",
+            cancel: "Cancel",
+            placeholder: "180",
+            initialValue: vm.BodyWeightInputValue,
+            keyboard: Keyboard.Numeric);
+
+        if (result == null)
+        {
+            return;
+        }
+
+        var success = await vm.UpdateBodyWeightAsync(result);
+        if (!success)
+        {
+            await DisplayAlert("Invalid Weight", "Enter a valid body weight greater than 0.", "OK");
         }
     }
 }

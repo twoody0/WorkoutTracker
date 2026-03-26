@@ -5,13 +5,13 @@ namespace WorkoutTracker;
 
 public partial class AppShell : Shell
 {
-    private readonly IAuthService _authService;
+    private readonly IAppModeService _appModeService;
 
-    public AppShell()
+    public AppShell(IAppModeService appModeService)
     {
         InitializeComponent();
 
-        _authService = App.Services.GetRequiredService<IAuthService>();
+        _appModeService = appModeService;
 
         // Initial navigation setup
         BuildSignedInTabs();
@@ -58,13 +58,16 @@ public partial class AppShell : Shell
             Icon = "addworkout.png"
         });
 
-        tabBar.Items.Add(new ShellContent
+        if (_appModeService.HasLeaderboard)
         {
-            Route = "leaderboard",
-            Title = "Leaderboard",
-            ContentTemplate = new DataTemplate(() => App.Services.GetRequiredService<LeaderboardPage>()),
-            Icon = "leaderboard.png"
-        });
+            tabBar.Items.Add(new ShellContent
+            {
+                Route = "leaderboard",
+                Title = "Leaderboard",
+                ContentTemplate = new DataTemplate(() => App.Services.GetRequiredService<LeaderboardPage>()),
+                Icon = "leaderboard.png"
+            });
+        }
 
         tabBar.Items.Add(new ShellContent
         {
