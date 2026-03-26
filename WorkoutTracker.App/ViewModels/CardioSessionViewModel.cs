@@ -1,5 +1,8 @@
-﻿using System.Windows.Input;
+using System.Windows.Input;
+using Microsoft.Maui.ApplicationModel;
 using WorkoutTracker.Models;
+using MauiPermissions = Microsoft.Maui.ApplicationModel.Permissions;
+using WorkoutTracker.PlatformPermissions;
 using WorkoutTracker.Services;
 
 namespace WorkoutTracker.ViewModels;
@@ -60,8 +63,13 @@ public class CardioWorkoutViewModel : BaseViewModel
     /// <summary>
     /// Starts a new cardio workout session and begins tracking steps.
     /// </summary>
-    public ICommand StartSessionCommand => new Command(() =>
+    public ICommand StartSessionCommand => new Command(async () =>
     {
+        if (!await EnsureActivityRecognitionPermissionAsync())
+        {
+            return;
+        }
+
         SessionSteps = 0;
         _stepCounterService.StartTracking();
         IsTracking = true;
@@ -104,6 +112,42 @@ public class CardioWorkoutViewModel : BaseViewModel
     private void OnStepsUpdated(object? sender, int steps)
     {
         SessionSteps = steps;
+    }
+
+    private static async Task<bool> EnsureActivityRecognitionPermissionAsync()
+    {
+#if ANDROID
+        if (!OperatingSystem.IsAndroidVersionAtLeast(29))
+        {
+            return true;
+        }
+
+        var status = await MauiPermissions.CheckStatusAsync<ActivityRecognitionPermission>();
+        if (status == PermissionStatus.Granted)
+        {
+            return true;
+        }
+
+        status = await MauiPermissions.RequestAsync<ActivityRecognitionPermission>();
+        if (status == PermissionStatus.Granted)
+        {
+            return true;
+        }
+
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page != null)
+        {
+            await page.DisplayAlert(
+                "Permission Needed",
+                "Allow activity recognition to track steps during cardio sessions.",
+                "OK");
+        }
+
+        return false;
+#else
+        await Task.CompletedTask;
+        return true;
+#endif
     }
 
     #endregion

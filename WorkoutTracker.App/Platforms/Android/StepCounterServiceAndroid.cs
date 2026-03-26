@@ -50,9 +50,16 @@ public class StepCounterServiceAndroid : Java.Lang.Object, IStepCounterService, 
         if (_stepSensor == null)
             return;
 
-        _sensorManager.RegisterListener(this, _stepSensor, SensorDelay.Normal);
-        _isTracking = true;
-        Log.Debug("StepCounterService", "Started tracking.");
+        try
+        {
+            _sensorManager.RegisterListener(this, _stepSensor, SensorDelay.Normal);
+            _isTracking = true;
+            Log.Debug("StepCounterService", "Started tracking.");
+        }
+        catch (Exception ex)
+        {
+            Log.Error("StepCounterService", $"Unable to start tracking: {ex}");
+        }
     }
 
     public void StopTracking()
