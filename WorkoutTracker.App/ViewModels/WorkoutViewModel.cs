@@ -12,6 +12,7 @@ public class WorkoutViewModel : BaseViewModel
 
     private readonly IWorkoutService _workoutService;
     private readonly IWorkoutLibraryService _workoutLibraryService;
+    private readonly IWorkoutScheduleService _workoutScheduleService;
 
     private string _selectedMuscleGroup = string.Empty;
     private string _exerciseSearchQuery = string.Empty;
@@ -21,18 +22,26 @@ public class WorkoutViewModel : BaseViewModel
     private string _weight = string.Empty;
     private string _reps = string.Empty;
     private string _sets = string.Empty;
+    private string _activePlanSummary = "No active workout plan. Add any workout you want.";
+    private bool _hasLoadedTemplate;
+    private readonly HashSet<string> _usedPlanWorkoutKeys = new();
 
     #endregion
 
     #region Constructor
 
-    public WorkoutViewModel(IWorkoutService workoutService, IWorkoutLibraryService workoutLibraryService)
+    public WorkoutViewModel(
+        IWorkoutService workoutService,
+        IWorkoutLibraryService workoutLibraryService,
+        IWorkoutScheduleService workoutScheduleService)
     {
         _workoutService = workoutService;
         _workoutLibraryService = workoutLibraryService;
+        _workoutScheduleService = workoutScheduleService;
 
         MuscleGroups = new List<string> { "Back", "Biceps", "Chest", "Legs", "Shoulders", "Triceps", "Abs" };
         ExerciseSuggestions = new ObservableCollection<WeightliftingExercise>();
+        RecommendedPlanWorkouts = new ObservableCollection<Workout>();
 
         Weight = string.Empty;
         Reps = string.Empty;
@@ -43,16 +52,12 @@ public class WorkoutViewModel : BaseViewModel
         // Preload template if one exists
         if (WorkoutTemplateCache.Template is Workout workout)
         {
-            Name = workout.Name;
-            ExerciseSearchQuery = workout.Name;
-            Weight = workout.Weight.ToString();
-            Reps = workout.Reps.ToString();
-            Sets = workout.Sets.ToString();
-            SelectedMuscleGroup = workout.MuscleGroup;
-
-            _ = UpdateExerciseSuggestionsAsync();
+            _hasLoadedTemplate = true;
+            ApplyWorkoutTemplate(workout);
             WorkoutTemplateCache.Template = null;
         }
+
+        RefreshPlanRecommendations();
     }
 
     #endregion
@@ -62,6 +67,15 @@ public class WorkoutViewModel : BaseViewModel
     public List<string> MuscleGroups { get; }
 
     public ObservableCollection<WeightliftingExercise> ExerciseSuggestions { get; }
+    public ObservableCollection<Workout> RecommendedPlanWorkouts { get; }
+    public string TodayLabel => DateTime.Today.DayOfWeek.ToString();
+    public bool HasRecommendedPlanWorkouts => RecommendedPlanWorkouts.Count > 0;
+
+    public string ActivePlanSummary
+    {
+        get => _activePlanSummary;
+        set => SetProperty(ref _activePlanSummary, value);
+    }
 
     public bool HasWorkouts
     {
@@ -127,6 +141,13 @@ public class WorkoutViewModel : BaseViewModel
     #region Commands
 
     public ICommand AddWorkoutCommand => new Command(async () => await AddWorkoutAsync());
+    public ICommand UseRecommendedWorkoutCommand => new Command<Workout>(workout =>
+    {
+        if (workout != null)
+        {
+            ApplyWorkoutTemplate(workout);
+        }
+    });
 
     public ICommand SelectExerciseCommand => new Command<WeightliftingExercise>(exercise =>
     {
@@ -192,6 +213,7 @@ public class WorkoutViewModel : BaseViewModel
             reps: parsedReps,
             sets: parsedSets,
             muscleGroup: SelectedMuscleGroup,
+            day: DateTime.Today.DayOfWeek,
             startTime: DateTime.Now,
             type: WorkoutType.WeightLifting,
             gymLocation: "Default Gym"
@@ -200,8 +222,88 @@ public class WorkoutViewModel : BaseViewModel
         await _workoutService.AddWorkout(workout);
         HasWorkouts = true;
 
+        _usedPlanWorkoutKeys.Add(GetWorkoutKey(workout));
+        RemoveRecommendedWorkout(workout);
+
         Name = ExerciseSearchQuery = Weight = Reps = Sets = string.Empty;
         ExerciseSuggestions.Clear();
+    }
+
+    private void ApplyWorkoutTemplate(Workout workout)
+    {
+        SelectedMuscleGroup = workout.MuscleGroup;
+        Name = workout.Name;
+        ExerciseSearchQuery = workout.Name;
+        Weight = workout.Weight.ToString();
+        Reps = workout.Reps.ToString();
+        Sets = workout.Sets.ToString();
+        _ = UpdateExerciseSuggestionsAsync();
+    }
+
+    private void RemoveRecommendedWorkout(Workout workout)
+    {
+        var existingWorkout = RecommendedPlanWorkouts
+            .FirstOrDefault(candidate => GetWorkoutKey(candidate) == GetWorkoutKey(workout));
+
+        if (existingWorkout != null)
+        {
+            RecommendedPlanWorkouts.Remove(existingWorkout);
+            OnPropertyChanged(nameof(HasRecommendedPlanWorkouts));
+            UpdateActivePlanSummary();
+        }
+    }
+
+    public void RefreshPlanRecommendations()
+    {
+        RecommendedPlanWorkouts.Clear();
+
+        foreach (var workout in _workoutScheduleService.GetActivePlanWorkoutsForDay(DateTime.Today.DayOfWeek)
+                     .Where(workout => workout.Type == WorkoutType.WeightLifting)
+                     .Where(workout => !_usedPlanWorkoutKeys.Contains(GetWorkoutKey(workout))))
+        {
+            RecommendedPlanWorkouts.Add(workout);
+        }
+
+        OnPropertyChanged(nameof(HasRecommendedPlanWorkouts));
+        OnPropertyChanged(nameof(TodayLabel));
+        UpdateActivePlanSummary();
+
+        if (HasRecommendedPlanWorkouts)
+        {
+            if (!_hasLoadedTemplate && string.IsNullOrWhiteSpace(Name) && string.IsNullOrWhiteSpace(ExerciseSearchQuery))
+            {
+                ApplyWorkoutTemplate(RecommendedPlanWorkouts[0]);
+            }
+        }
+    }
+
+    private void UpdateActivePlanSummary()
+    {
+        if (HasRecommendedPlanWorkouts)
+        {
+            var activePlanName = _workoutScheduleService.ActivePlan?.Name ?? "your active plan";
+            ActivePlanSummary = $"Today is {TodayLabel}. Start from '{activePlanName}' instead of entering everything manually.";
+        }
+        else if (_workoutScheduleService.ActivePlan != null)
+        {
+            ActivePlanSummary = $"Today is {TodayLabel}. No unused weightlifting suggestions are left from '{_workoutScheduleService.ActivePlan.Name}'.";
+        }
+        else
+        {
+            ActivePlanSummary = "No active workout plan. Add any workout you want.";
+        }
+    }
+
+    private static string GetWorkoutKey(Workout workout)
+    {
+        return string.Join("|",
+            workout.Day,
+            workout.Name,
+            workout.MuscleGroup,
+            workout.Type,
+            workout.Sets,
+            workout.Reps,
+            workout.Steps);
     }
 
     private async Task ShowError(string message)

@@ -11,7 +11,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
     private readonly IWorkoutScheduleService _scheduleService;
 
     public WorkoutPlan? SelectedPlan { get; private set; }
-    public ObservableCollection<WorkoutDisplay> Workouts { get; } = new();
+    public ObservableCollection<WorkoutPlanDayGroup> WorkoutGroups { get; } = new();
 
     public ICommand ToggleExpandCommand { get; }
     public ICommand StartPlanCommand { get; }
@@ -59,11 +59,16 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
     public void LoadPlan(WorkoutPlan plan)
     {
         SelectedPlan = plan;
-        Workouts.Clear();
-        foreach (var workout in plan.Workouts)
+        WorkoutGroups.Clear();
+
+        foreach (var group in plan.Workouts
+            .OrderBy(workout => (int)workout.Day)
+            .GroupBy(workout => workout.Day))
         {
-            Workouts.Add(new WorkoutDisplay(workout));
+            WorkoutGroups.Add(new WorkoutPlanDayGroup(group.Key, group.Select(workout => new WorkoutDisplay(workout))));
         }
+
+        OnPropertyChanged(nameof(WorkoutGroups));
     }
 
     private void ToggleExpand(WorkoutDisplay workoutDisplay)
@@ -71,7 +76,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
         if (workoutDisplay != null)
         {
             workoutDisplay.IsExpanded = !workoutDisplay.IsExpanded;
-            OnPropertyChanged(nameof(Workouts));
+            OnPropertyChanged(nameof(WorkoutGroups));
         }
     }
 

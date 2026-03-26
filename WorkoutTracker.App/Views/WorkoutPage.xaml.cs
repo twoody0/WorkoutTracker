@@ -13,6 +13,16 @@ public partial class WorkoutPage : ContentPage
         BindingContext = vm;
     }
 
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+
+        if (BindingContext is WorkoutViewModel vm)
+        {
+            vm.RefreshPlanRecommendations();
+        }
+    }
+
     private async void ExerciseEntry_Focused(object sender, FocusEventArgs e)
     {
         if (BindingContext is WorkoutViewModel vm)
