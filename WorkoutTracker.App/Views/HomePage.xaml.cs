@@ -10,12 +10,13 @@ public partial class HomePage : ContentPage
         InitializeComponent();
         BindingContext = viewModel;
     }
-    protected override void OnAppearing()
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
         if (BindingContext is HomeViewModel vm)
         {
             vm.UpdateWelcomeMessage();
+            await vm.RefreshHeatMapAsync();
         }
     }
 }

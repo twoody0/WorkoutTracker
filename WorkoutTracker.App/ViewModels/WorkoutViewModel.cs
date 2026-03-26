@@ -3,6 +3,7 @@ using System.Windows.Input;
 using WorkoutTracker.Helpers;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
+using WorkoutTracker.Views;
 
 namespace WorkoutTracker.ViewModels;
 
@@ -25,6 +26,10 @@ public class WorkoutViewModel : BaseViewModel
     private string _activePlanSummary = "No active workout plan. Add any workout you want.";
     private bool _hasLoadedTemplate;
     private readonly HashSet<string> _usedPlanWorkoutKeys = new();
+    private bool _isQuickAddMode;
+    private bool _isAdvancedFieldsVisible = true;
+    private bool _suppressSuggestionRefresh;
+    private List<Workout> _workoutHistory = new();
 
     #endregion
 
@@ -41,7 +46,7 @@ public class WorkoutViewModel : BaseViewModel
 
         MuscleGroups = new List<string> { "Back", "Biceps", "Chest", "Legs", "Shoulders", "Triceps", "Abs" };
         ExerciseSuggestions = new ObservableCollection<WeightliftingExercise>();
-        RecommendedPlanWorkouts = new ObservableCollection<Workout>();
+        RecommendedPlanWorkouts = new ObservableCollection<WorkoutRecommendation>();
 
         Weight = string.Empty;
         Reps = string.Empty;
@@ -53,7 +58,7 @@ public class WorkoutViewModel : BaseViewModel
         if (WorkoutTemplateCache.Template is Workout workout)
         {
             _hasLoadedTemplate = true;
-            ApplyWorkoutTemplate(workout);
+            ApplyWorkoutTemplate(workout, historicalWeight: null, collapseForQuickAdd: false);
             WorkoutTemplateCache.Template = null;
         }
 
@@ -67,7 +72,7 @@ public class WorkoutViewModel : BaseViewModel
     public List<string> MuscleGroups { get; }
 
     public ObservableCollection<WeightliftingExercise> ExerciseSuggestions { get; }
-    public ObservableCollection<Workout> RecommendedPlanWorkouts { get; }
+    public ObservableCollection<WorkoutRecommendation> RecommendedPlanWorkouts { get; }
     public string TodayLabel => DateTime.Today.DayOfWeek.ToString();
     public bool HasRecommendedPlanWorkouts => RecommendedPlanWorkouts.Count > 0;
 
@@ -75,6 +80,18 @@ public class WorkoutViewModel : BaseViewModel
     {
         get => _activePlanSummary;
         set => SetProperty(ref _activePlanSummary, value);
+    }
+
+    public bool IsQuickAddMode
+    {
+        get => _isQuickAddMode;
+        set => SetProperty(ref _isQuickAddMode, value);
+    }
+
+    public bool IsAdvancedFieldsVisible
+    {
+        get => _isAdvancedFieldsVisible;
+        set => SetProperty(ref _isAdvancedFieldsVisible, value);
     }
 
     public bool HasWorkouts
@@ -108,7 +125,12 @@ public class WorkoutViewModel : BaseViewModel
         set
         {
             if (SetProperty(ref _exerciseSearchQuery, value))
-                _ = UpdateExerciseSuggestionsAsync();
+            {
+                if (!_suppressSuggestionRefresh)
+                {
+                    _ = UpdateExerciseSuggestionsAsync();
+                }
+            }
         }
     }
 
@@ -141,12 +163,16 @@ public class WorkoutViewModel : BaseViewModel
     #region Commands
 
     public ICommand AddWorkoutCommand => new Command(async () => await AddWorkoutAsync());
-    public ICommand UseRecommendedWorkoutCommand => new Command<Workout>(workout =>
+    public ICommand UseRecommendedWorkoutCommand => new Command<WorkoutRecommendation>(recommendation =>
     {
-        if (workout != null)
+        if (recommendation != null)
         {
-            ApplyWorkoutTemplate(workout);
+            ApplyWorkoutTemplate(recommendation, collapseForQuickAdd: true);
         }
+    });
+    public ICommand ToggleAdvancedFieldsCommand => new Command(() =>
+    {
+        IsAdvancedFieldsVisible = !IsAdvancedFieldsVisible;
     });
 
     public ICommand SelectExerciseCommand => new Command<WeightliftingExercise>(exercise =>
@@ -161,7 +187,7 @@ public class WorkoutViewModel : BaseViewModel
 
     public ICommand NavigateToViewWorkoutsCommand => new Command(async () =>
     {
-        await Shell.Current.GoToAsync("///ViewWorkoutPage");
+        await Shell.Current.Navigation.PushAsync(App.Services.GetRequiredService<ViewWorkoutPage>());
     });
 
     #endregion
@@ -170,8 +196,9 @@ public class WorkoutViewModel : BaseViewModel
 
     private async Task CheckForExistingWorkouts()
     {
-        var all = await _workoutService.GetWorkouts();
-        HasWorkouts = all.Any();
+        _workoutHistory = (await _workoutService.GetWorkouts()).ToList();
+        HasWorkouts = _workoutHistory.Any();
+        RefreshPlanRecommendations();
     }
 
     private async Task AddWorkoutAsync()
@@ -220,30 +247,52 @@ public class WorkoutViewModel : BaseViewModel
         );
 
         await _workoutService.AddWorkout(workout);
+        _workoutHistory.Add(workout);
         HasWorkouts = true;
 
         _usedPlanWorkoutKeys.Add(GetWorkoutKey(workout));
         RemoveRecommendedWorkout(workout);
 
-        Name = ExerciseSearchQuery = Weight = Reps = Sets = string.Empty;
-        ExerciseSuggestions.Clear();
+        if (RecommendedPlanWorkouts.Count > 0)
+        {
+            ApplyWorkoutTemplate(RecommendedPlanWorkouts[0], collapseForQuickAdd: true);
+        }
+        else
+        {
+            Name = ExerciseSearchQuery = Weight = Reps = Sets = string.Empty;
+            ExerciseSuggestions.Clear();
+            IsQuickAddMode = false;
+            IsAdvancedFieldsVisible = true;
+        }
     }
 
-    private void ApplyWorkoutTemplate(Workout workout)
+    private void ApplyWorkoutTemplate(WorkoutRecommendation recommendation, bool collapseForQuickAdd)
+    {
+        ApplyWorkoutTemplate(recommendation.Workout, recommendation.LastUsedWeight, collapseForQuickAdd);
+    }
+
+    private void ApplyWorkoutTemplate(Workout workout, double? historicalWeight, bool collapseForQuickAdd)
     {
         SelectedMuscleGroup = workout.MuscleGroup;
         Name = workout.Name;
+        _suppressSuggestionRefresh = true;
         ExerciseSearchQuery = workout.Name;
-        Weight = workout.Weight.ToString();
+        _suppressSuggestionRefresh = false;
+        Weight = historicalWeight.HasValue
+            ? historicalWeight.Value.ToString()
+            : workout.Weight > 0 ? workout.Weight.ToString() : string.Empty;
         Reps = workout.Reps.ToString();
         Sets = workout.Sets.ToString();
-        _ = UpdateExerciseSuggestionsAsync();
+        IsQuickAddMode = collapseForQuickAdd;
+        IsAdvancedFieldsVisible = !collapseForQuickAdd;
+        IsNameFieldFocused = false;
+        ExerciseSuggestions.Clear();
     }
 
     private void RemoveRecommendedWorkout(Workout workout)
     {
         var existingWorkout = RecommendedPlanWorkouts
-            .FirstOrDefault(candidate => GetWorkoutKey(candidate) == GetWorkoutKey(workout));
+            .FirstOrDefault(candidate => GetWorkoutKey(candidate.Workout) == GetWorkoutKey(workout));
 
         if (existingWorkout != null)
         {
@@ -261,7 +310,11 @@ public class WorkoutViewModel : BaseViewModel
                      .Where(workout => workout.Type == WorkoutType.WeightLifting)
                      .Where(workout => !_usedPlanWorkoutKeys.Contains(GetWorkoutKey(workout))))
         {
-            RecommendedPlanWorkouts.Add(workout);
+            RecommendedPlanWorkouts.Add(new WorkoutRecommendation
+            {
+                Workout = workout,
+                LastUsedWeight = GetLastUsedWeight(workout)
+            });
         }
 
         OnPropertyChanged(nameof(HasRecommendedPlanWorkouts));
@@ -272,7 +325,7 @@ public class WorkoutViewModel : BaseViewModel
         {
             if (!_hasLoadedTemplate && string.IsNullOrWhiteSpace(Name) && string.IsNullOrWhiteSpace(ExerciseSearchQuery))
             {
-                ApplyWorkoutTemplate(RecommendedPlanWorkouts[0]);
+                ApplyWorkoutTemplate(RecommendedPlanWorkouts[0], collapseForQuickAdd: true);
             }
         }
     }
@@ -304,6 +357,18 @@ public class WorkoutViewModel : BaseViewModel
             workout.Sets,
             workout.Reps,
             workout.Steps);
+    }
+
+    private double? GetLastUsedWeight(Workout workout)
+    {
+        return _workoutHistory
+            .Where(historyWorkout =>
+                historyWorkout.Type == WorkoutType.WeightLifting &&
+                historyWorkout.Weight > 0 &&
+                string.Equals(historyWorkout.Name, workout.Name, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(historyWorkout => historyWorkout.StartTime)
+            .Select(historyWorkout => (double?)historyWorkout.Weight)
+            .FirstOrDefault();
     }
 
     private async Task ShowError(string message)

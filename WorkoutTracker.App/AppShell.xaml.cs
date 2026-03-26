@@ -36,6 +36,7 @@ public partial class AppShell : Shell
 
         tabBar.Items.Add(new ShellContent
         {
+            Route = "home",
             Title = "Home",
             ContentTemplate = new DataTemplate(() => App.Services.GetRequiredService<HomePage>()),
             Icon = "home.png"
@@ -43,6 +44,7 @@ public partial class AppShell : Shell
 
         tabBar.Items.Add(new ShellContent
         {
+            Route = "dashboard",
             Title = "Dashboard",
             ContentTemplate = new DataTemplate(() => App.Services.GetRequiredService<DashboardPage>()),
             Icon = "dashboard.png"
@@ -50,6 +52,7 @@ public partial class AppShell : Shell
 
         tabBar.Items.Add(new ShellContent
         {
+            Route = "add-workout",
             Title = "Add Workout",
             ContentTemplate = new DataTemplate(() => App.Services.GetRequiredService<WorkoutPage>()),
             Icon = "addworkout.png"
@@ -57,6 +60,7 @@ public partial class AppShell : Shell
 
         tabBar.Items.Add(new ShellContent
         {
+            Route = "leaderboard",
             Title = "Leaderboard",
             ContentTemplate = new DataTemplate(() => App.Services.GetRequiredService<LeaderboardPage>()),
             Icon = "leaderboard.png"
@@ -64,6 +68,7 @@ public partial class AppShell : Shell
 
         tabBar.Items.Add(new ShellContent
         {
+            Route = "workout-plans",
             Title = "Workout Plans",
             ContentTemplate = new DataTemplate(() => App.Services.GetRequiredService<WorkoutPlanPage>()),
             Icon = "workoutplans.png"

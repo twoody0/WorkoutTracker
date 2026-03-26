@@ -40,16 +40,26 @@
                                         Stroke="#C7D8BF"
                                         StrokeShape="RoundRectangle 8">
                                     <VerticalStackLayout Spacing="4">
-                                        <Label Text="{Binding Name}" FontAttributes="Bold" />
-                                        <Label Text="{Binding MuscleGroup, StringFormat='Focus: {0}'}"
+                                        <Label Text="{Binding Workout.Name}"
+                                               FontAttributes="Bold"
+                                               LineBreakMode="WordWrap" />
+                                        <Label Text="{Binding Workout.MuscleGroup, StringFormat='Focus: {0}'}"
+                                                FontSize="12"
+                                                TextColor="Gray"
+                                                LineBreakMode="WordWrap" />
+                                        <Label Text="{Binding LastUsedWeight, StringFormat='Weight: {0}'}"
                                                FontSize="12"
-                                               TextColor="Gray" />
-                                        <Label Text="{Binding Sets, StringFormat='Sets: {0}'}"
+                                               TextColor="Gray"
+                                               LineBreakMode="WordWrap"
+                                               IsVisible="{Binding HasLastUsedWeight}" />
+                                        <Label Text="{Binding Workout.Sets, StringFormat='Sets: {0}'}"
                                                FontSize="12"
-                                               TextColor="Gray" />
-                                        <Label Text="{Binding Reps, StringFormat='Reps: {0}'}"
+                                               TextColor="Gray"
+                                               LineBreakMode="WordWrap" />
+                                        <Label Text="{Binding Workout.Reps, StringFormat='Reps: {0}'}"
                                                FontSize="12"
-                                               TextColor="Gray" />
+                                               TextColor="Gray"
+                                               LineBreakMode="WordWrap" />
                                         <Button Text="Use This Workout"
                                                 Command="{Binding Source={x:Reference Page}, Path=BindingContext.UseRecommendedWorkoutCommand}"
                                                 CommandParameter="{Binding .}"
@@ -64,51 +74,95 @@
                 </VerticalStackLayout>
             </Border>
 
-            <!-- Muscle Group Picker -->
-            <Picker Title="Select Muscle Group"
-                    ItemsSource="{Binding MuscleGroups}"
-                    SelectedItem="{Binding SelectedMuscleGroup}" />
+            <Border IsVisible="{Binding IsQuickAddMode}"
+                    Stroke="#D5DAE1"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 10"
+                    Padding="12"
+                    Margin="0,0,0,10">
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="4">
+                    <Label Grid.Row="0"
+                           Grid.Column="0"
+                           Text="{Binding Name}"
+                           FontAttributes="Bold"
+                           FontSize="16" />
+                    <Label Grid.Row="1"
+                           Grid.Column="0"
+                           Text="{Binding Weight, StringFormat='Weight: {0}'}"
+                           FontSize="12"
+                           TextColor="Gray" />
+                    <Label Grid.Row="2"
+                           Grid.Column="0"
+                           Text="{Binding Reps, StringFormat='Reps: {0}'}"
+                           FontSize="12"
+                           TextColor="Gray" />
+                    <Label Grid.Row="3"
+                           Grid.Column="0"
+                           Text="{Binding Sets, StringFormat='Sets: {0}'}"
+                           FontSize="12"
+                           TextColor="Gray" />
+                    <Label Grid.Row="4"
+                           Grid.Column="0"
+                           Text="{Binding SelectedMuscleGroup, StringFormat='Focus: {0}'}"
+                           FontSize="12"
+                           TextColor="Gray" />
+                    <ImageButton Grid.RowSpan="5"
+                                 Grid.Column="1"
+                                 Source="edit_icon.png"
+                                 BackgroundColor="Transparent"
+                                 HeightRequest="24"
+                                 WidthRequest="24"
+                                 Command="{Binding ToggleAdvancedFieldsCommand}" />
+                </Grid>
+            </Border>
 
-            <!-- Entry for exercise name search -->
-            <Entry x:Name="ExerciseEntry"
-                   Placeholder="Type exercise name..."
-                   Text="{Binding ExerciseSearchQuery}" 
-                   Focused="ExerciseEntry_Focused"
-                   Unfocused="ExerciseEntry_Unfocused" />
-
-            <!-- CollectionView for suggestions -->
-            <CollectionView ItemsSource="{Binding ExerciseSuggestions}"
-                            IsVisible="{Binding IsNameFieldFocused}"
-                            SelectionMode="None">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Border Padding="10" Margin="5" Stroke="LightGray" StrokeShape="RoundRectangle 5">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer 
-                                    Command="{Binding Source={x:Reference Page}, Path=BindingContext.SelectExerciseCommand}"
-                                    CommandParameter="{Binding .}" />
-                            </Border.GestureRecognizers>
-                            <Label Text="{Binding Name}" />
-                        </Border>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-
-            <!-- Fields for weight, reps, and sets -->
             <Entry x:Name="WeightEntry"
                    Placeholder="Enter weight (lbs or kg)" 
                    Keyboard="Numeric" 
-                   Text="{Binding Weight}" />
+                    Text="{Binding Weight}" />
 
-            <Entry x:Name="RepsEntry"
-                   Placeholder="Enter reps" 
-                   Keyboard="Numeric" 
-                   Text="{Binding Reps}" />
+            <VerticalStackLayout IsVisible="{Binding IsAdvancedFieldsVisible}"
+                                 Spacing="5">
+                <!-- Muscle Group Picker -->
+                <Picker Title="Select Muscle Group"
+                        ItemsSource="{Binding MuscleGroups}"
+                        SelectedItem="{Binding SelectedMuscleGroup}" />
 
-            <Entry x:Name="SetsEntry"
-                   Placeholder="Enter sets" 
-                   Keyboard="Numeric" 
-                   Text="{Binding Sets}" />
+                <!-- Entry for exercise name search -->
+                <Entry x:Name="ExerciseEntry"
+                       Placeholder="Type exercise name..."
+                       Text="{Binding ExerciseSearchQuery}" 
+                       Focused="ExerciseEntry_Focused"
+                       Unfocused="ExerciseEntry_Unfocused" />
+
+                <!-- CollectionView for suggestions -->
+                <CollectionView ItemsSource="{Binding ExerciseSuggestions}"
+                                IsVisible="{Binding IsNameFieldFocused}"
+                                SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="10" Margin="5" Stroke="LightGray" StrokeShape="RoundRectangle 5">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer 
+                                        Command="{Binding Source={x:Reference Page}, Path=BindingContext.SelectExerciseCommand}"
+                                        CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                                <Label Text="{Binding Name}" />
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <Entry x:Name="RepsEntry"
+                       Placeholder="Enter reps" 
+                       Keyboard="Numeric" 
+                       Text="{Binding Reps}" />
+
+                <Entry x:Name="SetsEntry"
+                       Placeholder="Enter sets" 
+                       Keyboard="Numeric" 
+                       Text="{Binding Sets}" />
+            </VerticalStackLayout>
 
             <Button Text="Add Workout" 
                     Clicked="OnAddWorkoutClicked"

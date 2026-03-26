@@ -62,7 +62,7 @@ public class ViewWorkoutViewModel : BaseViewModel
                 gymLocation: workout.GymLocation
             );
 
-            await Shell.Current.GoToAsync("///WorkoutPage");
+            await Shell.Current.GoToAsync("//add-workout");
         }
     });
 

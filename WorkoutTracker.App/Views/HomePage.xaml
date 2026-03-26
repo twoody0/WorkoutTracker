@@ -10,22 +10,147 @@
             <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
-    <StackLayout Padding="20" VerticalOptions="Center" Spacing="15">
-        <!-- Welcome Message (visible when logged in) -->
-        <Label Text="{Binding WelcomeMessage}" FontSize="20" HorizontalOptions="Center" 
-               IsVisible="{Binding IsUserLoggedIn}" />
 
-        <!-- Login and Sign Up Buttons (visible when NOT logged in) -->
-        <StackLayout IsVisible="{Binding IsUserLoggedIn, Converter={StaticResource InverseBooleanConverter}}" Spacing="20">
-            <Button Text="Login" Command="{Binding NavigateToLoginCommand}" />
-            <Button Text="Sign Up" Command="{Binding NavigateToSignupCommand}" />
+    <ScrollView>
+        <StackLayout Padding="20" VerticalOptions="Center" Spacing="15">
+            <Label Text="{Binding WelcomeMessage}"
+                   FontSize="20"
+                   HorizontalOptions="Center"
+                   IsVisible="{Binding IsUserLoggedIn}" />
+
+            <Border IsVisible="{Binding IsUserLoggedIn}"
+                    Stroke="#E4E6EB"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 20"
+                    BackgroundColor="#FBFBFC"
+                    Padding="18">
+                <VerticalStackLayout Spacing="16">
+                    <Label Text="Today's Muscle Heat"
+                           FontSize="22"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center" />
+
+                    <Label Text="{Binding TodaySummary}"
+                           HorizontalTextAlignment="Center"
+                           TextColor="Gray" />
+
+                    <Grid ColumnDefinitions="*,Auto"
+                          HorizontalOptions="Center"
+                          ColumnSpacing="24">
+                        <VerticalStackLayout Grid.Column="0"
+                                             Spacing="8"
+                                             HorizontalOptions="Center">
+                            <Border BackgroundColor="{Binding HeadColor}"
+                                    StrokeThickness="0"
+                                    WidthRequest="54"
+                                    HeightRequest="54"
+                                    StrokeShape="RoundRectangle 27"
+                                    HorizontalOptions="Center" />
+
+                            <Grid ColumnDefinitions="34,86,34"
+                                  RowDefinitions="24,60,58,78"
+                                  ColumnSpacing="6"
+                                  RowSpacing="6"
+                                  HorizontalOptions="Center">
+                                <Border Grid.Row="0"
+                                        Grid.Column="0"
+                                        Grid.ColumnSpan="3"
+                                        BackgroundColor="{Binding ShouldersColor}"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 12" />
+                                <Border Grid.Row="1"
+                                        Grid.Column="0"
+                                        BackgroundColor="{Binding LeftArmColor}"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 16" />
+                                <Border Grid.Row="1"
+                                        Grid.Column="1"
+                                        BackgroundColor="{Binding ChestColor}"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 18" />
+                                <Border Grid.Row="1"
+                                        Grid.Column="2"
+                                        BackgroundColor="{Binding RightArmColor}"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 16" />
+                                <Border Grid.Row="2"
+                                        Grid.Column="1"
+                                        BackgroundColor="{Binding AbsColor}"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 18" />
+                                <Border Grid.Row="3"
+                                        Grid.Column="1">
+                                    <Grid ColumnDefinitions="*,10,*"
+                                          ColumnSpacing="6">
+                                        <Border Grid.Column="0"
+                                                BackgroundColor="{Binding LeftLegColor}"
+                                                StrokeThickness="0"
+                                                StrokeShape="RoundRectangle 16" />
+                                        <Border Grid.Column="2"
+                                                BackgroundColor="{Binding RightLegColor}"
+                                                StrokeThickness="0"
+                                                StrokeShape="RoundRectangle 16" />
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Column="1"
+                                             VerticalOptions="Center"
+                                             Spacing="10">
+                            <Label Text="Cooler = less volume"
+                                   FontSize="12"
+                                   TextColor="Gray" />
+                            <HorizontalStackLayout Spacing="8">
+                                <Border WidthRequest="18"
+                                        HeightRequest="18"
+                                        BackgroundColor="#D7D9DE"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 9" />
+                                <Label Text="Light work"
+                                       VerticalOptions="Center"
+                                       FontSize="12" />
+                            </HorizontalStackLayout>
+                            <HorizontalStackLayout Spacing="8">
+                                <Border WidthRequest="18"
+                                        HeightRequest="18"
+                                        BackgroundColor="#FFB08F"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 9" />
+                                <Label Text="Moderate"
+                                       VerticalOptions="Center"
+                                       FontSize="12" />
+                            </HorizontalStackLayout>
+                            <HorizontalStackLayout Spacing="8">
+                                <Border WidthRequest="18"
+                                        HeightRequest="18"
+                                        BackgroundColor="#FF7043"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 9" />
+                                <Label Text="Heavy focus"
+                                       VerticalOptions="Center"
+                                       FontSize="12" />
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <StackLayout IsVisible="{Binding IsUserLoggedIn, Converter={StaticResource InverseBooleanConverter}}"
+                         Spacing="20">
+                <Button Text="Login" Command="{Binding NavigateToLoginCommand}" />
+                <Button Text="Sign Up" Command="{Binding NavigateToSignupCommand}" />
+            </StackLayout>
+
+            <Button Text="Sign Out"
+                    Command="{Binding SignOutCommand}"
+                    IsVisible="{Binding IsUserLoggedIn}" />
+            <Button Text="Dashboard"
+                    Command="{Binding NavigateToDashboardCommand}"
+                    IsVisible="{Binding IsUserLoggedIn}" />
+            <Button Text="Leaderboard"
+                    Command="{Binding NavigateToLeaderboardCommand}"
+                    IsVisible="{Binding IsUserLoggedIn}" />
         </StackLayout>
-
-        <!-- Sign Out Button (visible when logged in) -->
-        <Button Text="Sign Out" Command="{Binding SignOutCommand}" IsVisible="{Binding IsUserLoggedIn}" />
-
-        <!-- Optionally, additional navigation -->
-        <Button Text="Dashboard" Command="{Binding NavigateToDashboardCommand}" IsVisible="{Binding IsUserLoggedIn}" />
-        <Button Text="Leaderboard" Command="{Binding NavigateToLeaderboardCommand}" IsVisible="{Binding IsUserLoggedIn}" />
-    </StackLayout>
+    </ScrollView>
 </ContentPage>
