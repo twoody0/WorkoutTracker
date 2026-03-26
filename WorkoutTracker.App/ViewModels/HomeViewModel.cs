@@ -6,11 +6,13 @@ namespace WorkoutTracker.ViewModels;
 
 public class HomeViewModel : BaseViewModel
 {
+    private static readonly TimeSpan HeatFadeWindow = TimeSpan.FromHours(24);
+
     private readonly IAuthService _authService;
     private readonly IWorkoutService _workoutService;
     private readonly IServiceProvider _services;
     private string _welcomeMessage = string.Empty;
-    private string _todaySummary = "No lifting logged yet today.";
+    private string _todaySummary = "No recent lifting heat right now.";
     private double _frontShouldersOpacity;
     private double _frontChestOpacity;
     private double _frontBicepsOpacity;
@@ -174,12 +176,12 @@ public class HomeViewModel : BaseViewModel
             return;
         }
 
-        var today = DateTime.Today;
+        var now = DateTime.Now;
         var bodyWeight = Math.Max(_authService.CurrentUser?.Weight ?? 180, 1);
         var workouts = (await _workoutService.GetWorkouts())
             .Where(workout =>
                 workout.Type == WorkoutType.WeightLifting &&
-                workout.StartTime.Date == today)
+                now - workout.StartTime <= HeatFadeWindow)
             .ToList();
 
         if (workouts.Count == 0)
@@ -188,7 +190,7 @@ public class HomeViewModel : BaseViewModel
             return;
         }
 
-        var volumeByRegion = BuildVolumeByRegion(workouts, bodyWeight);
+        var volumeByRegion = BuildVolumeByRegion(workouts, bodyWeight, now);
 
         FrontShouldersOpacity = GetHeatOpacity(volumeByRegion, "FrontShoulders");
         FrontChestOpacity = GetHeatOpacity(volumeByRegion, "FrontChest");
@@ -205,7 +207,11 @@ public class HomeViewModel : BaseViewModel
         BackHamstringsOpacity = GetHeatOpacity(volumeByRegion, "BackHamstrings");
         BackCalvesOpacity = GetHeatOpacity(volumeByRegion, "BackCalves");
 
-        TodaySummary = $"Today's muscle heat is based on {workouts.Count} lift{(workouts.Count == 1 ? string.Empty : "s")} logged on {today:MMMM d}, normalized to your {bodyWeight:N0} lb body weight.";
+        var mostRecentWorkout = workouts.MaxBy(workout => workout.StartTime);
+        var lastWorkoutAge = mostRecentWorkout == null
+            ? string.Empty
+            : GetRelativeAge(now - mostRecentWorkout.StartTime);
+        TodaySummary = $"Muscle heat fades over 24 hours. Based on {workouts.Count} recent lift{(workouts.Count == 1 ? string.Empty : "s")}, normalized to your {bodyWeight:N0} lb body weight{lastWorkoutAge}.";
     }
 
     private void ResetHeatMap()
@@ -223,17 +229,25 @@ public class HomeViewModel : BaseViewModel
         BackGlutesOpacity = 0;
         BackHamstringsOpacity = 0;
         BackCalvesOpacity = 0;
-        TodaySummary = "No lifting logged yet today.";
+        TodaySummary = "No recent lifting heat right now.";
     }
 
-    private static Dictionary<string, double> BuildVolumeByRegion(IEnumerable<Workout> workouts, double bodyWeight)
+    private static Dictionary<string, double> BuildVolumeByRegion(IEnumerable<Workout> workouts, double bodyWeight, DateTime now)
     {
         var volumeByRegion = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var workout in workouts)
         {
             var weightRatio = Math.Max(1, workout.Weight) / bodyWeight;
-            var effortScore = weightRatio * Math.Max(1, workout.Reps) * Math.Max(1, workout.Sets);
+            var age = now - workout.StartTime;
+            var fadeMultiplier = GetFadeMultiplier(age);
+
+            if (fadeMultiplier <= 0)
+            {
+                continue;
+            }
+
+            var effortScore = weightRatio * Math.Max(1, workout.Reps) * Math.Max(1, workout.Sets) * fadeMultiplier;
 
             foreach (var region in InferHeatRegions(workout))
             {
@@ -249,6 +263,22 @@ public class HomeViewModel : BaseViewModel
         }
 
         return volumeByRegion;
+    }
+
+    private static double GetFadeMultiplier(TimeSpan age)
+    {
+        if (age <= TimeSpan.Zero)
+        {
+            return 1;
+        }
+
+        if (age >= HeatFadeWindow)
+        {
+            return 0;
+        }
+
+        var progress = age.TotalHours / HeatFadeWindow.TotalHours;
+        return 1 - progress;
     }
 
     private static IReadOnlyList<string> InferHeatRegions(Workout workout)
@@ -365,5 +395,17 @@ public class HomeViewModel : BaseViewModel
         var intensity = Math.Clamp(volume / 30.0, 0.0, 1.0);
         var easedIntensity = Math.Pow(intensity, 1.35);
         return 0.05 + (easedIntensity * 0.7);
+    }
+
+    private static string GetRelativeAge(TimeSpan age)
+    {
+        if (age.TotalHours < 1)
+        {
+            var minutes = Math.Max(1, (int)Math.Round(age.TotalMinutes));
+            return $", last logged about {minutes} minute{(minutes == 1 ? string.Empty : "s")} ago";
+        }
+
+        var hours = Math.Max(1, (int)Math.Round(age.TotalHours));
+        return $", last logged about {hours} hour{(hours == 1 ? string.Empty : "s")} ago";
     }
 }

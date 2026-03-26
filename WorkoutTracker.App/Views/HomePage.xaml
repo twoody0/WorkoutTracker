@@ -25,7 +25,7 @@
                     BackgroundColor="#FBFBFC"
                     Padding="18">
                 <VerticalStackLayout Spacing="16">
-                    <Label Text="Today's Muscle Heat"
+                    <Label Text="Muscle Heat"
                            FontSize="22"
                            FontAttributes="Bold"
                            HorizontalOptions="Center" />
