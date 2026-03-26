@@ -24,7 +24,11 @@
                                            FontSize="18"/>
                                     <Label Text="{Binding BodyWeightSummary}"
                                            TextColor="#5A6472"/>
-                                    <Button Text="Edit Body Weight"
+                                    <Label Text="{Binding BodyWeightReminderText}"
+                                           TextColor="#C26A00"
+                                           FontSize="12"
+                                           IsVisible="{Binding ShowBodyWeightReminder}"/>
+                                    <Button Text="{Binding BodyWeightButtonText}"
                                             Clicked="OnEditBodyWeightClicked"/>
                              </VerticalStackLayout>
                       </Border>

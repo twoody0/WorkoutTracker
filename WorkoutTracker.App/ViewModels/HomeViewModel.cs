@@ -54,6 +54,8 @@ public class HomeViewModel : BaseViewModel
                 OnPropertyChanged(nameof(HasBodyWeight));
                 OnPropertyChanged(nameof(BodyWeightSummary));
                 OnPropertyChanged(nameof(BodyWeightInputValue));
+                OnPropertyChanged(nameof(BodyWeightButtonText));
+                OnPropertyChanged(nameof(ShowBodyWeightReminder));
             }
         }
     }
@@ -79,6 +81,12 @@ public class HomeViewModel : BaseViewModel
         : "Body weight not set yet";
 
     public string BodyWeightInputValue => _bodyWeightService.GetBodyWeight()?.ToString("0.#") ?? string.Empty;
+
+    public string BodyWeightButtonText => HasBodyWeight ? "Edit Body Weight" : "Enter Body Weight";
+
+    public bool ShowBodyWeightReminder => !HasBodyWeight;
+
+    public string BodyWeightReminderText => "Set your body weight to improve heat map accuracy.";
 
     public string TodaySummary
     {
@@ -286,6 +294,8 @@ public class HomeViewModel : BaseViewModel
         OnPropertyChanged(nameof(HasBodyWeight));
         OnPropertyChanged(nameof(BodyWeightSummary));
         OnPropertyChanged(nameof(BodyWeightInputValue));
+        OnPropertyChanged(nameof(BodyWeightButtonText));
+        OnPropertyChanged(nameof(ShowBodyWeightReminder));
         UpdateWelcomeMessage();
         await RefreshHeatMapAsync();
         return true;

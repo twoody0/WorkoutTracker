@@ -8,7 +8,7 @@ public sealed class GuestAuthService : IAuthService
     {
         Name = "Local User",
         Age = 0,
-        Weight = 180,
+        Weight = 0,
         Username = "guest",
         Password = string.Empty,
         Email = string.Empty
