@@ -13,11 +13,6 @@
                              FontSize="20"
                              HorizontalOptions="Center"/>
 
-                      <Label Text="{Binding ModeDescription}"
-                             HorizontalTextAlignment="Center"
-                             TextColor="Gray"
-                             FontSize="13"/>
-
                       <Border Stroke="#E4E6EB"
                               StrokeThickness="1"
                               StrokeShape="RoundRectangle 16"
