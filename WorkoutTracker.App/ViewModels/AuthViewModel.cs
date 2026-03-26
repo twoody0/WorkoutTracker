@@ -8,18 +8,20 @@ namespace WorkoutTracker.ViewModels;
 public class AuthViewModel : BaseViewModel
 {
     private readonly IAuthService _authService;
+    private readonly IServiceProvider _services;
 
     // Backing fields for properties
-    private string _username;
-    private string _password;
-    private string _name;
-    private string _email;
-    private string _age;
-    private string _weight;
+    private string _username = string.Empty;
+    private string _password = string.Empty;
+    private string _name = string.Empty;
+    private string _email = string.Empty;
+    private string _age = string.Empty;
+    private string _weight = string.Empty;
 
-    public AuthViewModel()
+    public AuthViewModel(IAuthService authService, IServiceProvider services)
     {
-        _authService = App.Services.GetRequiredService<IAuthService>();
+        _authService = authService;
+        _services = services;
     }
 
     #region Properties
@@ -138,12 +140,14 @@ public class AuthViewModel : BaseViewModel
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                Application.Current.MainPage = new AppShell();
+                App.SetRootPage(_services.GetRequiredService<AppShell>());
             });
         }
         else
         {
-            await Application.Current.MainPage.DisplayAlert("Login Failed", "Invalid username or password.", "OK");
+            var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (page != null)
+                await page.DisplayAlert("Login Failed", "Invalid username or password.", "OK");
         }
     }
 
@@ -151,7 +155,9 @@ public class AuthViewModel : BaseViewModel
     {
         if (!int.TryParse(Age?.Trim(), out int parsedAge) || !double.TryParse(Weight?.Trim(), out double parsedWeight))
         {
-            await Application.Current.MainPage.DisplayAlert("Validation Error", "Please enter a valid age and weight.", "OK");
+            var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (page != null)
+                await page.DisplayAlert("Validation Error", "Please enter a valid age and weight.", "OK");
             return;
         }
 
@@ -165,7 +171,9 @@ public class AuthViewModel : BaseViewModel
         }
         else
         {
-            await Application.Current.MainPage.DisplayAlert("Signup Failed", "Username already exists.", "OK");
+            var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (page != null)
+                await page.DisplayAlert("Signup Failed", "Username already exists.", "OK");
         }
     }
 

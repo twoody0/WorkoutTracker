@@ -14,7 +14,7 @@ public partial class AppShell : Shell
         _authService = App.Services.GetRequiredService<IAuthService>();
 
         // Initial navigation setup
-        UpdateShellItems();
+        BuildSignedInTabs();
 
         // Register routes (optional since we’re using DI below)
         Routing.RegisterRoute(nameof(SignupPage), typeof(SignupPage));
@@ -28,69 +28,47 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(nameof(WorkoutPlanDetailsPage), typeof(WorkoutPlanDetailsPage));
     }
 
-    protected override void OnAppearing()
+    private void BuildSignedInTabs()
     {
-        base.OnAppearing();
-        UpdateShellItems();
-    }
+        Items.Clear();
 
-    public void UpdateShellItems()
-    {
-        this.Items.Clear();
+        var tabBar = new TabBar();
 
-        if (_authService.CurrentUser != null)
+        tabBar.Items.Add(new ShellContent
         {
-            var tabBar = new TabBar();
+            Title = "Home",
+            ContentTemplate = new DataTemplate(() => App.Services.GetRequiredService<HomePage>()),
+            Icon = "home.png"
+        });
 
-            tabBar.Items.Add(new ShellContent
-            {
-                Title = "Home",
-                ContentTemplate = new DataTemplate(() =>
-                    App.Services.GetRequiredService<HomePage>()),
-                Icon = "home.png"
-            });
-
-            tabBar.Items.Add(new ShellContent
-            {
-                Title = "Dashboard",
-                ContentTemplate = new DataTemplate(() =>
-                    App.Services.GetRequiredService<DashboardPage>()),
-                Icon = "dashboard.png"
-            });
-
-            tabBar.Items.Add(new ShellContent
-            {
-                Title = "Add Workout",
-                ContentTemplate = new DataTemplate(() =>
-                    App.Services.GetRequiredService<WorkoutPage>()),
-                Icon = "addworkout.png"
-            });
-
-            tabBar.Items.Add(new ShellContent
-            {
-                Title = "Leaderboard",
-                ContentTemplate = new DataTemplate(() =>
-                    App.Services.GetRequiredService<LeaderboardPage>()),
-                Icon = "leaderboard.png"
-            });
-
-            tabBar.Items.Add(new ShellContent
-            {
-                Title = "Workout Plans",
-                ContentTemplate = new DataTemplate(() =>
-                    App.Services.GetRequiredService<WorkoutPlanPage>()),
-                Icon = "workoutplans.png"
-            });
-
-            this.Items.Add(tabBar);
-        }
-        else
+        tabBar.Items.Add(new ShellContent
         {
-            var window = Application.Current?.Windows.FirstOrDefault();
-            if (window != null)
-            {
-                window.Page = App.Services.GetRequiredService<SignedOutShell>();
-            }
-        }
+            Title = "Dashboard",
+            ContentTemplate = new DataTemplate(() => App.Services.GetRequiredService<DashboardPage>()),
+            Icon = "dashboard.png"
+        });
+
+        tabBar.Items.Add(new ShellContent
+        {
+            Title = "Add Workout",
+            ContentTemplate = new DataTemplate(() => App.Services.GetRequiredService<WorkoutPage>()),
+            Icon = "addworkout.png"
+        });
+
+        tabBar.Items.Add(new ShellContent
+        {
+            Title = "Leaderboard",
+            ContentTemplate = new DataTemplate(() => App.Services.GetRequiredService<LeaderboardPage>()),
+            Icon = "leaderboard.png"
+        });
+
+        tabBar.Items.Add(new ShellContent
+        {
+            Title = "Workout Plans",
+            ContentTemplate = new DataTemplate(() => App.Services.GetRequiredService<WorkoutPlanPage>()),
+            Icon = "workoutplans.png"
+        });
+
+        Items.Add(tabBar);
     }
 }

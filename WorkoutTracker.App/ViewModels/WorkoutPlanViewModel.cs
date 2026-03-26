@@ -13,11 +13,11 @@ public class WorkoutPlanViewModel : BaseViewModel
     public ObservableCollection<WorkoutPlan> WorkoutPlans { get; set; } = new();
     private List<WorkoutPlan> AllPlans { get; set; } = new();
 
-    public WorkoutPlan CurrentPlan => _scheduleService.ActivePlan;
+    public WorkoutPlan? CurrentPlan => _scheduleService.ActivePlan;
     public bool HasActivePlan => _scheduleService.ActivePlan != null;
 
-    public string NewPlanName { get; set; }
-    public string NewPlanDescription { get; set; }
+    public string NewPlanName { get; set; } = string.Empty;
+    public string NewPlanDescription { get; set; } = string.Empty;
     public Command AddWorkoutPlanCommand { get; }
     public Command SelectWorkoutPlanCommand { get; }
 

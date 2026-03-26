@@ -69,7 +69,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<WeeklySchedulePage>();
         builder.Services.AddTransient<EditDayPage>();
 
-        // Register shell
+        // Register shells
+        builder.Services.AddSingleton<AppShell>();
         builder.Services.AddSingleton<SignedOutShell>();
 
         return builder.Build();

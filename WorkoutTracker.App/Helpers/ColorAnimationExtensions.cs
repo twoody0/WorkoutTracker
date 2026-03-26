@@ -6,7 +6,7 @@ namespace WorkoutTracker.Helpers;
 
 public static class ColorAnimationExtensions
 {
-    public static Task<bool> ColorTo(this VisualElement element, Color fromColor, Color toColor, Action<Color> callback, uint duration = 250, Easing easing = null)
+    public static Task<bool> ColorTo(this VisualElement element, Color fromColor, Color toColor, Action<Color> callback, uint duration = 250, Easing? easing = null)
     {
         easing ??= Easing.Linear;
 

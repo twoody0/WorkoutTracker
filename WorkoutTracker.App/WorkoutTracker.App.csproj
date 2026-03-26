@@ -19,6 +19,7 @@
 		<SingleProject>true</SingleProject>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<NoWarn>$(NoWarn);XC0022;XC0025</NoWarn>
 
 		<!-- Display name -->
 		<ApplicationTitle>WorkoutTracker</ApplicationTitle>

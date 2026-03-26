@@ -9,24 +9,21 @@ namespace WorkoutTracker.ViewModels;
 /// </summary>
 public class LoginViewModel : BaseViewModel
 {
-    #region Private Fields
-
     private readonly IAuthService _authService;
+    private readonly IServiceProvider _services;
+
     private string _username = string.Empty;
     private string _password = string.Empty;
+    private bool _isBusy;
 
-    #endregion
-
-    #region Constructor
-
-    public LoginViewModel(IAuthService authService)
+    public LoginViewModel(IAuthService authService, IServiceProvider services)
     {
         _authService = authService;
+        _services = services;
+
+        LoginCommand = new Command(async () => await ExecuteLoginAsync(), () => !IsBusy);
+        NavigateToRegisterCommand = new Command(async () => await Shell.Current.GoToAsync(nameof(SignupPage)));
     }
-
-    #endregion
-
-    #region Public Properties
 
     /// <summary>
     /// Username entered by the user.
@@ -46,33 +43,48 @@ public class LoginViewModel : BaseViewModel
         set => SetProperty(ref _password, value);
     }
 
-    #endregion
-
-    #region Commands
-
-    /// <summary>
-    /// Command to handle login logic.
-    /// </summary>
-    public ICommand LoginCommand => new Command(async () =>
+    public bool IsBusy
     {
-        var user = await _authService.LoginAsync(Username, Password);
-        if (user != null)
+        get => _isBusy;
+        set
         {
-            ((AppShell)Shell.Current).UpdateShellItems(); // Refresh the shell based on login state
-            await Shell.Current.GoToAsync("//HomePage"); // Navigate to root home page
+            if (SetProperty(ref _isBusy, value))
+                (LoginCommand as Command)?.ChangeCanExecute();
         }
-        else
-        {
-            await Application.Current.MainPage.DisplayAlert("Login Failed", "Invalid username or password", "OK");
-        }
-    });
+    }
 
-    /// <summary>
-    /// Command to navigate to the registration page.
-    /// </summary>
-    public ICommand NavigateToRegisterCommand => new Command(async () =>
+    public ICommand LoginCommand { get; }
+    public ICommand NavigateToRegisterCommand { get; }
+
+    private async Task ExecuteLoginAsync()
     {
-        await Shell.Current.GoToAsync(nameof(SignupPage));
-    });
-    #endregion
+        if (IsBusy) return;
+
+        try
+        {
+            IsBusy = true;
+
+            var user = await _authService.LoginAsync(Username, Password);
+            if (user != null)
+            {
+                // Replace MainPage entirely with the signed-in shell
+                App.SetRootPage(_services.GetRequiredService<AppShell>());
+                return;
+            }
+
+            var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (page != null)
+                await page.DisplayAlert("Login Failed", "Invalid username or password", "OK");
+        }
+        catch (Exception ex)
+        {
+            var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (page != null)
+                await page.DisplayAlert("Error", ex.Message, "OK");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
 }

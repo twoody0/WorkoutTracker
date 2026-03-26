@@ -10,18 +10,19 @@ namespace WorkoutTracker.Platforms.Android;
 public class StepCounterServiceAndroid : Java.Lang.Object, IStepCounterService, ISensorEventListener
 {
     private readonly SensorManager _sensorManager;
-    private readonly Sensor _stepSensor;
+    private readonly Sensor? _stepSensor;
     private readonly bool _usingStepCounter;
     private int _sessionStepCount;
     private float _baselineStepCount = -1;
     private bool _isTracking;
 
-    public event EventHandler<int> StepsUpdated;
+    public event EventHandler<int>? StepsUpdated;
 
     public StepCounterServiceAndroid()
     {
         var context = Application.Context;
-        _sensorManager = (SensorManager)context.GetSystemService(Context.SensorService);
+        _sensorManager = (SensorManager?)context.GetSystemService(Context.SensorService)
+            ?? throw new InvalidOperationException("Sensor manager is unavailable.");
 
         // Try to get the Step Counter sensor first
         _stepSensor = _sensorManager.GetDefaultSensor(SensorType.StepCounter);
@@ -46,6 +47,9 @@ public class StepCounterServiceAndroid : Java.Lang.Object, IStepCounterService, 
 
         _sessionStepCount = 0;
         _baselineStepCount = -1;
+        if (_stepSensor == null)
+            return;
+
         _sensorManager.RegisterListener(this, _stepSensor, SensorDelay.Normal);
         _isTracking = true;
         Log.Debug("StepCounterService", "Started tracking.");
@@ -56,19 +60,23 @@ public class StepCounterServiceAndroid : Java.Lang.Object, IStepCounterService, 
         if (!_isTracking)
             return;
 
-        _sensorManager.UnregisterListener(this, _stepSensor);
+        if (_stepSensor != null)
+            _sensorManager.UnregisterListener(this, _stepSensor);
         _isTracking = false;
         Log.Debug("StepCounterService", $"Stopped tracking. Final steps: {_sessionStepCount}");
         StepsUpdated?.Invoke(this, _sessionStepCount);
     }
 
-    public void OnAccuracyChanged(Sensor sensor, [GeneratedEnum] SensorStatus accuracy)
+    public void OnAccuracyChanged(Sensor? sensor, [GeneratedEnum] SensorStatus accuracy)
     {
         // Not used
     }
 
-    public void OnSensorChanged(SensorEvent e)
+    public void OnSensorChanged(SensorEvent? e)
     {
+        if (e?.Values == null || e.Values.Count == 0)
+            return;
+
         Log.Debug("StepCounterService", $"Sensor event: {e.Values[0]}");
         if (_usingStepCounter)
         {

@@ -30,7 +30,11 @@ public class EditDayViewModel : BaseViewModel
     private async void MoveWorkout(Workout workout)
     {
         var days = Enum.GetNames(typeof(DayOfWeek));
-        string selectedDay = await Application.Current.MainPage.DisplayActionSheet("Move To:", "Cancel", null, days);
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page == null)
+            return;
+
+        string selectedDay = await page.DisplayActionSheet("Move To:", "Cancel", null, days);
 
         if (!string.IsNullOrWhiteSpace(selectedDay) && Enum.TryParse(selectedDay, out DayOfWeek newDay))
         {
@@ -57,6 +61,8 @@ public class EditDayViewModel : BaseViewModel
     private async void AddWorkout()
     {
         var addPage = new AddWorkoutPage(Day, _scheduleService, Workouts);
-        await Application.Current.MainPage.Navigation.PushAsync(addPage);
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page != null)
+            await page.Navigation.PushAsync(addPage);
     }
 }

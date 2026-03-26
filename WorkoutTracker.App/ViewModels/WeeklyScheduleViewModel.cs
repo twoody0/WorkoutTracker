@@ -17,6 +17,7 @@ public class WeeklyScheduleViewModel : BaseViewModel
     public WeeklyScheduleViewModel(IWorkoutScheduleService scheduleService)
     {
         _scheduleService = scheduleService;
+        ChangeWorkoutDayCommand = new Command<Workout>(ChangeWorkoutDay);
         EditDayCommand = new Command<DayOfWeek>(EditDay);
         LoadSchedule();
     }
@@ -31,7 +32,11 @@ public class WeeklyScheduleViewModel : BaseViewModel
         if (workout == null) return;
 
         var days = Enum.GetNames(typeof(DayOfWeek));
-        string selectedDay = await Application.Current.MainPage.DisplayActionSheet(
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page == null)
+            return;
+
+        string selectedDay = await page.DisplayActionSheet(
             "Move Workout To:",
             "Cancel",
             null,
@@ -41,7 +46,7 @@ public class WeeklyScheduleViewModel : BaseViewModel
         {
             workout.Day = newDay;
             LoadSchedule(); // Refresh the schedule view
-            await Application.Current.MainPage.DisplayAlert("Workout Moved", $"{workout.Name} is now scheduled for {newDay}.", "OK");
+            await page.DisplayAlert("Workout Moved", $"{workout.Name} is now scheduled for {newDay}.", "OK");
         }
     }
 

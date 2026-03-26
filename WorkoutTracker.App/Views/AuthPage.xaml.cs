@@ -15,7 +15,15 @@ public partial class AuthPage : ContentPage
         viewModel.PropertyChanged += ViewModel_PropertyChanged;
     }
 
-    private async void ViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+
+        if (BindingContext is AuthViewModel viewModel)
+            viewModel.PropertyChanged -= ViewModel_PropertyChanged;
+    }
+
+    private async void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(AuthViewModel.IsFormValid))
         {

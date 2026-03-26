@@ -13,6 +13,7 @@ public class SignupViewModel : BaseViewModel
     #region Private Fields
 
     private readonly IAuthService _authService;
+    private readonly IServiceProvider _services;
     private string _name = string.Empty;
     private string _age = string.Empty;
     private string _weight = string.Empty;
@@ -24,9 +25,10 @@ public class SignupViewModel : BaseViewModel
 
     #region Constructor
 
-    public SignupViewModel(IAuthService authService)
+    public SignupViewModel(IAuthService authService, IServiceProvider services)
     {
         _authService = authService;
+        _services = services;
     }
 
     #endregion
@@ -104,7 +106,8 @@ public class SignupViewModel : BaseViewModel
             }
 
             // Auto-login after signup
-            var loggedInUser = await _authService.LoginAsync(Username, Password);
+            var username = Username ?? string.Empty;
+            var loggedInUser = await _authService.LoginAsync(username.Trim(), Password);
             if (loggedInUser == null)
             {
                 if (page != null)
@@ -115,16 +118,18 @@ public class SignupViewModel : BaseViewModel
             // Switch to AppShell on main thread
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                Application.Current.MainPage = new AppShell();
+                App.SetRootPage(_services.GetRequiredService<AppShell>());
             });
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException)
         {
-            await page.DisplayAlert("Network Error", "Please check your internet connection.", "OK");
+            if (page != null)
+                await page.DisplayAlert("Network Error", "Please check your internet connection.", "OK");
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException)
         {
-            await page.DisplayAlert("Navigation Error", "Unable to navigate. Please try again.", "OK");
+            if (page != null)
+                await page.DisplayAlert("Navigation Error", "Unable to navigate. Please try again.", "OK");
         }
     });
 

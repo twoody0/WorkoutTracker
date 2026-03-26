@@ -10,8 +10,8 @@ public class WeightliftingLibraryViewModel : BaseViewModel
     #region Fields
 
     private readonly IWorkoutLibraryService _libraryService;
-    private string _searchText;
-    private string _selectedMuscleGroup;
+    private string _searchText = string.Empty;
+    private string _selectedMuscleGroup = string.Empty;
 
     #endregion
 

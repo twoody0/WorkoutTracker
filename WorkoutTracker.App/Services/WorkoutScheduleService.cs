@@ -25,22 +25,9 @@ public class WorkoutScheduleService : IWorkoutScheduleService
             _weeklySchedule[day].Clear();
         }
 
-        // Distribute workouts across the week
-        int dayIndex = 0;
         foreach (var workout in plan.Workouts)
         {
-            var day = (DayOfWeek)(dayIndex % 7);
-            _weeklySchedule[day].Add(new Workout
-            {
-                Name = workout.Name,
-                MuscleGroup = workout.MuscleGroup,
-                GymLocation = workout.GymLocation,
-                Reps = workout.Reps,
-                Sets = workout.Sets,
-                Type = workout.Type,
-                Day = day // Include day assignment
-            });
-            dayIndex++;
+            AddWorkoutToDay(workout.Day, CloneWorkout(workout));
         }
     }
 
@@ -67,6 +54,37 @@ public class WorkoutScheduleService : IWorkoutScheduleService
     {
         return _weeklySchedule;
     }
+
+    public IReadOnlyList<Workout> GetActivePlanWorkoutsForDay(DayOfWeek day)
+    {
+        if (ActivePlan == null)
+        {
+            return [];
+        }
+
+        return ActivePlan.Workouts
+            .Where(workout => workout.Day == day)
+            .Select(CloneWorkout)
+            .ToList();
+    }
+
+    private static Workout CloneWorkout(Workout workout)
+    {
+        return new Workout(
+            name: workout.Name,
+            weight: workout.Weight,
+            reps: workout.Reps,
+            sets: workout.Sets,
+            muscleGroup: workout.MuscleGroup,
+            day: workout.Day,
+            startTime: workout.StartTime,
+            type: workout.Type,
+            gymLocation: workout.GymLocation)
+        {
+            EndTime = workout.EndTime,
+            Steps = workout.Steps
+        };
+    }
 }
 
 public interface IWorkoutScheduleService
@@ -76,4 +94,5 @@ public interface IWorkoutScheduleService
     void AddWorkoutToDay(DayOfWeek day, Workout workout);
     void RemoveWorkoutFromDay(DayOfWeek day, Workout workout);
     IReadOnlyDictionary<DayOfWeek, List<Workout>> GetWeeklySchedule();
+    IReadOnlyList<Workout> GetActivePlanWorkoutsForDay(DayOfWeek day);
 }

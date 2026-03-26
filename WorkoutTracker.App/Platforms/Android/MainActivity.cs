@@ -10,15 +10,16 @@ namespace WorkoutTracker;
 [Activity(Theme = "@style/Maui.SplashTheme", MainLauncher = true, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation)]
 public class MainActivity : MauiAppCompatActivity
 {
-    protected override void OnCreate(Bundle savedInstanceState)
+    protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
 
         // Check if ACTIVITY_RECOGNITION permission is granted.
-        if (ContextCompat.CheckSelfPermission(this, Manifest.Permission.ActivityRecognition) != (int)Permission.Granted)
+        if (OperatingSystem.IsAndroidVersionAtLeast(29) &&
+            ContextCompat.CheckSelfPermission(this, Manifest.Permission.ActivityRecognition) != Permission.Granted)
         {
             // Request the permission from the user.
-            ActivityCompat.RequestPermissions(this, new string[] { Manifest.Permission.ActivityRecognition }, 0);
+            ActivityCompat.RequestPermissions(this, [Manifest.Permission.ActivityRecognition], 0);
         }
     }
 }

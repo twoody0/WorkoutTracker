@@ -10,7 +10,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
 {
     private readonly IWorkoutScheduleService _scheduleService;
 
-    public WorkoutPlan SelectedPlan { get; private set; }
+    public WorkoutPlan? SelectedPlan { get; private set; }
     public ObservableCollection<WorkoutDisplay> Workouts { get; } = new();
 
     public ICommand ToggleExpandCommand { get; }
@@ -30,7 +30,11 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
             return;
 
         var days = Enum.GetNames(typeof(DayOfWeek));
-        string selectedDay = await Application.Current.MainPage.DisplayActionSheet(
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page == null || SelectedPlan == null)
+            return;
+
+        string selectedDay = await page.DisplayActionSheet(
             "Move Workout To:",
             "Cancel",
             null,
@@ -45,7 +49,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
             LoadPlan(SelectedPlan);
 
             // Optionally notify user
-            await Application.Current.MainPage.DisplayAlert(
+            await page.DisplayAlert(
                 "Workout Moved",
                 $"{workoutDisplay.Workout.Name} is now scheduled for {newDay}.",
                 "OK");
@@ -73,9 +77,16 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
 
     private async void StartPlan()
     {
+        if (SelectedPlan == null)
+            return;
+
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page == null)
+            return;
+
         if (_scheduleService.ActivePlan != null)
         {
-            bool confirm = await Application.Current.MainPage.DisplayAlert(
+            bool confirm = await page.DisplayAlert(
                 "Replace Active Plan?",
                 $"You already have '{_scheduleService.ActivePlan.Name}' as your active plan.\n\nDo you want to replace it with '{SelectedPlan.Name}'?",
                 "Yes, Replace",
@@ -92,7 +103,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
         parentViewModel.RefreshActivePlan();
 
         // Show success
-        await Application.Current.MainPage.DisplayAlert(
+        await page.DisplayAlert(
             "Plan Started",
             $"'{SelectedPlan.Name}' is now your active workout plan!",
             "OK");

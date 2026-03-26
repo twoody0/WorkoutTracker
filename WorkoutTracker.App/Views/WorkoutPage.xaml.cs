@@ -53,9 +53,12 @@ public partial class WorkoutPage : ContentPage
         }
 
         // Hide keyboard
-        await ExerciseEntry.HideKeyboardAsync();
-        await WeightEntry.HideKeyboardAsync();
-        await RepsEntry.HideKeyboardAsync();
-        await SetsEntry.HideKeyboardAsync();
+        if (!OperatingSystem.IsMacCatalyst())
+        {
+            await ExerciseEntry.HideKeyboardAsync();
+            await WeightEntry.HideKeyboardAsync();
+            await RepsEntry.HideKeyboardAsync();
+            await SetsEntry.HideKeyboardAsync();
+        }
     }
 }

@@ -14,7 +14,7 @@ public class ViewWorkoutViewModel : BaseViewModel
     #region Private Fields
 
     private readonly IWorkoutService _workoutService;
-    private ObservableCollection<Workout> _workouts;
+    private ObservableCollection<Workout> _workouts = new();
 
     #endregion
 

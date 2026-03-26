@@ -11,15 +11,17 @@ public class HomeViewModel : BaseViewModel
     #region Private Fields
 
     private readonly IAuthService _authService;
+    private readonly IServiceProvider _services;
     private string _welcomeMessage = string.Empty;
 
     #endregion
 
     #region Constructor
 
-    public HomeViewModel(IAuthService authService)
+    public HomeViewModel(IAuthService authService, IServiceProvider services)
     {
         _authService = authService;
+        _services = services;
         UpdateWelcomeMessage();
     }
 
@@ -75,7 +77,8 @@ public class HomeViewModel : BaseViewModel
     {
         _authService.SignOut();
         UpdateWelcomeMessage();
-        await Shell.Current.GoToAsync("///HomePage");
+        App.SetRootPage(_services.GetRequiredService<SignedOutShell>());
+        await Task.CompletedTask;
     });
 
     #endregion

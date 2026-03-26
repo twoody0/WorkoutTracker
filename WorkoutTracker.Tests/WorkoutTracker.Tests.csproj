@@ -1,11 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\\WorkoutTracker.App\\Models\\User.cs" Link="AppSources\\Models\\User.cs" />
+    <Compile Include="..\\WorkoutTracker.App\\Models\\Workout.cs" Link="AppSources\\Models\\Workout.cs" />
+    <Compile Include="..\\WorkoutTracker.App\\Models\\WorkoutPlan.cs" Link="AppSources\\Models\\WorkoutPlan.cs" />
+    <Compile Include="..\\WorkoutTracker.App\\Services\\IAuthService.cs" Link="AppSources\\Services\\IAuthService.cs" />
+    <Compile Include="..\\WorkoutTracker.App\\Services\\AuthService.cs" Link="AppSources\\Services\\AuthService.cs" />
+    <Compile Include="..\\WorkoutTracker.App\\Services\\WorkoutScheduleService.cs" Link="AppSources\\Services\\WorkoutScheduleService.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
