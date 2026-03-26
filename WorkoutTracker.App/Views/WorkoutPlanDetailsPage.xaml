@@ -19,25 +19,25 @@
                     TextColor="White"
                     CornerRadius="12" />
 
-            <CollectionView ItemsSource="{Binding WorkoutGroups}">
-                <CollectionView.ItemTemplate>
+            <VerticalStackLayout Spacing="12"
+                                 BindableLayout.ItemsSource="{Binding WorkoutGroups}">
+                <BindableLayout.ItemTemplate>
                     <DataTemplate>
-                        <VerticalStackLayout Spacing="10" Margin="0,0,0,12">
+                        <VerticalStackLayout Spacing="10">
                             <Label Text="{Binding Day}"
                                    FontSize="18"
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#244B58, Dark=#C3D7E7}" />
 
-                            <CollectionView ItemsSource="{Binding Workouts}"
-                                            SelectionMode="None">
-                                <CollectionView.ItemTemplate>
+                            <VerticalStackLayout Spacing="10"
+                                                 BindableLayout.ItemsSource="{Binding Workouts}">
+                                <BindableLayout.ItemTemplate>
                                     <DataTemplate>
                                         <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
                                                 StrokeThickness="1"
                                                 StrokeShape="RoundRectangle 18"
                                                 BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
-                                                Padding="12"
-                                                Margin="0,0,0,10">
+                                                Padding="12">
                                             <VerticalStackLayout Spacing="4">
                                                 <Label Text="{Binding Workout.Name}" FontAttributes="Bold" FontSize="16" />
 
@@ -68,12 +68,12 @@
                                             </VerticalStackLayout>
                                         </Border>
                                     </DataTemplate>
-                                </CollectionView.ItemTemplate>
-                            </CollectionView>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
                         </VerticalStackLayout>
                     </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

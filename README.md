@@ -1,10 +1,10 @@
-﻿# 🏋️ Workout Tracker App
+# Dayvera
 
 A cross-platform fitness tracker built with **.NET MAUI**, designed to help users stay on top of their fitness goals by logging cardio and weightlifting workouts, tracking progress, and viewing performance data.
 
 ---
 
-## 🚀 Features
+## Features
 
 - **User Accounts**
   - Sign up and log in with a simple in-memory auth system.
@@ -13,7 +13,7 @@ A cross-platform fitness tracker built with **.NET MAUI**, designed to help user
   - Track exercises by muscle group, with sets, reps, and weights.
 
 - **Cardio Sessions**
-  - Real-time step tracking using Android’s Step Counter and Step Detector sensors.
+  - Real-time step tracking using Android's Step Counter and Step Detector sensors.
 
 - **Dashboard**
   - Filter workouts by date to stay organized.
@@ -29,7 +29,7 @@ A cross-platform fitness tracker built with **.NET MAUI**, designed to help user
 
 ---
 
-## 🧰 Tech Stack
+## Tech Stack
 
 - .NET MAUI (cross-platform UI framework)
 - MVVM architecture (clean separation of UI & logic)
@@ -38,7 +38,7 @@ A cross-platform fitness tracker built with **.NET MAUI**, designed to help user
 
 ---
 
-## 🛠 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -55,11 +55,11 @@ dotnet build
 dotnet run
 ```
 
-> 📱 For Android: make sure to grant **Activity Recognition** permissions when requested.
+For Android: make sure to grant **Activity Recognition** permissions when requested.
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 ├── Models/                  # Workout, User, Exercise definitions
@@ -73,7 +73,7 @@ dotnet run
 
 ---
 
-## 📈 What's Next?
+## What's Next?
 
 - Add SQLite to persist user and workout data
 - Secure passwords with hashing (e.g. BCrypt)
@@ -83,13 +83,13 @@ dotnet run
 
 ---
 
-## 👋 Author
+## Author
 
 **Tyler Woody**  
 Built with .NET MAUI, a lot of coffee, and a love for clean code.
 
 ---
 
-## 📃 License
+## License
 
 This project is open-source and available under the [MIT License](LICENSE).

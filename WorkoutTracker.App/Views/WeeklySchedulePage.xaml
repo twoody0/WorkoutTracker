@@ -37,15 +37,14 @@
                 </VerticalStackLayout>
             </Border>
 
-            <CollectionView ItemsSource="{Binding WeeklySchedule}"
-                            SelectionMode="None">
-                <CollectionView.ItemTemplate>
+            <VerticalStackLayout Spacing="14"
+                                 BindableLayout.ItemsSource="{Binding WeeklySchedule}">
+                <BindableLayout.ItemTemplate>
                     <DataTemplate>
                         <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
                                 BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
                                 StrokeShape="RoundRectangle 22"
-                                Padding="16"
-                                Margin="0,0,0,14">
+                                Padding="16">
                             <VerticalStackLayout Spacing="12">
                                 <Grid ColumnDefinitions="*,Auto"
                                       ColumnSpacing="10">
@@ -68,28 +67,40 @@
                                             CommandParameter="{Binding Key}" />
                                 </Grid>
 
-                                <CollectionView ItemsSource="{Binding Value}"
-                                                SelectionMode="None">
-                                    <CollectionView.EmptyView>
-                                        <Border StrokeThickness="0"
-                                                BackgroundColor="{AppThemeBinding Light=#F5F7FA, Dark=#1B2431}"
-                                                StrokeShape="RoundRectangle 16"
-                                                Padding="14">
-                                            <Label Text="Rest day"
-                                                   FontSize="14"
-                                                   FontAttributes="Italic"
-                                                   HorizontalOptions="Center"
-                                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}" />
-                                        </Border>
-                                    </CollectionView.EmptyView>
+                                <Border StrokeThickness="0"
+                                        BackgroundColor="{AppThemeBinding Light=#F5F7FA, Dark=#1B2431}"
+                                        StrokeShape="RoundRectangle 16"
+                                        Padding="14"
+                                        IsVisible="False">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border"
+                                                     Binding="{Binding Value.Count}"
+                                                     Value="0">
+                                            <Setter Property="IsVisible" Value="True" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Label Text="Rest day"
+                                           FontSize="14"
+                                           FontAttributes="Italic"
+                                           HorizontalOptions="Center"
+                                           TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}" />
+                                </Border>
 
-                                    <CollectionView.ItemTemplate>
+                                <VerticalStackLayout Spacing="10"
+                                                     BindableLayout.ItemsSource="{Binding Value}">
+                                    <VerticalStackLayout.Triggers>
+                                        <DataTrigger TargetType="VerticalStackLayout"
+                                                     Binding="{Binding Value.Count}"
+                                                     Value="0">
+                                            <Setter Property="IsVisible" Value="False" />
+                                        </DataTrigger>
+                                    </VerticalStackLayout.Triggers>
+                                    <BindableLayout.ItemTemplate>
                                         <DataTemplate>
                                             <Border Stroke="{AppThemeBinding Light=#E0E7EF, Dark=#334050}"
                                                     BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#1A2230}"
                                                     StrokeShape="RoundRectangle 18"
-                                                    Padding="12"
-                                                    Margin="0,0,0,10">
+                                                    Padding="12">
                                                 <VerticalStackLayout Spacing="4">
                                                     <Label Text="{Binding Name}"
                                                            FontSize="16"
@@ -112,13 +123,13 @@
                                                 </VerticalStackLayout>
                                             </Border>
                                         </DataTemplate>
-                                    </CollectionView.ItemTemplate>
-                                </CollectionView>
+                                    </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
                             </VerticalStackLayout>
                         </Border>
                     </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

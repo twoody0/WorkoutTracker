@@ -54,10 +54,10 @@
                         SelectedItem="{Binding SelectedCategory}" />
             </VerticalStackLayout>
 
-            <CollectionView ItemsSource="{Binding GroupedWorkoutPlans}"
-                            IsVisible="{Binding ShowGroupedWorkoutPlans}"
-                            SelectionMode="None">
-                <CollectionView.ItemTemplate>
+            <VerticalStackLayout IsVisible="{Binding ShowGroupedWorkoutPlans}"
+                                 Spacing="14"
+                                 BindableLayout.ItemsSource="{Binding GroupedWorkoutPlans}">
+                <BindableLayout.ItemTemplate>
                     <DataTemplate>
                         <VerticalStackLayout Spacing="10">
                             <Label Text="{Binding CategoryName}"
@@ -65,16 +65,15 @@
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#155E52, Dark=#8EE7D2}" />
 
-                            <CollectionView ItemsSource="{Binding .}"
-                                            SelectionMode="None">
-                                <CollectionView.ItemTemplate>
+                            <VerticalStackLayout Spacing="10"
+                                                 BindableLayout.ItemsSource="{Binding .}">
+                                <BindableLayout.ItemTemplate>
                                     <DataTemplate>
                                         <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
                                                 StrokeThickness="1"
                                                 StrokeShape="RoundRectangle 18"
                                                 BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
-                                                Padding="15"
-                                                Margin="0,0,0,10">
+                                                Padding="15">
                                             <VerticalStackLayout Spacing="4">
                                                 <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" />
                                                 <Label Text="{Binding DurationDisplay, StringFormat='Duration: {0}'}"
@@ -95,24 +94,23 @@
                                             </VerticalStackLayout>
                                         </Border>
                                     </DataTemplate>
-                                </CollectionView.ItemTemplate>
-                            </CollectionView>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
                         </VerticalStackLayout>
                     </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
 
-            <CollectionView ItemsSource="{Binding WorkoutPlans}"
-                            IsVisible="{Binding ShowFlatWorkoutPlans}"
-                            SelectionMode="None">
-                <CollectionView.ItemTemplate>
+            <VerticalStackLayout IsVisible="{Binding ShowFlatWorkoutPlans}"
+                                 Spacing="10"
+                                 BindableLayout.ItemsSource="{Binding WorkoutPlans}">
+                <BindableLayout.ItemTemplate>
                     <DataTemplate>
                         <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
                                 StrokeThickness="1"
                                 StrokeShape="RoundRectangle 18"
                                 BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
-                                Padding="15"
-                                Margin="0,0,0,10">
+                                Padding="15">
                             <VerticalStackLayout Spacing="4">
                                 <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" />
                                 <Label Text="{Binding Category, StringFormat='Category: {0}'}"
@@ -136,8 +134,8 @@
                             </VerticalStackLayout>
                         </Border>
                     </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
 
             <Button Text="{Binding CreatePlanButtonText}"
                     Command="{Binding ToggleCreatePlanCommand}"

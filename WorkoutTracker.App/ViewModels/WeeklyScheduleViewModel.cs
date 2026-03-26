@@ -67,12 +67,13 @@ public class WeeklyScheduleViewModel : BaseViewModel
 
     private void LoadSchedule()
     {
+        var schedule = _scheduleService.GetWeeklySchedule();
         WeeklySchedule.Clear();
 
         foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
         {
-            var workouts = _scheduleService.GetWeeklySchedule().ContainsKey(day)
-                ? _scheduleService.GetWeeklySchedule()[day]
+            var workouts = schedule.ContainsKey(day)
+                ? schedule[day]
                 : new List<Workout>();
 
             WeeklySchedule.Add(new KeyValuePair<DayOfWeek, List<Workout>>(day, workouts));

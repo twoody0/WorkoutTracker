@@ -29,10 +29,10 @@
 		<DefineConstants Condition="'$(AppEdition)' == 'Premium'">$(DefineConstants);PREMIUM_EDITION</DefineConstants>
 
 		<!-- Display name -->
-		<ApplicationTitle>WorkoutTracker</ApplicationTitle>
+		<ApplicationTitle>Dayvera</ApplicationTitle>
 
 		<!-- App Identifier -->
-		<ApplicationId>com.companyname.workouttracker</ApplicationId>
+		<ApplicationId>com.companyname.dayvera</ApplicationId>
 
 		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>

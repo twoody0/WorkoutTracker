@@ -259,7 +259,7 @@ public class HomeViewModel : BaseViewModel
 
         WelcomeMessage = SupportsAccounts
             ? $"Welcome, {user.Username}"
-            : "Welcome to WorkoutTracker";
+            : "Welcome to Dayvera";
     }
 
     public async Task RefreshHeatMapAsync()

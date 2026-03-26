@@ -30,6 +30,7 @@ public class WorkoutViewModel : BaseViewModel
     private bool _isAdvancedFieldsVisible = true;
     private bool _suppressSuggestionRefresh;
     private List<Workout> _workoutHistory = new();
+    private bool _hasScheduledWeightliftingWorkoutsToday;
 
     #endregion
 
@@ -306,8 +307,13 @@ public class WorkoutViewModel : BaseViewModel
     {
         RecommendedPlanWorkouts.Clear();
 
-        foreach (var workout in _workoutScheduleService.GetActivePlanWorkoutsForDay(DateTime.Today.DayOfWeek)
-                     .Where(workout => workout.Type == WorkoutType.WeightLifting)
+        var todaysPlannedWorkouts = _workoutScheduleService.GetActivePlanWorkoutsForDay(DateTime.Today.DayOfWeek)
+            .Where(workout => workout.Type == WorkoutType.WeightLifting)
+            .ToList();
+
+        _hasScheduledWeightliftingWorkoutsToday = todaysPlannedWorkouts.Count > 0;
+
+        foreach (var workout in todaysPlannedWorkouts
                      .Where(workout => !_usedPlanWorkoutKeys.Contains(GetWorkoutKey(workout))))
         {
             RecommendedPlanWorkouts.Add(new WorkoutRecommendation
@@ -339,7 +345,9 @@ public class WorkoutViewModel : BaseViewModel
         }
         else if (_workoutScheduleService.ActivePlan != null)
         {
-            ActivePlanSummary = $"Today is {TodayLabel}. No unused weightlifting suggestions are left from '{_workoutScheduleService.ActivePlan.Name}'.";
+            ActivePlanSummary = _hasScheduledWeightliftingWorkoutsToday
+                ? $"Today is {TodayLabel}. You've completed the weightlifting workout suggestions from '{_workoutScheduleService.ActivePlan.Name}' for today, but you can still add more if you want."
+                : $"Today is {TodayLabel}. It looks like a rest day in '{_workoutScheduleService.ActivePlan.Name}', but you can still add a workout if you want.";
         }
         else
         {
