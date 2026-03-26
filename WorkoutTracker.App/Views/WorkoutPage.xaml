@@ -117,24 +117,31 @@
                 </Grid>
             </Border>
 
-            <Entry x:Name="WeightEntry"
-                   Placeholder="Enter weight (lbs or kg)" 
-                   Keyboard="Numeric" 
-                    Text="{Binding Weight}" />
+            <VerticalStackLayout Spacing="2">
+                <Label Text="Weight" FontAttributes="Bold" />
+                <Entry x:Name="WeightEntry"
+                       Placeholder="Enter weight (lbs or kg)" 
+                       Keyboard="Numeric" 
+                       Text="{Binding Weight}" />
+            </VerticalStackLayout>
 
             <VerticalStackLayout IsVisible="{Binding IsAdvancedFieldsVisible}"
-                                 Spacing="5">
-                <!-- Muscle Group Picker -->
-                <Picker Title="Select Muscle Group"
-                        ItemsSource="{Binding MuscleGroups}"
-                        SelectedItem="{Binding SelectedMuscleGroup}" />
+                                  Spacing="5">
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="Focus" FontAttributes="Bold" />
+                    <Picker Title="Select Muscle Group"
+                            ItemsSource="{Binding MuscleGroups}"
+                            SelectedItem="{Binding SelectedMuscleGroup}" />
+                </VerticalStackLayout>
 
-                <!-- Entry for exercise name search -->
-                <Entry x:Name="ExerciseEntry"
-                       Placeholder="Type exercise name..."
-                       Text="{Binding ExerciseSearchQuery}" 
-                       Focused="ExerciseEntry_Focused"
-                       Unfocused="ExerciseEntry_Unfocused" />
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="Exercise" FontAttributes="Bold" />
+                    <Entry x:Name="ExerciseEntry"
+                           Placeholder="Type exercise name..."
+                           Text="{Binding ExerciseSearchQuery}" 
+                           Focused="ExerciseEntry_Focused"
+                           Unfocused="ExerciseEntry_Unfocused" />
+                </VerticalStackLayout>
 
                 <!-- CollectionView for suggestions -->
                 <CollectionView ItemsSource="{Binding ExerciseSuggestions}"
@@ -154,15 +161,21 @@
                     </CollectionView.ItemTemplate>
                 </CollectionView>
 
-                <Entry x:Name="RepsEntry"
-                       Placeholder="Enter reps" 
-                       Keyboard="Numeric" 
-                       Text="{Binding Reps}" />
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="Reps" FontAttributes="Bold" />
+                    <Entry x:Name="RepsEntry"
+                           Placeholder="Enter reps" 
+                           Keyboard="Numeric" 
+                           Text="{Binding Reps}" />
+                </VerticalStackLayout>
 
-                <Entry x:Name="SetsEntry"
-                       Placeholder="Enter sets" 
-                       Keyboard="Numeric" 
-                       Text="{Binding Sets}" />
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="Sets" FontAttributes="Bold" />
+                    <Entry x:Name="SetsEntry"
+                           Placeholder="Enter sets" 
+                           Keyboard="Numeric" 
+                           Text="{Binding Sets}" />
+                </VerticalStackLayout>
             </VerticalStackLayout>
 
             <Button Text="Add Workout" 

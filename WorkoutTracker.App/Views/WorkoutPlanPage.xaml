@@ -54,6 +54,18 @@
                         SelectedItem="{Binding SelectedCategory}" />
             </VerticalStackLayout>
 
+            <Border IsVisible="{Binding ShowCategoryPrompt}"
+                    Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 18"
+                    BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#101720}"
+                    Padding="16">
+                <Label Text="Pick All Categories to show everything, or choose one category to browse just that section."
+                       FontSize="14"
+                       HorizontalTextAlignment="Center"
+                       TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+            </Border>
+
             <VerticalStackLayout IsVisible="{Binding ShowGroupedWorkoutPlans}"
                                  Spacing="14"
                                  BindableLayout.ItemsSource="{Binding GroupedWorkoutPlans}">

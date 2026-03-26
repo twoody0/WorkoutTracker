@@ -7,6 +7,7 @@ namespace WorkoutTracker.ViewModels;
 
 public class WorkoutPlanViewModel : BaseViewModel
 {
+    private const string SelectCategoryOption = "Choose a Category";
     private const string AllCategoriesOption = "All Categories";
     private const string CustomCategory = "Custom";
 
@@ -15,7 +16,7 @@ public class WorkoutPlanViewModel : BaseViewModel
     private string _newPlanName = string.Empty;
     private string _newPlanDescription = string.Empty;
     private string _newPlanDurationInWeeks = "4";
-    private string _selectedCategory = AllCategoriesOption;
+    private string _selectedCategory = SelectCategoryOption;
     private string _selectedNewPlanCategory = CustomCategory;
     private bool _isCreatePlanVisible;
 
@@ -26,10 +27,12 @@ public class WorkoutPlanViewModel : BaseViewModel
     private List<WorkoutPlan> AllPlans { get; set; } = new();
 
     public WorkoutPlan? CurrentPlan => _scheduleService.ActivePlan;
+    public bool HasCategorySelection => SelectedCategory != SelectCategoryOption;
+    public bool ShowCategoryPrompt => !HasCategorySelection;
     public bool HasActivePlan => _scheduleService.ActivePlan != null;
     public string CurrentPlanTimelineSummary => _scheduleService.GetActivePlanTimelineSummary();
     public bool ShowGroupedWorkoutPlans => SelectedCategory == AllCategoriesOption;
-    public bool ShowFlatWorkoutPlans => !ShowGroupedWorkoutPlans;
+    public bool ShowFlatWorkoutPlans => HasCategorySelection && !ShowGroupedWorkoutPlans;
 
     public string NewPlanName
     {
@@ -112,6 +115,7 @@ public class WorkoutPlanViewModel : BaseViewModel
             .ToList();
 
         AvailableCategories.Clear();
+        AvailableCategories.Add(SelectCategoryOption);
         AvailableCategories.Add(AllCategoriesOption);
 
         foreach (var category in categories)
@@ -132,7 +136,7 @@ public class WorkoutPlanViewModel : BaseViewModel
 
         if (!AvailableCategories.Contains(SelectedCategory))
         {
-            _selectedCategory = AllCategoriesOption;
+            _selectedCategory = SelectCategoryOption;
             OnPropertyChanged(nameof(SelectedCategory));
         }
 
@@ -150,9 +154,15 @@ public class WorkoutPlanViewModel : BaseViewModel
 
         var filteredPlans = AllPlans
             .Where(plan => plan != _scheduleService.ActivePlan)
-            .Where(plan => SelectedCategory == AllCategoriesOption ||
+            .Where(plan => !HasCategorySelection ||
+                           SelectedCategory == AllCategoriesOption ||
                            string.Equals(plan.Category, SelectedCategory, StringComparison.OrdinalIgnoreCase))
             .ToList();
+
+        if (!HasCategorySelection)
+        {
+            filteredPlans.Clear();
+        }
 
         foreach (var plan in filteredPlans)
         {
@@ -167,6 +177,8 @@ public class WorkoutPlanViewModel : BaseViewModel
         }
 
         OnPropertyChanged(nameof(CurrentPlan));
+        OnPropertyChanged(nameof(HasCategorySelection));
+        OnPropertyChanged(nameof(ShowCategoryPrompt));
         OnPropertyChanged(nameof(HasActivePlan));
         OnPropertyChanged(nameof(CurrentPlanTimelineSummary));
         OnPropertyChanged(nameof(ShowGroupedWorkoutPlans));

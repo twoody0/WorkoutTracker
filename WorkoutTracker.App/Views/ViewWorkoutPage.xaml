@@ -24,12 +24,9 @@
                                     <Setter Property="IsVisible" Value="True"/>
                                 </DataTrigger>
                             </StackLayout.Triggers>
-                            <Label Text="Weight:" FontAttributes="Bold" />
-                            <Label Text="{Binding Weight}" />
-                            <Label Text="Reps:" FontAttributes="Bold" />
-                            <Label Text="{Binding Reps}" />
-                            <Label Text="Sets:" FontAttributes="Bold" />
-                            <Label Text="{Binding Sets}" />
+                            <Label Text="{Binding Weight, StringFormat='Weight: {0}'}" />
+                            <Label Text="{Binding Reps, StringFormat='Reps: {0}'}" />
+                            <Label Text="{Binding Sets, StringFormat='Sets: {0}'}" />
                         </StackLayout>
 
                         <!-- Cardio Section -->
@@ -41,8 +38,7 @@
                                     <Setter Property="IsVisible" Value="True"/>
                                 </DataTrigger>
                             </StackLayout.Triggers>
-                            <Label Text="Steps:" FontAttributes="Bold" />
-                            <Label Text="{Binding Steps}" />
+                            <Label Text="{Binding Steps, StringFormat='Steps: {0}'}" />
                         </StackLayout>
                         <Button
                             Text="Copy to Add"

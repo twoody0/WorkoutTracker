@@ -20,7 +20,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
     public WorkoutPlanDetailsViewModel(IWorkoutScheduleService scheduleService)
     {
         _scheduleService = scheduleService;
-        ToggleExpandCommand = new Command<WorkoutDisplay>(ToggleExpand);
+        ToggleExpandCommand = new Command<WorkoutPlanDayGroup>(ToggleExpand);
         StartPlanCommand = new Command(StartPlan);
         ChangeWorkoutDayCommand = new Command<WorkoutDisplay>(ChangeWorkoutDay);
     }
@@ -61,23 +61,40 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
         SelectedPlan = plan;
         WorkoutGroups.Clear();
 
-        foreach (var group in plan.Workouts
-            .OrderBy(workout => (int)workout.Day)
-            .GroupBy(workout => workout.Day))
+        var workoutsByDay = plan.Workouts
+            .GroupBy(workout => workout.Day)
+            .ToDictionary(group => group.Key, group => group.AsEnumerable());
+
+        var orderedDays = Enum.GetValues<DayOfWeek>()
+            .OrderBy(day => (int)day)
+            .ToList();
+        var firstWorkoutDay = orderedDays.FirstOrDefault(day => workoutsByDay.ContainsKey(day));
+
+        for (var i = 0; i < orderedDays.Count; i++)
         {
-            WorkoutGroups.Add(new WorkoutPlanDayGroup(group.Key, group.Select(workout => new WorkoutDisplay(workout))));
+            var day = orderedDays[i];
+            var workoutsForDay = workoutsByDay.TryGetValue(day, out var workouts)
+                ? workouts.OrderBy(workout => workout.Name)
+                : Enumerable.Empty<Workout>();
+
+            WorkoutGroups.Add(new WorkoutPlanDayGroup(
+                day,
+                workoutsForDay.Select(workout => new WorkoutDisplay(workout)),
+                isExpanded: day == firstWorkoutDay && workoutsForDay.Any()));
         }
 
+        OnPropertyChanged(nameof(SelectedPlan));
         OnPropertyChanged(nameof(WorkoutGroups));
     }
 
-    private void ToggleExpand(WorkoutDisplay workoutDisplay)
+    private void ToggleExpand(WorkoutPlanDayGroup? workoutGroup)
     {
-        if (workoutDisplay != null)
+        if (workoutGroup == null || !workoutGroup.HasWorkouts)
         {
-            workoutDisplay.IsExpanded = !workoutDisplay.IsExpanded;
-            OnPropertyChanged(nameof(WorkoutGroups));
+            return;
         }
+
+        workoutGroup.IsExpanded = !workoutGroup.IsExpanded;
     }
 
     private async void StartPlan()
