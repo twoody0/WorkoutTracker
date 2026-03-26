@@ -27,14 +27,42 @@
                              BackgroundColor="#FBFBFC"
                              Padding="18">
                             <VerticalStackLayout Spacing="16">
-                                   <Label Text="Muscle Heat"
-                                          FontSize="22"
-                                          FontAttributes="Bold"
-                                          HorizontalOptions="Center"/>
+                                   <Grid ColumnDefinitions="Auto,Auto"
+                                         ColumnSpacing="8"
+                                         HorizontalOptions="Center">
+                                          <Label Grid.Column="0"
+                                                 Text="Muscle Heat"
+                                                 FontSize="22"
+                                                 FontAttributes="Bold"
+                                                 VerticalOptions="Center"/>
+                                          <ImageButton Grid.Column="1"
+                                                       Source="info.png"
+                                                       Command="{Binding ToggleHeatInfoCommand}"
+                                                       WidthRequest="20"
+                                                       HeightRequest="20"
+                                                       MinimumWidthRequest="0"
+                                                       MinimumHeightRequest="0"
+                                                       Padding="0"
+                                                       BackgroundColor="Transparent"
+                                                       BorderWidth="0"
+                                                       Aspect="AspectFit"
+                                                       VerticalOptions="Center"/>
+                                   </Grid>
 
                                    <Label Text="{Binding TodaySummary}"
                                           HorizontalTextAlignment="Center"
                                           TextColor="Gray"/>
+
+                                   <Border IsVisible="{Binding IsHeatInfoVisible}"
+                                           BackgroundColor="#F1F3F6"
+                                           StrokeThickness="0"
+                                           StrokeShape="RoundRectangle 12"
+                                           Padding="12,10">
+                                          <Label Text="{Binding HeatInfoText}"
+                                                 HorizontalTextAlignment="Center"
+                                                 TextColor="#5A6472"
+                                                 FontSize="12"/>
+                                   </Border>
 
                                    <Grid ColumnDefinitions="*,*"
                                          ColumnSpacing="16">

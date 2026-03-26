@@ -13,6 +13,8 @@ public class HomeViewModel : BaseViewModel
     private readonly IServiceProvider _services;
     private string _welcomeMessage = string.Empty;
     private string _todaySummary = "No recent lifting heat right now.";
+    private string _heatInfoText = "Heat uses your recent lifts, body weight, and a 24-hour fade window.";
+    private bool _isHeatInfoVisible;
     private double _frontShouldersOpacity;
     private double _frontChestOpacity;
     private double _frontBicepsOpacity;
@@ -53,6 +55,18 @@ public class HomeViewModel : BaseViewModel
     {
         get => _todaySummary;
         set => SetProperty(ref _todaySummary, value);
+    }
+
+    public string HeatInfoText
+    {
+        get => _heatInfoText;
+        set => SetProperty(ref _heatInfoText, value);
+    }
+
+    public bool IsHeatInfoVisible
+    {
+        get => _isHeatInfoVisible;
+        set => SetProperty(ref _isHeatInfoVisible, value);
     }
 
     public double FrontShouldersOpacity
@@ -138,6 +152,11 @@ public class HomeViewModel : BaseViewModel
         await Shell.Current.GoToAsync("LoginPage");
     });
 
+    public ICommand ToggleHeatInfoCommand => new Command(() =>
+    {
+        IsHeatInfoVisible = !IsHeatInfoVisible;
+    });
+
     public ICommand NavigateToSignupCommand => new Command(async () =>
     {
         await Shell.Current.GoToAsync("SignupPage");
@@ -211,7 +230,8 @@ public class HomeViewModel : BaseViewModel
         var lastWorkoutAge = mostRecentWorkout == null
             ? string.Empty
             : GetRelativeAge(now - mostRecentWorkout.StartTime);
-        TodaySummary = $"Muscle heat fades over 24 hours. Based on {workouts.Count} recent lift{(workouts.Count == 1 ? string.Empty : "s")}, normalized to your {bodyWeight:N0} lb body weight{lastWorkoutAge}.";
+        TodaySummary = $"{workouts.Count} recent lift{(workouts.Count == 1 ? string.Empty : "s")}{lastWorkoutAge}.";
+        HeatInfoText = $"Heat uses your recent lifts, body weight, and a 24-hour fade window. Current body weight: {bodyWeight:N0} lb.";
     }
 
     private void ResetHeatMap()
@@ -230,6 +250,8 @@ public class HomeViewModel : BaseViewModel
         BackHamstringsOpacity = 0;
         BackCalvesOpacity = 0;
         TodaySummary = "No recent lifting heat right now.";
+        HeatInfoText = "Heat uses your recent lifts, body weight, and a 24-hour fade window.";
+        IsHeatInfoVisible = false;
     }
 
     private static Dictionary<string, double> BuildVolumeByRegion(IEnumerable<Workout> workouts, double bodyWeight, DateTime now)
