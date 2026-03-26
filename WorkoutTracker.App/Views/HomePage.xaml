@@ -1,175 +1,179 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage 
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:conv="clr-namespace:WorkoutTracker.Converters"
-    x:Class="WorkoutTracker.Views.HomePage"
-    Title="Home">
-    <ContentPage.Resources>
-        <ResourceDictionary>
-            <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
-        </ResourceDictionary>
-    </ContentPage.Resources>
+<ContentPage
+       xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:conv="clr-namespace:WorkoutTracker.Converters"
+       x:Class="WorkoutTracker.Views.HomePage"
+       Title="Home">
+       <ContentPage.Resources>
+              <ResourceDictionary>
+                     <conv:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+              </ResourceDictionary>
+       </ContentPage.Resources>
 
-    <ScrollView>
-        <StackLayout Padding="20" VerticalOptions="Center" Spacing="15">
-            <Label Text="{Binding WelcomeMessage}"
-                   FontSize="20"
-                   HorizontalOptions="Center"
-                   IsVisible="{Binding IsUserLoggedIn}" />
+       <ScrollView>
+              <StackLayout Padding="20"
+                           VerticalOptions="Center"
+                           Spacing="15">
+                     <Label Text="{Binding WelcomeMessage}"
+                            FontSize="20"
+                            HorizontalOptions="Center"
+                            IsVisible="{Binding IsUserLoggedIn}"/>
 
-            <Border IsVisible="{Binding IsUserLoggedIn}"
-                    Stroke="#E4E6EB"
-                    StrokeThickness="1"
-                    StrokeShape="RoundRectangle 20"
-                    BackgroundColor="#FBFBFC"
-                    Padding="18">
-                <VerticalStackLayout Spacing="16">
-                    <Label Text="Muscle Heat"
-                           FontSize="22"
-                           FontAttributes="Bold"
-                           HorizontalOptions="Center" />
+                     <Border IsVisible="{Binding IsUserLoggedIn}"
+                             Stroke="#E4E6EB"
+                             StrokeThickness="1"
+                             StrokeShape="RoundRectangle 20"
+                             BackgroundColor="#FBFBFC"
+                             Padding="18">
+                            <VerticalStackLayout Spacing="16">
+                                   <Label Text="Muscle Heat"
+                                          FontSize="22"
+                                          FontAttributes="Bold"
+                                          HorizontalOptions="Center"/>
 
-                    <Label Text="{Binding TodaySummary}"
-                           HorizontalTextAlignment="Center"
-                           TextColor="Gray" />
+                                   <Label Text="{Binding TodaySummary}"
+                                          HorizontalTextAlignment="Center"
+                                          TextColor="Gray"/>
 
-                    <Grid ColumnDefinitions="*,*"
-                          ColumnSpacing="16">
-                        <VerticalStackLayout Grid.Column="0"
-                                             HorizontalOptions="Center"
-                                             Spacing="8">
-                            <Label Text="Front"
-                                   FontAttributes="Bold"
-                                   HorizontalOptions="Center" />
-                            <Border Stroke="#ECEEF2"
-                                    StrokeThickness="1"
-                                    StrokeShape="RoundRectangle 18"
-                                    BackgroundColor="#FFFFFF"
-                                    Padding="6">
-                                <Grid WidthRequest="190"
-                                      HeightRequest="360">
-                                    <Image Source="body_front_base.png"
-                                           Aspect="AspectFit" />
-                                    <Image Source="body_front_shoulders.png"
-                                           Aspect="AspectFit"
-                                           Opacity="{Binding FrontShouldersOpacity}" />
-                                    <Image Source="body_front_chest.png"
-                                           Aspect="AspectFit"
-                                           Opacity="{Binding FrontChestOpacity}" />
-                                    <Image Source="body_front_biceps.png"
-                                           Aspect="AspectFit"
-                                           Opacity="{Binding FrontBicepsOpacity}" />
-                                    <Image Source="body_front_triceps.png"
-                                           Aspect="AspectFit"
-                                           Opacity="{Binding FrontTricepsOpacity}" />
-                                    <Image Source="body_front_abs.png"
-                                           Aspect="AspectFit"
-                                           Opacity="{Binding FrontAbsOpacity}" />
-                                    <Image Source="body_front_quads.png"
-                                           Aspect="AspectFit"
-                                           Opacity="{Binding FrontQuadsOpacity}" />
-                                </Grid>
-                            </Border>
-                        </VerticalStackLayout>
+                                   <Grid ColumnDefinitions="*,*"
+                                         ColumnSpacing="16">
+                                          <VerticalStackLayout Grid.Column="0"
+                                                               HorizontalOptions="Center"
+                                                               Spacing="8">
+                                                 <Label Text="Front"
+                                                        FontAttributes="Bold"
+                                                        HorizontalOptions="Center"/>
+                                                 <Border Stroke="#ECEEF2"
+                                                         StrokeThickness="1"
+                                                         StrokeShape="RoundRectangle 18"
+                                                         BackgroundColor="#FFFFFF"
+                                                         Padding="4,2">
+                                                        <Grid WidthRequest="190"
+                                                              HeightRequest="300">
+                                                               <Image Source="body_front_base.png"
+                                                                      Aspect="AspectFit"/>
+                                                               <Image Source="body_front_shoulders.png"
+                                                                      Aspect="AspectFit"
+                                                                      Opacity="{Binding FrontShouldersOpacity}"/>
+                                                               <Image Source="body_front_chest.png"
+                                                                      Aspect="AspectFit"
+                                                                      Opacity="{Binding FrontChestOpacity}"/>
+                                                               <Image Source="body_front_biceps.png"
+                                                                      Aspect="AspectFit"
+                                                                      Opacity="{Binding FrontBicepsOpacity}"/>
+                                                               <Image Source="body_front_triceps.png"
+                                                                      Aspect="AspectFit"
+                                                                      Opacity="{Binding FrontTricepsOpacity}"/>
+                                                               <Image Source="body_front_abs.png"
+                                                                      Aspect="AspectFit"
+                                                                      Opacity="{Binding FrontAbsOpacity}"/>
+                                                               <Image Source="body_front_quads.png"
+                                                                      Aspect="AspectFit"
+                                                                      Opacity="{Binding FrontQuadsOpacity}"/>
+                                                        </Grid>
+                                                 </Border>
+                                          </VerticalStackLayout>
 
-                        <VerticalStackLayout Grid.Column="1"
-                                             HorizontalOptions="Center"
-                                             Spacing="8">
-                            <Label Text="Back"
-                                   FontAttributes="Bold"
-                                   HorizontalOptions="Center" />
-                            <Border Stroke="#ECEEF2"
-                                    StrokeThickness="1"
-                                    StrokeShape="RoundRectangle 18"
-                                    BackgroundColor="#FFFFFF"
-                                    Padding="6">
-                                <Grid WidthRequest="190"
-                                      HeightRequest="360">
-                                    <Image Source="body_back_base.png"
-                                           Aspect="AspectFit" />
-                                    <Image Source="body_back_shoulders.png"
-                                           Aspect="AspectFit"
-                                           Opacity="{Binding BackShouldersOpacity}" />
-                                    <Image Source="body_back_triceps.png"
-                                           Aspect="AspectFit"
-                                           Opacity="{Binding BackTricepsOpacity}" />
-                                    <Image Source="body_back_lats.png"
-                                           Aspect="AspectFit"
-                                           Opacity="{Binding BackLatsOpacity}" />
-                                    <Image Source="body_back_lower_back.png"
-                                           Aspect="AspectFit"
-                                           Opacity="{Binding BackLowerBackOpacity}" />
-                                    <Image Source="body_back_glutes.png"
-                                           Aspect="AspectFit"
-                                           Opacity="{Binding BackGlutesOpacity}" />
-                                    <Image Source="body_back_hamstrings.png"
-                                           Aspect="AspectFit"
-                                           Opacity="{Binding BackHamstringsOpacity}" />
-                                    <Image Source="body_back_calves.png"
-                                           Aspect="AspectFit"
-                                           Opacity="{Binding BackCalvesOpacity}" />
-                                </Grid>
-                            </Border>
-                        </VerticalStackLayout>
-                    </Grid>
+                                          <VerticalStackLayout Grid.Column="1"
+                                                               HorizontalOptions="Center"
+                                                               Spacing="8">
+                                                 <Label Text="Back"
+                                                        FontAttributes="Bold"
+                                                        HorizontalOptions="Center"/>
+                                                 <Border Stroke="#ECEEF2"
+                                                         StrokeThickness="1"
+                                                         StrokeShape="RoundRectangle 18"
+                                                         BackgroundColor="#FFFFFF"
+                                                         Padding="4,2">
+                                                        <Grid WidthRequest="190"
+                                                              HeightRequest="300">
+                                                               <Image Source="body_back_base.png"
+                                                                      Aspect="AspectFit"/>
+                                                               <Image Source="body_back_shoulders.png"
+                                                                      Aspect="AspectFit"
+                                                                      Opacity="{Binding BackShouldersOpacity}"/>
+                                                               <Image Source="body_back_triceps.png"
+                                                                      Aspect="AspectFit"
+                                                                      Opacity="{Binding BackTricepsOpacity}"/>
+                                                               <Image Source="body_back_lats.png"
+                                                                      Aspect="AspectFit"
+                                                                      Opacity="{Binding BackLatsOpacity}"/>
+                                                               <Image Source="body_back_lower_back.png"
+                                                                      Aspect="AspectFit"
+                                                                      Opacity="{Binding BackLowerBackOpacity}"/>
+                                                               <Image Source="body_back_glutes.png"
+                                                                      Aspect="AspectFit"
+                                                                      Opacity="{Binding BackGlutesOpacity}"/>
+                                                               <Image Source="body_back_hamstrings.png"
+                                                                      Aspect="AspectFit"
+                                                                      Opacity="{Binding BackHamstringsOpacity}"/>
+                                                               <Image Source="body_back_calves.png"
+                                                                      Aspect="AspectFit"
+                                                                      Opacity="{Binding BackCalvesOpacity}"/>
+                                                        </Grid>
+                                                 </Border>
+                                          </VerticalStackLayout>
+                                   </Grid>
 
-                    <VerticalStackLayout Spacing="10">
-                        <Label Text="Heat Guide"
-                               FontAttributes="Bold"
-                               HorizontalOptions="Center" />
-                            <HorizontalStackLayout HorizontalOptions="Center"
-                                                   Spacing="16">
-                            <HorizontalStackLayout Spacing="8">
-                                <Border WidthRequest="18"
-                                        HeightRequest="18"
-                                        BackgroundColor="#F7D6D6"
-                                        StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 9" />
-                                <Label Text="Light"
-                                        VerticalOptions="Center"
-                                        FontSize="12" />
-                            </HorizontalStackLayout>
-                            <HorizontalStackLayout Spacing="8">
-                                <Border WidthRequest="18"
-                                        HeightRequest="18"
-                                        BackgroundColor="#E97878"
-                                        StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 9" />
-                                <Label Text="Moderate"
-                                        VerticalOptions="Center"
-                                        FontSize="12" />
-                            </HorizontalStackLayout>
-                            <HorizontalStackLayout Spacing="8">
-                                <Border WidthRequest="18"
-                                        HeightRequest="18"
-                                        BackgroundColor="#FF0000"
-                                        StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 9" />
-                                <Label Text="High effort"
-                                        VerticalOptions="Center"
-                                        FontSize="12" />
-                            </HorizontalStackLayout>
-                        </HorizontalStackLayout>
-                    </VerticalStackLayout>
-                </VerticalStackLayout>
-            </Border>
+                                   <VerticalStackLayout Spacing="10">
+                                          <Label Text="Heat Guide"
+                                                 FontAttributes="Bold"
+                                                 HorizontalOptions="Center"/>
+                                          <HorizontalStackLayout HorizontalOptions="Center"
+                                                                 Spacing="16">
+                                                 <HorizontalStackLayout Spacing="8">
+                                                        <Border WidthRequest="18"
+                                                                HeightRequest="18"
+                                                                BackgroundColor="#F7D6D6"
+                                                                StrokeThickness="0"
+                                                                StrokeShape="RoundRectangle 9"/>
+                                                        <Label Text="Light"
+                                                               VerticalOptions="Center"
+                                                               FontSize="12"/>
+                                                 </HorizontalStackLayout>
+                                                 <HorizontalStackLayout Spacing="8">
+                                                        <Border WidthRequest="18"
+                                                                HeightRequest="18"
+                                                                BackgroundColor="#E97878"
+                                                                StrokeThickness="0"
+                                                                StrokeShape="RoundRectangle 9"/>
+                                                        <Label Text="Moderate"
+                                                               VerticalOptions="Center"
+                                                               FontSize="12"/>
+                                                 </HorizontalStackLayout>
+                                                 <HorizontalStackLayout Spacing="8">
+                                                        <Border WidthRequest="18"
+                                                                HeightRequest="18"
+                                                                BackgroundColor="#FF0000"
+                                                                StrokeThickness="0"
+                                                                StrokeShape="RoundRectangle 9"/>
+                                                        <Label Text="High effort"
+                                                               VerticalOptions="Center"
+                                                               FontSize="12"/>
+                                                 </HorizontalStackLayout>
+                                          </HorizontalStackLayout>
+                                   </VerticalStackLayout>
+                            </VerticalStackLayout>
+                     </Border>
 
-            <StackLayout IsVisible="{Binding IsUserLoggedIn, Converter={StaticResource InverseBooleanConverter}}"
-                         Spacing="20">
-                <Button Text="Login" Command="{Binding NavigateToLoginCommand}" />
-                <Button Text="Sign Up" Command="{Binding NavigateToSignupCommand}" />
-            </StackLayout>
+                     <StackLayout IsVisible="{Binding IsUserLoggedIn, Converter={StaticResource InverseBooleanConverter}}"
+                                  Spacing="20">
+                            <Button Text="Login"
+                                    Command="{Binding NavigateToLoginCommand}"/>
+                            <Button Text="Sign Up"
+                                    Command="{Binding NavigateToSignupCommand}"/>
+                     </StackLayout>
 
-            <Button Text="Sign Out"
-                    Command="{Binding SignOutCommand}"
-                    IsVisible="{Binding IsUserLoggedIn}" />
-            <Button Text="Dashboard"
-                    Command="{Binding NavigateToDashboardCommand}"
-                    IsVisible="{Binding IsUserLoggedIn}" />
-            <Button Text="Leaderboard"
-                    Command="{Binding NavigateToLeaderboardCommand}"
-                    IsVisible="{Binding IsUserLoggedIn}" />
-        </StackLayout>
-    </ScrollView>
+                     <Button Text="Sign Out"
+                             Command="{Binding SignOutCommand}"
+                             IsVisible="{Binding IsUserLoggedIn}"/>
+                     <Button Text="Dashboard"
+                             Command="{Binding NavigateToDashboardCommand}"
+                             IsVisible="{Binding IsUserLoggedIn}"/>
+                     <Button Text="Leaderboard"
+                             Command="{Binding NavigateToLeaderboardCommand}"
+                             IsVisible="{Binding IsUserLoggedIn}"/>
+              </StackLayout>
+       </ScrollView>
 </ContentPage>
