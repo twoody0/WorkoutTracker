@@ -6,6 +6,9 @@
 
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="15">
+            <Label Text="{Binding SelectedPlan.DurationDisplay, StringFormat='Duration: {0}'}"
+                   FontSize="14"
+                   TextColor="#2F6F3E" />
             <Label Text="{Binding SelectedPlan.Description}" FontSize="16" TextColor="Gray" />
 
             <Button Text="Start Plan"

@@ -13,6 +13,7 @@
     <Compile Include="..\\WorkoutTracker.App\\Models\\WorkoutPlan.cs" Link="AppSources\\Models\\WorkoutPlan.cs" />
     <Compile Include="..\\WorkoutTracker.App\\Services\\IAuthService.cs" Link="AppSources\\Services\\IAuthService.cs" />
     <Compile Include="..\\WorkoutTracker.App\\Services\\AuthService.cs" Link="AppSources\\Services\\AuthService.cs" />
+    <Compile Include="..\\WorkoutTracker.App\\Services\\WorkoutPlanService.cs" Link="AppSources\\Services\\WorkoutPlanService.cs" />
     <Compile Include="..\\WorkoutTracker.App\\Services\\WorkoutScheduleService.cs" Link="AppSources\\Services\\WorkoutScheduleService.cs" />
   </ItemGroup>
 

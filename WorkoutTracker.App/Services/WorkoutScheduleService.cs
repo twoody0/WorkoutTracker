@@ -5,10 +5,16 @@ namespace WorkoutTracker.Services;
 public class WorkoutScheduleService : IWorkoutScheduleService
 {
     private readonly Dictionary<DayOfWeek, List<Workout>> _weeklySchedule = new();
+    private readonly IWorkoutPlanService _workoutPlanService;
     public WorkoutPlan? ActivePlan { get; private set; }
+    public DateTime? ActivePlanStartedOn { get; private set; }
+    public DateTime? ActivePlanEndsOn { get; private set; }
+    public bool HasCompletedActivePlan => ActivePlanEndsOn.HasValue && DateTime.Today > ActivePlanEndsOn.Value.Date;
 
-    public WorkoutScheduleService()
+    public WorkoutScheduleService(IWorkoutPlanService workoutPlanService)
     {
+        _workoutPlanService = workoutPlanService;
+
         foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
         {
             _weeklySchedule[day] = new List<Workout>();
@@ -17,9 +23,10 @@ public class WorkoutScheduleService : IWorkoutScheduleService
 
     public void AddPlanToWeeklySchedule(WorkoutPlan plan)
     {
-        ActivePlan = plan; // Track the active plan
+        ActivePlan = plan;
+        ActivePlanStartedOn = DateTime.Today;
+        ActivePlanEndsOn = DateTime.Today.AddDays((plan.DurationInWeeks * 7) - 1);
 
-        // Clear existing schedule
         foreach (var day in _weeklySchedule.Keys.ToList())
         {
             _weeklySchedule[day].Clear();
@@ -68,6 +75,63 @@ public class WorkoutScheduleService : IWorkoutScheduleService
             .ToList();
     }
 
+    public void RestartActivePlan()
+    {
+        if (ActivePlan == null)
+        {
+            return;
+        }
+
+        AddPlanToWeeklySchedule(ActivePlan);
+    }
+
+    public WorkoutPlan? GetSuggestedNextPlan()
+    {
+        if (ActivePlan == null)
+        {
+            return null;
+        }
+
+        var planProgressionMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Beginner Full Body Foundation"] = "Upper/Lower Strength Builder",
+            ["Upper/Lower Strength Builder"] = "Push/Pull/Legs Hypertrophy",
+            ["Brisk Walking Starter"] = "Interval Conditioning Builder",
+            ["Interval Conditioning Builder"] = "Couch to 5K Starter"
+        };
+
+        if (planProgressionMap.TryGetValue(ActivePlan.Name, out var nextPlanName))
+        {
+            return _workoutPlanService.GetWorkoutPlans()
+                .FirstOrDefault(plan =>
+                    !plan.IsCustom &&
+                    string.Equals(plan.Name, nextPlanName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return _workoutPlanService.GetWorkoutPlans()
+            .FirstOrDefault(plan =>
+                !plan.IsCustom &&
+                !string.Equals(plan.Name, ActivePlan.Name, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(plan.Category, ActivePlan.Category, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public string GetActivePlanTimelineSummary()
+    {
+        if (ActivePlan == null || !ActivePlanStartedOn.HasValue || !ActivePlanEndsOn.HasValue)
+        {
+            return "No active plan timeline.";
+        }
+
+        if (HasCompletedActivePlan)
+        {
+            return $"Completed on {ActivePlanEndsOn.Value:d}.";
+        }
+
+        var daysRemaining = (ActivePlanEndsOn.Value.Date - DateTime.Today).Days + 1;
+        var weeksRemaining = Math.Max(1, (int)Math.Ceiling(daysRemaining / 7d));
+        return $"{ActivePlan.DurationDisplay} plan. {weeksRemaining} week{(weeksRemaining == 1 ? string.Empty : "s")} remaining until {ActivePlanEndsOn.Value:d}.";
+    }
+
     private static Workout CloneWorkout(Workout workout)
     {
         return new Workout(
@@ -90,9 +154,15 @@ public class WorkoutScheduleService : IWorkoutScheduleService
 public interface IWorkoutScheduleService
 {
     WorkoutPlan? ActivePlan { get; }
+    DateTime? ActivePlanStartedOn { get; }
+    DateTime? ActivePlanEndsOn { get; }
+    bool HasCompletedActivePlan { get; }
     void AddPlanToWeeklySchedule(WorkoutPlan plan);
     void AddWorkoutToDay(DayOfWeek day, Workout workout);
     void RemoveWorkoutFromDay(DayOfWeek day, Workout workout);
     IReadOnlyDictionary<DayOfWeek, List<Workout>> GetWeeklySchedule();
     IReadOnlyList<Workout> GetActivePlanWorkoutsForDay(DayOfWeek day);
+    void RestartActivePlan();
+    WorkoutPlan? GetSuggestedNextPlan();
+    string GetActivePlanTimelineSummary();
 }

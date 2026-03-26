@@ -7,6 +7,22 @@
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="15">
             <Label Text="Your Weekly Schedule" FontSize="24" FontAttributes="Bold" HorizontalOptions="Center" />
+            <Border Stroke="#D7E8DA"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 12"
+                    BackgroundColor="#F6FBF7"
+                    Padding="12"
+                    IsVisible="{Binding HasActivePlan}">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="{Binding ActivePlanName}"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           TextColor="#2F6F3E" />
+                    <Label Text="{Binding ActivePlanTimelineSummary}"
+                           FontSize="13"
+                           TextColor="Gray" />
+                </VerticalStackLayout>
+            </Border>
 
             <CollectionView ItemsSource="{Binding WeeklySchedule}">
                 <CollectionView.ItemTemplate>

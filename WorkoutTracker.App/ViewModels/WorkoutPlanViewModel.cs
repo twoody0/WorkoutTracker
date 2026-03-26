@@ -7,19 +7,80 @@ namespace WorkoutTracker.ViewModels;
 
 public class WorkoutPlanViewModel : BaseViewModel
 {
+    private const string AllCategoriesOption = "All Categories";
+    private const string CustomCategory = "Custom";
+
     private readonly IWorkoutPlanService _workoutPlanService;
     private readonly IWorkoutScheduleService _scheduleService;
+    private string _newPlanName = string.Empty;
+    private string _newPlanDescription = string.Empty;
+    private string _newPlanDurationInWeeks = "4";
+    private string _selectedCategory = AllCategoriesOption;
+    private string _selectedNewPlanCategory = CustomCategory;
+    private bool _isCreatePlanVisible;
 
     public ObservableCollection<WorkoutPlan> WorkoutPlans { get; set; } = new();
+    public ObservableCollection<string> AvailableCategories { get; } = new();
+    public ObservableCollection<string> AvailableNewPlanCategories { get; } = new();
     private List<WorkoutPlan> AllPlans { get; set; } = new();
 
     public WorkoutPlan? CurrentPlan => _scheduleService.ActivePlan;
     public bool HasActivePlan => _scheduleService.ActivePlan != null;
+    public string CurrentPlanTimelineSummary => _scheduleService.GetActivePlanTimelineSummary();
 
-    public string NewPlanName { get; set; } = string.Empty;
-    public string NewPlanDescription { get; set; } = string.Empty;
+    public string NewPlanName
+    {
+        get => _newPlanName;
+        set => SetProperty(ref _newPlanName, value);
+    }
+
+    public string NewPlanDescription
+    {
+        get => _newPlanDescription;
+        set => SetProperty(ref _newPlanDescription, value);
+    }
+
+    public string NewPlanDurationInWeeks
+    {
+        get => _newPlanDurationInWeeks;
+        set => SetProperty(ref _newPlanDurationInWeeks, value);
+    }
+
+    public string SelectedCategory
+    {
+        get => _selectedCategory;
+        set
+        {
+            if (SetProperty(ref _selectedCategory, value))
+            {
+                RefreshWorkoutPlans();
+            }
+        }
+    }
+
+    public string SelectedNewPlanCategory
+    {
+        get => _selectedNewPlanCategory;
+        set => SetProperty(ref _selectedNewPlanCategory, value);
+    }
+
+    public bool IsCreatePlanVisible
+    {
+        get => _isCreatePlanVisible;
+        set
+        {
+            if (SetProperty(ref _isCreatePlanVisible, value))
+            {
+                OnPropertyChanged(nameof(CreatePlanButtonText));
+            }
+        }
+    }
+
+    public string CreatePlanButtonText => IsCreatePlanVisible ? "Cancel" : "Create Your Own Plan";
+
     public Command AddWorkoutPlanCommand { get; }
     public Command SelectWorkoutPlanCommand { get; }
+    public Command ToggleCreatePlanCommand { get; }
 
     public WorkoutPlanViewModel(IWorkoutPlanService workoutPlanService, IWorkoutScheduleService scheduleService)
     {
@@ -28,33 +89,82 @@ public class WorkoutPlanViewModel : BaseViewModel
 
         AddWorkoutPlanCommand = new Command(AddWorkoutPlan);
         SelectWorkoutPlanCommand = new Command<WorkoutPlan>(SelectWorkoutPlan);
+        ToggleCreatePlanCommand = new Command(ToggleCreatePlan);
         LoadWorkoutPlans();
     }
 
     private void LoadWorkoutPlans()
     {
-        // Get all plans
         AllPlans = _workoutPlanService.GetWorkoutPlans().ToList();
-
+        RefreshCategories();
         RefreshWorkoutPlans();
+    }
+
+    private void RefreshCategories()
+    {
+        var categories = AllPlans
+            .Select(plan => string.IsNullOrWhiteSpace(plan.Category) ? CustomCategory : plan.Category)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(category => category)
+            .ToList();
+
+        AvailableCategories.Clear();
+        AvailableCategories.Add(AllCategoriesOption);
+
+        foreach (var category in categories)
+        {
+            AvailableCategories.Add(category);
+        }
+
+        AvailableNewPlanCategories.Clear();
+        foreach (var category in categories)
+        {
+            AvailableNewPlanCategories.Add(category);
+        }
+
+        if (!AvailableNewPlanCategories.Contains(CustomCategory))
+        {
+            AvailableNewPlanCategories.Add(CustomCategory);
+        }
+
+        if (!AvailableCategories.Contains(SelectedCategory))
+        {
+            _selectedCategory = AllCategoriesOption;
+            OnPropertyChanged(nameof(SelectedCategory));
+        }
+
+        if (!AvailableNewPlanCategories.Contains(SelectedNewPlanCategory))
+        {
+            _selectedNewPlanCategory = CustomCategory;
+            OnPropertyChanged(nameof(SelectedNewPlanCategory));
+        }
     }
 
     private void RefreshWorkoutPlans()
     {
         WorkoutPlans.Clear();
 
-        // Add all plans EXCEPT the current active one
         foreach (var plan in AllPlans)
         {
-            if (plan != _scheduleService.ActivePlan)
+            if (plan == _scheduleService.ActivePlan)
             {
-                WorkoutPlans.Add(plan);
+                continue;
             }
+
+            if (SelectedCategory != AllCategoriesOption &&
+                !string.Equals(plan.Category, SelectedCategory, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            WorkoutPlans.Add(plan);
         }
 
         OnPropertyChanged(nameof(CurrentPlan));
         OnPropertyChanged(nameof(HasActivePlan));
+        OnPropertyChanged(nameof(CurrentPlanTimelineSummary));
     }
+
     private async void SelectWorkoutPlan(WorkoutPlan plan)
     {
         if (plan == null)
@@ -78,23 +188,44 @@ public class WorkoutPlanViewModel : BaseViewModel
     private void AddWorkoutPlan()
     {
         if (string.IsNullOrWhiteSpace(NewPlanName)) return;
+        if (!int.TryParse(NewPlanDurationInWeeks, out var durationInWeeks) || durationInWeeks <= 0)
+        {
+            durationInWeeks = 4;
+        }
 
         var newPlan = new WorkoutPlan
         {
             Name = NewPlanName,
             Description = NewPlanDescription,
+            Category = string.IsNullOrWhiteSpace(SelectedNewPlanCategory) ? CustomCategory : SelectedNewPlanCategory,
+            DurationInWeeks = durationInWeeks,
             IsCustom = true
         };
 
         _workoutPlanService.AddWorkoutPlan(newPlan);
         AllPlans.Add(newPlan);
 
+        RefreshCategories();
         RefreshWorkoutPlans();
 
         NewPlanName = string.Empty;
         NewPlanDescription = string.Empty;
-        OnPropertyChanged(nameof(NewPlanName));
-        OnPropertyChanged(nameof(NewPlanDescription));
+        NewPlanDurationInWeeks = "4";
+        SelectedNewPlanCategory = newPlan.Category;
+        IsCreatePlanVisible = false;
+    }
+
+    private void ToggleCreatePlan()
+    {
+        if (IsCreatePlanVisible)
+        {
+            NewPlanName = string.Empty;
+            NewPlanDescription = string.Empty;
+            NewPlanDurationInWeeks = "4";
+            SelectedNewPlanCategory = CustomCategory;
+        }
+
+        IsCreatePlanVisible = !IsCreatePlanVisible;
     }
 
     public void RefreshActivePlan()
