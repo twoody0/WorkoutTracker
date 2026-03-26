@@ -48,7 +48,8 @@
 
             <VerticalStackLayout Spacing="8">
                 <Label Text="Choose a category"
-                       FontAttributes="Bold" />
+                       FontAttributes="Bold"
+                       IsVisible="{Binding HasCategorySelection}" />
                 <Picker Title="Select a workout category"
                         ItemsSource="{Binding AvailableCategories}"
                         SelectedItem="{Binding SelectedCategory}" />

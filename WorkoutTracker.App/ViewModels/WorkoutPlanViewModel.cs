@@ -7,7 +7,6 @@ namespace WorkoutTracker.ViewModels;
 
 public class WorkoutPlanViewModel : BaseViewModel
 {
-    private const string SelectCategoryOption = "Choose a Category";
     private const string AllCategoriesOption = "All Categories";
     private const string CustomCategory = "Custom";
 
@@ -16,7 +15,7 @@ public class WorkoutPlanViewModel : BaseViewModel
     private string _newPlanName = string.Empty;
     private string _newPlanDescription = string.Empty;
     private string _newPlanDurationInWeeks = "4";
-    private string _selectedCategory = SelectCategoryOption;
+    private string? _selectedCategory;
     private string _selectedNewPlanCategory = CustomCategory;
     private bool _isCreatePlanVisible;
 
@@ -27,7 +26,7 @@ public class WorkoutPlanViewModel : BaseViewModel
     private List<WorkoutPlan> AllPlans { get; set; } = new();
 
     public WorkoutPlan? CurrentPlan => _scheduleService.ActivePlan;
-    public bool HasCategorySelection => SelectedCategory != SelectCategoryOption;
+    public bool HasCategorySelection => !string.IsNullOrWhiteSpace(SelectedCategory);
     public bool ShowCategoryPrompt => !HasCategorySelection;
     public bool HasActivePlan => _scheduleService.ActivePlan != null;
     public string CurrentPlanTimelineSummary => _scheduleService.GetActivePlanTimelineSummary();
@@ -52,7 +51,7 @@ public class WorkoutPlanViewModel : BaseViewModel
         set => SetProperty(ref _newPlanDurationInWeeks, value);
     }
 
-    public string SelectedCategory
+    public string? SelectedCategory
     {
         get => _selectedCategory;
         set
@@ -115,7 +114,6 @@ public class WorkoutPlanViewModel : BaseViewModel
             .ToList();
 
         AvailableCategories.Clear();
-        AvailableCategories.Add(SelectCategoryOption);
         AvailableCategories.Add(AllCategoriesOption);
 
         foreach (var category in categories)
@@ -134,9 +132,9 @@ public class WorkoutPlanViewModel : BaseViewModel
             AvailableNewPlanCategories.Add(CustomCategory);
         }
 
-        if (!AvailableCategories.Contains(SelectedCategory))
+        if (!string.IsNullOrWhiteSpace(SelectedCategory) && !AvailableCategories.Contains(SelectedCategory))
         {
-            _selectedCategory = SelectCategoryOption;
+            _selectedCategory = null;
             OnPropertyChanged(nameof(SelectedCategory));
         }
 
