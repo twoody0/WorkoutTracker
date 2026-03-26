@@ -29,22 +29,50 @@
                                     SelectionMode="None">
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
-                                <Border Stroke="#C7D8BF"
+                                <Border Stroke="{AppThemeBinding Light=#C7D8BF, Dark=#334155}"
                                         StrokeThickness="1"
                                         StrokeShape="RoundRectangle 10"
+                                        BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
                                         Padding="10"
                                         Margin="0,0,0,8">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border"
+                                                     Binding="{Binding IsSelected}"
+                                                     Value="True">
+                                            <Setter Property="Stroke" Value="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}" />
+                                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#F0FDFA, Dark=#10211C}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
                                     <VerticalStackLayout Spacing="6">
                                         <Label Text="{Binding Name}" FontAttributes="Bold" />
                                         <Label Text="{Binding MuscleGroup, StringFormat='Focus: {0}'}"
                                                FontSize="12"
-                                               TextColor="Gray" />
+                                               TextColor="Gray"
+                                               IsVisible="{Binding ShowDetails}" />
+                                        <Label Text="{Binding Sets, StringFormat='Sets: {0}'}"
+                                               FontSize="12"
+                                               TextColor="Gray"
+                                               IsVisible="{Binding ShowWeightLiftingDetails}" />
+                                        <Label Text="{Binding Reps, StringFormat='Reps: {0}'}"
+                                               FontSize="12"
+                                               TextColor="Gray"
+                                               IsVisible="{Binding ShowWeightLiftingDetails}" />
+                                        <Label Text="{Binding Steps, StringFormat='Steps: {0}'}"
+                                               FontSize="12"
+                                               TextColor="Gray"
+                                               IsVisible="{Binding ShowCardioDetails}" />
                                         <Button Text="Use This Workout"
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AddWorkoutViewModel}}, Path=UseRecommendedWorkoutCommand}"
                                                 CommandParameter="{Binding .}"
-                                                BackgroundColor="#DDEFD2"
-                                                TextColor="#183A1D"
-                                                CornerRadius="8" />
+                                                BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}"
+                                                TextColor="White"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding ShowUseButton}" />
+                                        <Label Text="{Binding SelectedText}"
+                                               FontSize="12"
+                                               FontAttributes="Bold"
+                                               TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}"
+                                               IsVisible="{Binding ShowSelectedState}" />
                                     </VerticalStackLayout>
                                 </Border>
                             </DataTemplate>

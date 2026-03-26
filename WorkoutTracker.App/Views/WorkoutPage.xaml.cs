@@ -1,5 +1,6 @@
 using CommunityToolkit.Maui.Core.Platform;
 using System.Linq;
+using System.ComponentModel;
 using WorkoutTracker.Models;
 using WorkoutTracker.ViewModels;
 
@@ -11,6 +12,7 @@ public partial class WorkoutPage : ContentPage
     {
         InitializeComponent();
         BindingContext = vm;
+        vm.PropertyChanged += OnViewModelPropertyChanged;
     }
 
     protected override void OnAppearing()
@@ -21,6 +23,14 @@ public partial class WorkoutPage : ContentPage
         {
             vm.RefreshPlanRecommendations();
         }
+
+        UpdateRecommendationsHeight();
+    }
+
+    protected override void OnSizeAllocated(double width, double height)
+    {
+        base.OnSizeAllocated(width, height);
+        UpdateRecommendationsHeight();
     }
 
     private async void ExerciseEntry_Focused(object sender, FocusEventArgs e)
@@ -70,5 +80,31 @@ public partial class WorkoutPage : ContentPage
             await RepsEntry.HideKeyboardAsync();
             await SetsEntry.HideKeyboardAsync();
         }
+    }
+
+    private void UpdateRecommendationsHeight()
+    {
+        if (RecommendationsList == null || Height <= 0)
+        {
+            return;
+        }
+
+        var targetHeight = Math.Max(220, Height - 420);
+        RecommendationsList.HeightRequest = targetHeight;
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(WorkoutViewModel.SelectedRecommendationItem) ||
+            sender is not WorkoutViewModel vm ||
+            vm.SelectedRecommendationItem == null)
+        {
+            return;
+        }
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            RecommendationsList?.ScrollTo(vm.SelectedRecommendationItem, position: ScrollToPosition.Center, animate: true);
+        });
     }
 }

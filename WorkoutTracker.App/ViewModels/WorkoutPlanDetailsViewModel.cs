@@ -16,6 +16,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
     public ICommand ToggleExpandCommand { get; }
     public ICommand StartPlanCommand { get; }
     public ICommand ChangeWorkoutDayCommand { get; }
+    public ICommand EditDayCommand { get; }
 
     public WorkoutPlanDetailsViewModel(IWorkoutScheduleService scheduleService)
     {
@@ -23,6 +24,42 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
         ToggleExpandCommand = new Command<WorkoutPlanDayGroup>(ToggleExpand);
         StartPlanCommand = new Command(StartPlan);
         ChangeWorkoutDayCommand = new Command<WorkoutDisplay>(ChangeWorkoutDay);
+        EditDayCommand = new Command<WorkoutPlanDayGroup>(EditDay);
+    }
+
+    private async void EditDay(WorkoutPlanDayGroup? workoutGroup)
+    {
+        if (workoutGroup == null || !workoutGroup.HasWorkouts || SelectedPlan == null)
+        {
+            return;
+        }
+
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page == null)
+        {
+            return;
+        }
+
+        var selectedWorkoutName = await page.DisplayActionSheet(
+            $"Edit {workoutGroup.DayLabel}",
+            "Cancel",
+            null,
+            workoutGroup.Workouts.Select(workout => workout.Workout.Name).ToArray());
+
+        if (string.IsNullOrWhiteSpace(selectedWorkoutName) || selectedWorkoutName == "Cancel")
+        {
+            return;
+        }
+
+        var workoutDisplay = workoutGroup.Workouts.FirstOrDefault(workout =>
+            string.Equals(workout.Workout.Name, selectedWorkoutName, StringComparison.Ordinal));
+
+        if (workoutDisplay == null)
+        {
+            return;
+        }
+
+        ChangeWorkoutDay(workoutDisplay);
     }
     private async void ChangeWorkoutDay(WorkoutDisplay workoutDisplay)
     {
@@ -80,7 +117,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
             WorkoutGroups.Add(new WorkoutPlanDayGroup(
                 day,
                 workoutsForDay.Select(workout => new WorkoutDisplay(workout)),
-                isExpanded: day == firstWorkoutDay && workoutsForDay.Any()));
+                isExpanded: false));
         }
 
         OnPropertyChanged(nameof(SelectedPlan));

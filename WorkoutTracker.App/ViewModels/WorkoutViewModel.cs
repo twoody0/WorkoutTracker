@@ -29,8 +29,10 @@ public class WorkoutViewModel : BaseViewModel
     private bool _isQuickAddMode;
     private bool _isAdvancedFieldsVisible = true;
     private bool _suppressSuggestionRefresh;
+    private bool _isApplyingRecommendation;
     private List<Workout> _workoutHistory = new();
     private bool _hasScheduledWeightliftingWorkoutsToday;
+    private WorkoutRecommendation? _selectedRecommendation;
 
     #endregion
 
@@ -86,14 +88,37 @@ public class WorkoutViewModel : BaseViewModel
     public bool IsQuickAddMode
     {
         get => _isQuickAddMode;
-        set => SetProperty(ref _isQuickAddMode, value);
+        set
+        {
+            if (SetProperty(ref _isQuickAddMode, value))
+            {
+                OnPropertyChanged(nameof(ShowStandaloneWeightField));
+                OnPropertyChanged(nameof(ShowAdvancedEditorSection));
+                OnPropertyChanged(nameof(ShowQuickAddReadOnlySummary));
+                OnPropertyChanged(nameof(ShowQuickAddInlineEditors));
+            }
+        }
     }
 
     public bool IsAdvancedFieldsVisible
     {
         get => _isAdvancedFieldsVisible;
-        set => SetProperty(ref _isAdvancedFieldsVisible, value);
+        set
+        {
+            if (SetProperty(ref _isAdvancedFieldsVisible, value))
+            {
+                OnPropertyChanged(nameof(ShowStandaloneWeightField));
+                OnPropertyChanged(nameof(ShowAdvancedEditorSection));
+                OnPropertyChanged(nameof(ShowQuickAddReadOnlySummary));
+                OnPropertyChanged(nameof(ShowQuickAddInlineEditors));
+            }
+        }
     }
+
+    public bool ShowStandaloneWeightField => !IsQuickAddMode || !IsAdvancedFieldsVisible;
+    public bool ShowAdvancedEditorSection => !IsQuickAddMode && IsAdvancedFieldsVisible;
+    public bool ShowQuickAddReadOnlySummary => IsQuickAddMode && !IsAdvancedFieldsVisible;
+    public bool ShowQuickAddInlineEditors => IsQuickAddMode && IsAdvancedFieldsVisible;
 
     public bool HasWorkouts
     {
@@ -116,6 +141,7 @@ public class WorkoutViewModel : BaseViewModel
             {
                 ExerciseSearchQuery = string.Empty;
                 ExerciseSuggestions.Clear();
+                SyncSelectedRecommendationState();
             }
         }
     }
@@ -138,26 +164,52 @@ public class WorkoutViewModel : BaseViewModel
     public string Name
     {
         get => _name;
-        set => SetProperty(ref _name, value);
+        set
+        {
+            if (SetProperty(ref _name, value))
+            {
+                SyncSelectedRecommendationState();
+            }
+        }
     }
 
     public string Weight
     {
         get => _weight;
-        set => SetProperty(ref _weight, value);
+        set
+        {
+            if (SetProperty(ref _weight, value))
+            {
+                SyncSelectedRecommendationState();
+            }
+        }
     }
 
     public string Reps
     {
         get => _reps;
-        set => SetProperty(ref _reps, value);
+        set
+        {
+            if (SetProperty(ref _reps, value))
+            {
+                SyncSelectedRecommendationState();
+            }
+        }
     }
 
     public string Sets
     {
         get => _sets;
-        set => SetProperty(ref _sets, value);
+        set
+        {
+            if (SetProperty(ref _sets, value))
+            {
+                SyncSelectedRecommendationState();
+            }
+        }
     }
+
+    public WorkoutRecommendation? SelectedRecommendationItem => _selectedRecommendation;
 
     #endregion
 
@@ -269,11 +321,20 @@ public class WorkoutViewModel : BaseViewModel
 
     private void ApplyWorkoutTemplate(WorkoutRecommendation recommendation, bool collapseForQuickAdd)
     {
+        if (_selectedRecommendation != null)
+        {
+            _selectedRecommendation.IsSelected = false;
+        }
+
+        _selectedRecommendation = recommendation;
+        _selectedRecommendation.IsSelected = true;
+        OnPropertyChanged(nameof(SelectedRecommendationItem));
         ApplyWorkoutTemplate(recommendation.Workout, recommendation.LastUsedWeight, collapseForQuickAdd);
     }
 
     private void ApplyWorkoutTemplate(Workout workout, double? historicalWeight, bool collapseForQuickAdd)
     {
+        _isApplyingRecommendation = true;
         SelectedMuscleGroup = workout.MuscleGroup;
         Name = workout.Name;
         _suppressSuggestionRefresh = true;
@@ -288,6 +349,7 @@ public class WorkoutViewModel : BaseViewModel
         IsAdvancedFieldsVisible = !collapseForQuickAdd;
         IsNameFieldFocused = false;
         ExerciseSuggestions.Clear();
+        _isApplyingRecommendation = false;
     }
 
     private void RemoveRecommendedWorkout(Workout workout)
@@ -297,6 +359,12 @@ public class WorkoutViewModel : BaseViewModel
 
         if (existingWorkout != null)
         {
+            if (_selectedRecommendation == existingWorkout)
+            {
+                _selectedRecommendation = null;
+                OnPropertyChanged(nameof(SelectedRecommendationItem));
+            }
+
             RecommendedPlanWorkouts.Remove(existingWorkout);
             OnPropertyChanged(nameof(HasRecommendedPlanWorkouts));
             UpdateActivePlanSummary();
@@ -305,7 +373,12 @@ public class WorkoutViewModel : BaseViewModel
 
     public void RefreshPlanRecommendations()
     {
+        var selectedWorkoutKey = _selectedRecommendation != null
+            ? GetWorkoutKey(_selectedRecommendation.Workout)
+            : null;
+
         RecommendedPlanWorkouts.Clear();
+        _selectedRecommendation = null;
 
         var todaysPlannedWorkouts = _workoutScheduleService.GetActivePlanWorkoutsForDay(DateTime.Today.DayOfWeek)
             .Where(workout => workout.Type == WorkoutType.WeightLifting)
@@ -333,7 +406,45 @@ public class WorkoutViewModel : BaseViewModel
             {
                 ApplyWorkoutTemplate(RecommendedPlanWorkouts[0], collapseForQuickAdd: true);
             }
+            else
+            {
+                var matchingRecommendation = !string.IsNullOrWhiteSpace(selectedWorkoutKey)
+                    ? RecommendedPlanWorkouts.FirstOrDefault(recommendation =>
+                        string.Equals(GetWorkoutKey(recommendation.Workout), selectedWorkoutKey, StringComparison.OrdinalIgnoreCase))
+                    : null;
+
+                matchingRecommendation ??= RecommendedPlanWorkouts.FirstOrDefault(recommendation =>
+                    string.Equals(recommendation.Workout.Name, Name, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(recommendation.Workout.MuscleGroup, SelectedMuscleGroup, StringComparison.OrdinalIgnoreCase));
+
+                if (matchingRecommendation != null)
+                {
+                    _selectedRecommendation = matchingRecommendation;
+                    _selectedRecommendation.IsSelected = true;
+                    OnPropertyChanged(nameof(SelectedRecommendationItem));
+                }
+            }
         }
+    }
+
+    private void SyncSelectedRecommendationState()
+    {
+        if (_isApplyingRecommendation || _selectedRecommendation == null)
+        {
+            return;
+        }
+
+        var workout = _selectedRecommendation.Workout;
+        var stillMatches = string.Equals(Name, workout.Name, StringComparison.Ordinal);
+
+        if (stillMatches)
+        {
+            return;
+        }
+
+        _selectedRecommendation.IsSelected = false;
+        _selectedRecommendation = null;
+        OnPropertyChanged(nameof(SelectedRecommendationItem));
     }
 
     private void UpdateActivePlanSummary()

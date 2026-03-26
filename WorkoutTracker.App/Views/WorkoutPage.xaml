@@ -26,10 +26,9 @@
                     <Label Text="Active Plan Suggestions"
                            FontAttributes="Bold"
                            FontSize="18" />
-                    <Label Text="{Binding ActivePlanSummary}"
-                           TextColor="{AppThemeBinding Light=#4F5B4B, Dark={StaticResource Gray200}}" />
 
                     <CollectionView ItemsSource="{Binding RecommendedPlanWorkouts}"
+                                    x:Name="RecommendationsList"
                                     IsVisible="{Binding HasRecommendedPlanWorkouts}"
                                     SelectionMode="None"
                                     HeightRequest="220">
@@ -40,33 +39,60 @@
                                         Stroke="{AppThemeBinding Light=#C7D8BF, Dark={StaticResource Gray500}}"
                                         BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
                                         StrokeShape="RoundRectangle 8">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border"
+                                                     Binding="{Binding IsSelected}"
+                                                     Value="True">
+                                            <Setter Property="Stroke" Value="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}" />
+                                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#F0FDFA, Dark=#10211C}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
                                     <VerticalStackLayout Spacing="4">
-                                        <Label Text="{Binding Workout.Name}"
-                                               FontAttributes="Bold"
-                                               LineBreakMode="WordWrap" />
+                                        <Grid ColumnDefinitions="*,Auto"
+                                              ColumnSpacing="10">
+                                            <Label Text="{Binding Workout.Name}"
+                                                   FontAttributes="Bold"
+                                                   Margin="0"
+                                                   VerticalOptions="Center"
+                                                   LineBreakMode="WordWrap" />
+                                            <Button Grid.Column="1"
+                                                    Text="Use This Workout"
+                                                    Command="{Binding Source={x:Reference Page}, Path=BindingContext.UseRecommendedWorkoutCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Padding="10,0"
+                                                    MinimumHeightRequest="28"
+                                                    HeightRequest="28"
+                                                    VerticalOptions="Center"
+                                                    BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}"
+                                                    TextColor="White"
+                                                    CornerRadius="8"
+                                                    IsVisible="{Binding ShowUseButton}" />
+                                        </Grid>
                                         <Label Text="{Binding Workout.MuscleGroup, StringFormat='Focus: {0}'}"
                                                 FontSize="12"
                                                 TextColor="Gray"
-                                                LineBreakMode="WordWrap" />
+                                                LineBreakMode="WordWrap"
+                                                IsVisible="{Binding ShowDetails}" />
                                         <Label Text="{Binding LastUsedWeight, StringFormat='Weight: {0}'}"
                                                FontSize="12"
                                                TextColor="Gray"
                                                LineBreakMode="WordWrap"
-                                               IsVisible="{Binding HasLastUsedWeight}" />
+                                               IsVisible="{Binding ShowDetails}" />
                                         <Label Text="{Binding Workout.Sets, StringFormat='Sets: {0}'}"
                                                FontSize="12"
                                                TextColor="Gray"
-                                               LineBreakMode="WordWrap" />
+                                               LineBreakMode="WordWrap"
+                                               IsVisible="{Binding ShowDetails}" />
                                         <Label Text="{Binding Workout.Reps, StringFormat='Reps: {0}'}"
                                                FontSize="12"
                                                TextColor="Gray"
-                                               LineBreakMode="WordWrap" />
-                                        <Button Text="Use This Workout"
-                                                Command="{Binding Source={x:Reference Page}, Path=BindingContext.UseRecommendedWorkoutCommand}"
-                                                CommandParameter="{Binding .}"
-                                                BackgroundColor="#DDEFD2"
-                                                TextColor="#183A1D"
-                                                CornerRadius="8" />
+                                               LineBreakMode="WordWrap"
+                                               IsVisible="{Binding ShowDetails}" />
+                                        <Label Text="{Binding SelectedText}"
+                                               FontSize="12"
+                                               FontAttributes="Bold"
+                                               TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}"
+                                               IsVisible="{Binding ShowSelectedState}" />
                                     </VerticalStackLayout>
                                 </Border>
                             </DataTemplate>
@@ -86,38 +112,110 @@
                            Grid.Column="0"
                            Text="{Binding Name}"
                            FontAttributes="Bold"
-                           FontSize="16" />
+                           FontSize="16"
+                           IsVisible="{Binding ShowQuickAddReadOnlySummary}" />
+                    <Entry Grid.Row="0"
+                           Grid.Column="0"
+                           Text="{Binding Name}"
+                           FontAttributes="Bold"
+                           FontSize="16"
+                           IsVisible="{Binding ShowQuickAddInlineEditors}" />
                     <Label Grid.Row="1"
                            Grid.Column="0"
                            Text="{Binding Weight, StringFormat='Weight: {0}'}"
                            FontSize="12"
-                           TextColor="Gray" />
+                           TextColor="Gray"
+                           IsVisible="{Binding ShowQuickAddReadOnlySummary}" />
+                    <Grid Grid.Row="1"
+                          Grid.Column="0"
+                          ColumnDefinitions="Auto,*"
+                          ColumnSpacing="6"
+                          IsVisible="{Binding ShowQuickAddInlineEditors}">
+                        <Label Text="Weight:"
+                               FontSize="12"
+                               TextColor="Gray"
+                               VerticalOptions="Center" />
+                        <Entry Grid.Column="1"
+                               Text="{Binding Weight}"
+                               Placeholder="0"
+                               Keyboard="Numeric"
+                               FontSize="12" />
+                    </Grid>
                     <Label Grid.Row="2"
                            Grid.Column="0"
-                           Text="{Binding Reps, StringFormat='Reps: {0}'}"
+                           Text="{Binding SelectedMuscleGroup, StringFormat='Focus: {0}'}"
                            FontSize="12"
-                           TextColor="Gray" />
+                           TextColor="Gray"
+                           IsVisible="{Binding ShowQuickAddReadOnlySummary}" />
+                    <Grid Grid.Row="2"
+                          Grid.Column="0"
+                          ColumnDefinitions="Auto,*"
+                          ColumnSpacing="6"
+                          IsVisible="{Binding ShowQuickAddInlineEditors}">
+                        <Label Text="Focus:"
+                               FontSize="12"
+                               TextColor="Gray"
+                               VerticalOptions="Center" />
+                        <Picker Grid.Column="1"
+                                Title="Select Muscle Group"
+                                FontSize="12"
+                                ItemsSource="{Binding MuscleGroups}"
+                                SelectedItem="{Binding SelectedMuscleGroup}" />
+                    </Grid>
                     <Label Grid.Row="3"
                            Grid.Column="0"
                            Text="{Binding Sets, StringFormat='Sets: {0}'}"
                            FontSize="12"
-                           TextColor="Gray" />
+                           TextColor="Gray"
+                           IsVisible="{Binding ShowQuickAddReadOnlySummary}" />
+                    <Grid Grid.Row="3"
+                          Grid.Column="0"
+                          ColumnDefinitions="Auto,*"
+                          ColumnSpacing="6"
+                          IsVisible="{Binding ShowQuickAddInlineEditors}">
+                        <Label Text="Sets:"
+                               FontSize="12"
+                               TextColor="Gray"
+                               VerticalOptions="Center" />
+                        <Entry Grid.Column="1"
+                               Text="{Binding Sets}"
+                               Placeholder="0"
+                               Keyboard="Numeric"
+                               FontSize="12" />
+                    </Grid>
                     <Label Grid.Row="4"
                            Grid.Column="0"
-                           Text="{Binding SelectedMuscleGroup, StringFormat='Focus: {0}'}"
+                           Text="{Binding Reps, StringFormat='Reps: {0}'}"
                            FontSize="12"
-                           TextColor="Gray" />
+                           TextColor="Gray"
+                           IsVisible="{Binding ShowQuickAddReadOnlySummary}" />
+                    <Grid Grid.Row="4"
+                          Grid.Column="0"
+                          ColumnDefinitions="Auto,*"
+                          ColumnSpacing="6"
+                          IsVisible="{Binding ShowQuickAddInlineEditors}">
+                        <Label Text="Reps:"
+                               FontSize="12"
+                               TextColor="Gray"
+                               VerticalOptions="Center" />
+                        <Entry Grid.Column="1"
+                               Text="{Binding Reps}"
+                               Placeholder="0"
+                               Keyboard="Numeric"
+                               FontSize="12" />
+                    </Grid>
                     <ImageButton Grid.RowSpan="5"
-                                 Grid.Column="1"
-                                 Source="edit_icon.png"
-                                 BackgroundColor="Transparent"
+                                  Grid.Column="1"
+                                  Source="edit_icon.png"
+                                  BackgroundColor="Transparent"
                                  HeightRequest="24"
                                  WidthRequest="24"
                                  Command="{Binding ToggleAdvancedFieldsCommand}" />
                 </Grid>
             </Border>
 
-            <VerticalStackLayout Spacing="2">
+            <VerticalStackLayout Spacing="2"
+                                 IsVisible="{Binding ShowStandaloneWeightField}">
                 <Label Text="Weight" FontAttributes="Bold" />
                 <Entry x:Name="WeightEntry"
                        Placeholder="Enter weight (lbs or kg)" 
@@ -125,8 +223,8 @@
                        Text="{Binding Weight}" />
             </VerticalStackLayout>
 
-            <VerticalStackLayout IsVisible="{Binding IsAdvancedFieldsVisible}"
-                                  Spacing="5">
+            <VerticalStackLayout IsVisible="{Binding ShowAdvancedEditorSection}"
+                                   Spacing="5">
                 <VerticalStackLayout Spacing="2">
                     <Label Text="Focus" FontAttributes="Bold" />
                     <Picker Title="Select Muscle Group"

@@ -12,10 +12,11 @@ public class WorkoutPlanDayGroup : INotifyPropertyChanged
 
     public DayOfWeek Day { get; }
     public string DayLabel => Day.ToString();
-    public string ToggleGlyph => !HasWorkouts ? string.Empty : IsExpanded ? "v" : ">";
+    public string ToggleGlyph => !HasWorkouts ? string.Empty : IsExpanded ? "^" : "v";
     public string ToggleLabel => IsExpanded ? "Hide" : "Show";
     public int WorkoutCount => Workouts.Count;
     public bool HasWorkouts => WorkoutCount > 0;
+    public bool CanEditDay => HasWorkouts;
     public bool ShowRestDayMessage => IsExpanded && !HasWorkouts;
     public bool ShowToggle => HasWorkouts;
     public string WorkoutCountLabel => WorkoutCount switch

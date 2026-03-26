@@ -46,14 +46,27 @@
                    FontAttributes="Bold"
                    HorizontalOptions="Center" />
 
-            <VerticalStackLayout Spacing="8">
-                <Label Text="Choose a category"
-                       FontAttributes="Bold"
-                       IsVisible="{Binding HasCategorySelection}" />
-                <Picker Title="Select a workout category"
-                        ItemsSource="{Binding AvailableCategories}"
-                        SelectedItem="{Binding SelectedCategory}" />
-            </VerticalStackLayout>
+            <Border Stroke="{AppThemeBinding Light=#0B5F59, Dark=#2DD4BF}"
+                    StrokeThickness="1.5"
+                    StrokeShape="RoundRectangle 18"
+                    BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#115E59}"
+                    Padding="16">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Browse Existing Plans"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           TextColor="White" />
+                    <Label Text="Pick a category to load ready-made workout plans."
+                           FontSize="13"
+                           TextColor="{AppThemeBinding Light=#D8FFFA, Dark=#CCFBF1}" />
+                    <Picker Title="Select a workout category"
+                            TitleColor="#0F172A"
+                            TextColor="{AppThemeBinding Light=#0F172A, Dark=#0F172A}"
+                            BackgroundColor="White"
+                            ItemsSource="{Binding AvailableCategories}"
+                            SelectedItem="{Binding SelectedCategory}" />
+                </VerticalStackLayout>
+            </Border>
 
             <Border IsVisible="{Binding ShowCategoryPrompt}"
                     Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"

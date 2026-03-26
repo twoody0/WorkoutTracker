@@ -14,5 +14,6 @@ public partial class AddWorkoutPage : ContentPage
         InitializeComponent();
         ViewModel = new AddWorkoutViewModel(day, scheduleService, workouts, Navigation);
         BindingContext = ViewModel;
+        ViewModel.InitializeDefaultRecommendation();
     }
 }

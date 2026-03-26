@@ -17,6 +17,7 @@ public class AddWorkoutViewModel : BaseViewModel
     private int _reps;
     private int _steps;
     private string _recommendedWorkoutSummary = "Build a custom workout for this day.";
+    private RecommendedWorkoutOption? _selectedRecommendedWorkout;
 
     public DayOfWeek Day { get; }
 
@@ -64,7 +65,7 @@ public class AddWorkoutViewModel : BaseViewModel
     }
 
     public List<WorkoutType> WorkoutTypes { get; } = Enum.GetValues(typeof(WorkoutType)).Cast<WorkoutType>().ToList();
-    public ObservableCollection<Workout> RecommendedWorkouts { get; } = new();
+    public ObservableCollection<RecommendedWorkoutOption> RecommendedWorkouts { get; } = new();
 
     public bool IsWeightLifting => SelectedType == WorkoutType.WeightLifting;
     public bool IsCardio => SelectedType == WorkoutType.Cardio;
@@ -88,14 +89,18 @@ public class AddWorkoutViewModel : BaseViewModel
 
         SelectedType = WorkoutType.WeightLifting; // Default
         SaveCommand = new Command(SaveWorkout);
-        UseRecommendedWorkoutCommand = new Command<Workout>(UseRecommendedWorkout);
+        UseRecommendedWorkoutCommand = new Command<RecommendedWorkoutOption>(UseRecommendedWorkout);
 
         LoadRecommendations();
     }
 
     private async void SaveWorkout()
     {
-        if (string.IsNullOrWhiteSpace(Name) || string.IsNullOrWhiteSpace(MuscleGroup))
+        var recommendedWorkout = _selectedRecommendedWorkout?.Workout;
+        var effectiveName = string.IsNullOrWhiteSpace(Name) ? recommendedWorkout?.Name ?? string.Empty : Name;
+        var effectiveMuscleGroup = string.IsNullOrWhiteSpace(MuscleGroup) ? recommendedWorkout?.MuscleGroup ?? string.Empty : MuscleGroup;
+
+        if (string.IsNullOrWhiteSpace(effectiveName) || string.IsNullOrWhiteSpace(effectiveMuscleGroup))
         {
             var page = Application.Current?.Windows.FirstOrDefault()?.Page;
             if (page != null)
@@ -104,11 +109,11 @@ public class AddWorkoutViewModel : BaseViewModel
         }
 
         var newWorkout = new Workout(
-            name: Name,
+            name: effectiveName,
             weight: 0, // User can edit later in EditDayPage
             reps: Reps,
             sets: Sets,
-            muscleGroup: MuscleGroup,
+            muscleGroup: effectiveMuscleGroup,
             day: Day,
             startTime: DateTime.Now,
             type: SelectedType,
@@ -136,7 +141,7 @@ public class AddWorkoutViewModel : BaseViewModel
 
         foreach (var workout in _scheduleService.GetActivePlanWorkoutsForDay(Day))
         {
-            RecommendedWorkouts.Add(workout);
+            RecommendedWorkouts.Add(new RecommendedWorkoutOption(workout));
         }
 
         OnPropertyChanged(nameof(HasRecommendedWorkouts));
@@ -145,7 +150,6 @@ public class AddWorkoutViewModel : BaseViewModel
         if (HasRecommendedWorkouts)
         {
             RecommendedWorkoutSummary = $"Use a workout from '{ActivePlanName}' or tweak it before saving.";
-            UseRecommendedWorkout(RecommendedWorkouts[0]);
         }
         else if (_scheduleService.ActivePlan != null)
         {
@@ -153,13 +157,30 @@ public class AddWorkoutViewModel : BaseViewModel
         }
     }
 
-    private void UseRecommendedWorkout(Workout? workout)
+    public void InitializeDefaultRecommendation()
     {
-        if (workout == null)
+        if (HasRecommendedWorkouts && _selectedRecommendedWorkout == null)
+        {
+            UseRecommendedWorkout(RecommendedWorkouts[0]);
+        }
+    }
+
+    private void UseRecommendedWorkout(RecommendedWorkoutOption? workoutOption)
+    {
+        if (workoutOption == null)
         {
             return;
         }
 
+        if (_selectedRecommendedWorkout != null)
+        {
+            _selectedRecommendedWorkout.IsSelected = false;
+        }
+
+        _selectedRecommendedWorkout = workoutOption;
+        _selectedRecommendedWorkout.IsSelected = true;
+
+        var workout = workoutOption.Workout;
         Name = workout.Name;
         MuscleGroup = workout.MuscleGroup;
         SelectedType = workout.Type;

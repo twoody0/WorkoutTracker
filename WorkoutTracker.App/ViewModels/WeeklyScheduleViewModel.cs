@@ -16,7 +16,8 @@ public class WeeklyScheduleViewModel : BaseViewModel
 
     public ICommand ChangeWorkoutDayCommand { get; }
     public ICommand EditDayCommand { get; }
-    public ObservableCollection<KeyValuePair<DayOfWeek, List<Workout>>> WeeklySchedule { get; } = new();
+    public ICommand ToggleDayCommand { get; }
+    public ObservableCollection<WeeklyScheduleDayGroup> WeeklySchedule { get; } = new();
     public string ActivePlanName => _scheduleService.ActivePlan?.Name ?? "No active plan";
     public string ActivePlanTimelineSummary => _scheduleService.GetActivePlanTimelineSummary();
     public bool HasActivePlan => _scheduleService.ActivePlan != null;
@@ -27,6 +28,7 @@ public class WeeklyScheduleViewModel : BaseViewModel
         _workoutService = workoutService;
         ChangeWorkoutDayCommand = new Command<Workout>(ChangeWorkoutDay);
         EditDayCommand = new Command<DayOfWeek>(EditDay);
+        ToggleDayCommand = new Command<WeeklyScheduleDayGroup>(ToggleDay);
         LoadSchedule();
     }
 
@@ -69,19 +71,38 @@ public class WeeklyScheduleViewModel : BaseViewModel
     {
         var schedule = _scheduleService.GetWeeklySchedule();
         WeeklySchedule.Clear();
+        var today = DateTime.Today.DayOfWeek;
+        var orderedDays = Enum.GetValues<DayOfWeek>()
+            .OrderBy(day => ((int)day - (int)today + 7) % 7)
+            .ToList();
 
-        foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
+        foreach (var day in orderedDays)
         {
             var workouts = schedule.ContainsKey(day)
                 ? schedule[day]
                 : new List<Workout>();
 
-            WeeklySchedule.Add(new KeyValuePair<DayOfWeek, List<Workout>>(day, workouts));
+            var isToday = day == today;
+            WeeklySchedule.Add(new WeeklyScheduleDayGroup(
+                day,
+                workouts,
+                isToday: isToday,
+                isExpanded: isToday));
         }
 
         OnPropertyChanged(nameof(ActivePlanName));
         OnPropertyChanged(nameof(ActivePlanTimelineSummary));
         OnPropertyChanged(nameof(HasActivePlan));
+    }
+
+    private void ToggleDay(WeeklyScheduleDayGroup? dayGroup)
+    {
+        if (dayGroup == null || !dayGroup.CanToggle)
+        {
+            return;
+        }
+
+        dayGroup.IsExpanded = !dayGroup.IsExpanded;
     }
 
     private async Task PromptForCompletedPlanAsync()

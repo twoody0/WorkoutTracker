@@ -29,91 +29,95 @@
                                     StrokeShape="RoundRectangle 18"
                                     BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#101720}"
                                     Padding="14,12">
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:WorkoutPlanDetailsViewModel}}, Path=ToggleExpandCommand}"
-                                                          CommandParameter="{Binding .}" />
-                                </Border.GestureRecognizers>
-                                <Grid ColumnDefinitions="Auto,*,Auto"
-                                      ColumnSpacing="12">
-                                    <Label Text="{Binding ToggleGlyph}"
-                                           FontSize="18"
-                                           VerticalOptions="Center"
-                                           IsVisible="{Binding HasWorkouts}"
-                                           TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}" />
-                                    <VerticalStackLayout Grid.Column="1" Spacing="4">
-                                        <HorizontalStackLayout Spacing="8">
-                                            <Label Text="{Binding DayLabel}"
-                                                   FontSize="18"
-                                                   FontAttributes="Bold"
-                                                   VerticalOptions="Center"
-                                                   TextColor="{AppThemeBinding Light=#244B58, Dark=#C3D7E7}" />
-                                            <Label Text="{Binding MuscleGroupSummary}"
-                                                   FontSize="13"
-                                                   LineBreakMode="TailTruncation"
-                                                   VerticalOptions="Center"
-                                                   TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}" />
-                                        </HorizontalStackLayout>
-                                        <Label Text="{Binding WorkoutCountLabel}"
-                                               FontSize="12"
-                                               TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
-                                    </VerticalStackLayout>
-                                </Grid>
-                            </Border>
-
-                            <VerticalStackLayout Spacing="10"
-                                                  IsVisible="{Binding IsExpanded}"
-                                                  BindableLayout.ItemsSource="{Binding VisibleMuscleGroups}">
-                                <BindableLayout.ItemTemplate>
-                                    <DataTemplate>
-                                        <VerticalStackLayout Spacing="8">
-                                            <Label Text="{Binding MuscleGroupLabel, StringFormat='Muscle Group: {0}'}"
-                                                   FontSize="14"
-                                                   FontAttributes="Bold"
-                                                   TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}" />
-
-                                            <VerticalStackLayout Spacing="10"
-                                                                 BindableLayout.ItemsSource="{Binding Workouts}">
-                                                <BindableLayout.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
-                                                                StrokeThickness="1"
-                                                                StrokeShape="RoundRectangle 18"
-                                                                BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
-                                                                Padding="12">
-                                                            <VerticalStackLayout Spacing="4">
-                                                                <Label Text="{Binding Workout.Name}" FontAttributes="Bold" FontSize="16" />
-
-                                                                <StackLayout IsVisible="{Binding Workout.Type, Converter={StaticResource IsWeightLiftingConverter}}">
-                                                                    <Label Text="{Binding Workout.Sets, StringFormat='Sets: {0}'}" FontSize="14" />
-                                                                    <Label Text="{Binding Workout.Reps, StringFormat='Reps: {0}'}" FontSize="14" />
-                                                                </StackLayout>
-
-                                                                <StackLayout IsVisible="{Binding Workout.Type, Converter={StaticResource IsCardioConverter}}">
-                                                                    <Label Text="{Binding Workout.Sets, StringFormat='Sessions: {0}'}" FontSize="14" />
-                                                                    <Label Text="{Binding Workout.Steps, StringFormat='Steps: {0}'}" FontSize="14" />
-                                                                </StackLayout>
-
-                                                                <Button Text="Change Day"
-                                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:WorkoutPlanDetailsViewModel}}, Path=ChangeWorkoutDayCommand}"
-                                                                        CommandParameter="{Binding .}"
-                                                                        Margin="0,5,0,0"
-                                                                        BackgroundColor="{AppThemeBinding Light=#E6EFFC, Dark=#1D324B}"
-                                                                        TextColor="{AppThemeBinding Light=#1D4ED8, Dark=#93C5FD}"
-                                                                        CornerRadius="12" />
-                                                            </VerticalStackLayout>
-                                                        </Border>
-                                                    </DataTemplate>
-                                                </BindableLayout.ItemTemplate>
-                                            </VerticalStackLayout>
+                                <VerticalStackLayout Spacing="10">
+                                    <Grid ColumnDefinitions="Auto,*,Auto"
+                                          ColumnSpacing="12">
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:WorkoutPlanDetailsViewModel}}, Path=ToggleExpandCommand}"
+                                                                  CommandParameter="{Binding .}" />
+                                        </Grid.GestureRecognizers>
+                                        <Label Text="{Binding ToggleGlyph}"
+                                               FontSize="18"
+                                               VerticalOptions="Center"
+                                               IsVisible="{Binding HasWorkouts}"
+                                               TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}" />
+                                        <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                            <HorizontalStackLayout Spacing="8">
+                                                <Label Text="{Binding DayLabel}"
+                                                       FontSize="18"
+                                                       FontAttributes="Bold"
+                                                       VerticalOptions="Center"
+                                                       TextColor="{AppThemeBinding Light=#244B58, Dark=#C3D7E7}" />
+                                                <Label Text="{Binding MuscleGroupSummary}"
+                                                       FontSize="13"
+                                                       LineBreakMode="TailTruncation"
+                                                       VerticalOptions="Center"
+                                                       TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}" />
+                                            </HorizontalStackLayout>
+                                            <Label Text="{Binding WorkoutCountLabel}"
+                                                   FontSize="12"
+                                                   TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
                                         </VerticalStackLayout>
-                                    </DataTemplate>
-                                </BindableLayout.ItemTemplate>
-                            </VerticalStackLayout>
+                                        <Button Grid.Column="2"
+                                                Text="Edit Day"
+                                                Padding="12,6"
+                                                VerticalOptions="Center"
+                                                IsVisible="{Binding CanEditDay}"
+                                                BackgroundColor="{AppThemeBinding Light=#E6EFFC, Dark=#1D324B}"
+                                                TextColor="{AppThemeBinding Light=#1D4ED8, Dark=#93C5FD}"
+                                                CornerRadius="12"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:WorkoutPlanDetailsViewModel}}, Path=EditDayCommand}"
+                                                CommandParameter="{Binding .}" />
+                                    </Grid>
 
-                            <Label Text="{Binding RestDayMessage}"
-                                   IsVisible="{Binding ShowRestDayMessage}"
-                                   FontSize="14"
-                                   TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                                    <VerticalStackLayout Spacing="10"
+                                                          IsVisible="{Binding IsExpanded}"
+                                                          BindableLayout.ItemsSource="{Binding VisibleMuscleGroups}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate>
+                                                <VerticalStackLayout Spacing="8">
+                                                    <Label Text="{Binding MuscleGroupLabel, StringFormat='Muscle Group: {0}'}"
+                                                           FontSize="14"
+                                                           FontAttributes="Bold"
+                                                           TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}" />
+
+                                                    <VerticalStackLayout Spacing="10"
+                                                                         BindableLayout.ItemsSource="{Binding Workouts}">
+                                                        <BindableLayout.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
+                                                                        StrokeThickness="1"
+                                                                        StrokeShape="RoundRectangle 18"
+                                                                        BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
+                                                                        Padding="12">
+                                                                    <VerticalStackLayout Spacing="4">
+                                                                        <Label Text="{Binding Workout.Name}" FontAttributes="Bold" FontSize="16" />
+
+                                                                        <StackLayout IsVisible="{Binding Workout.Type, Converter={StaticResource IsWeightLiftingConverter}}">
+                                                                            <Label Text="{Binding Workout.Sets, StringFormat='Sets: {0}'}" FontSize="14" />
+                                                                            <Label Text="{Binding Workout.Reps, StringFormat='Reps: {0}'}" FontSize="14" />
+                                                                        </StackLayout>
+
+                                                                        <StackLayout IsVisible="{Binding Workout.Type, Converter={StaticResource IsCardioConverter}}">
+                                                                            <Label Text="{Binding Workout.Sets, StringFormat='Sessions: {0}'}" FontSize="14" />
+                                                                            <Label Text="{Binding Workout.Steps, StringFormat='Steps: {0}'}" FontSize="14" />
+                                                                        </StackLayout>
+                                                                    </VerticalStackLayout>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </BindableLayout.ItemTemplate>
+                                                    </VerticalStackLayout>
+                                                </VerticalStackLayout>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+
+                                    <Label Text="{Binding RestDayMessage}"
+                                           IsVisible="{Binding ShowRestDayMessage}"
+                                           FontSize="14"
+                                           TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                                </VerticalStackLayout>
+                            </Border>
                         </VerticalStackLayout>
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
