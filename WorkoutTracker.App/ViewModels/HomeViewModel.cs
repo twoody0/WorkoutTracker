@@ -175,6 +175,7 @@ public class HomeViewModel : BaseViewModel
         }
 
         var today = DateTime.Today;
+        var bodyWeight = Math.Max(_authService.CurrentUser?.Weight ?? 180, 1);
         var workouts = (await _workoutService.GetWorkouts())
             .Where(workout =>
                 workout.Type == WorkoutType.WeightLifting &&
@@ -187,26 +188,24 @@ public class HomeViewModel : BaseViewModel
             return;
         }
 
-        var volumeByRegion = BuildVolumeByRegion(workouts);
+        var volumeByRegion = BuildVolumeByRegion(workouts, bodyWeight);
 
-        var maxVolume = volumeByRegion.Values.DefaultIfEmpty(0).Max();
+        FrontShouldersOpacity = GetHeatOpacity(volumeByRegion, "FrontShoulders");
+        FrontChestOpacity = GetHeatOpacity(volumeByRegion, "FrontChest");
+        FrontBicepsOpacity = GetHeatOpacity(volumeByRegion, "FrontBiceps");
+        FrontTricepsOpacity = GetHeatOpacity(volumeByRegion, "FrontTriceps");
+        FrontAbsOpacity = GetHeatOpacity(volumeByRegion, "FrontAbs");
+        FrontQuadsOpacity = GetHeatOpacity(volumeByRegion, "FrontQuads");
 
-        FrontShouldersOpacity = GetHeatOpacity(volumeByRegion, "FrontShoulders", maxVolume);
-        FrontChestOpacity = GetHeatOpacity(volumeByRegion, "FrontChest", maxVolume);
-        FrontBicepsOpacity = GetHeatOpacity(volumeByRegion, "FrontBiceps", maxVolume);
-        FrontTricepsOpacity = GetHeatOpacity(volumeByRegion, "FrontTriceps", maxVolume);
-        FrontAbsOpacity = GetHeatOpacity(volumeByRegion, "FrontAbs", maxVolume);
-        FrontQuadsOpacity = GetHeatOpacity(volumeByRegion, "FrontQuads", maxVolume);
+        BackShouldersOpacity = GetHeatOpacity(volumeByRegion, "BackShoulders");
+        BackTricepsOpacity = GetHeatOpacity(volumeByRegion, "BackTriceps");
+        BackLatsOpacity = GetHeatOpacity(volumeByRegion, "BackLats");
+        BackLowerBackOpacity = GetHeatOpacity(volumeByRegion, "BackLowerBack");
+        BackGlutesOpacity = GetHeatOpacity(volumeByRegion, "BackGlutes");
+        BackHamstringsOpacity = GetHeatOpacity(volumeByRegion, "BackHamstrings");
+        BackCalvesOpacity = GetHeatOpacity(volumeByRegion, "BackCalves");
 
-        BackShouldersOpacity = GetHeatOpacity(volumeByRegion, "BackShoulders", maxVolume);
-        BackTricepsOpacity = GetHeatOpacity(volumeByRegion, "BackTriceps", maxVolume);
-        BackLatsOpacity = GetHeatOpacity(volumeByRegion, "BackLats", maxVolume);
-        BackLowerBackOpacity = GetHeatOpacity(volumeByRegion, "BackLowerBack", maxVolume);
-        BackGlutesOpacity = GetHeatOpacity(volumeByRegion, "BackGlutes", maxVolume);
-        BackHamstringsOpacity = GetHeatOpacity(volumeByRegion, "BackHamstrings", maxVolume);
-        BackCalvesOpacity = GetHeatOpacity(volumeByRegion, "BackCalves", maxVolume);
-
-        TodaySummary = $"Today's muscle heat is based on {workouts.Count} lift{(workouts.Count == 1 ? string.Empty : "s")} logged on {today:MMMM d}.";
+        TodaySummary = $"Today's muscle heat is based on {workouts.Count} lift{(workouts.Count == 1 ? string.Empty : "s")} logged on {today:MMMM d}, normalized to your {bodyWeight:N0} lb body weight.";
     }
 
     private void ResetHeatMap()
@@ -227,23 +226,24 @@ public class HomeViewModel : BaseViewModel
         TodaySummary = "No lifting logged yet today.";
     }
 
-    private static Dictionary<string, double> BuildVolumeByRegion(IEnumerable<Workout> workouts)
+    private static Dictionary<string, double> BuildVolumeByRegion(IEnumerable<Workout> workouts, double bodyWeight)
     {
         var volumeByRegion = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var workout in workouts)
         {
-            var volume = Math.Max(1, workout.Weight) * Math.Max(1, workout.Reps) * Math.Max(1, workout.Sets);
+            var weightRatio = Math.Max(1, workout.Weight) / bodyWeight;
+            var effortScore = weightRatio * Math.Max(1, workout.Reps) * Math.Max(1, workout.Sets);
 
             foreach (var region in InferHeatRegions(workout))
             {
                 if (volumeByRegion.TryGetValue(region, out var existing))
                 {
-                    volumeByRegion[region] = existing + volume;
+                    volumeByRegion[region] = existing + effortScore;
                 }
                 else
                 {
-                    volumeByRegion[region] = volume;
+                    volumeByRegion[region] = effortScore;
                 }
             }
         }
@@ -353,14 +353,17 @@ public class HomeViewModel : BaseViewModel
         return keywords.Any(keyword => tokens.Contains(keyword, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static double GetHeatOpacity(IReadOnlyDictionary<string, double> volumeByRegion, string region, double maxVolume)
+    private static double GetHeatOpacity(IReadOnlyDictionary<string, double> volumeByRegion, string region)
     {
-        if (!volumeByRegion.TryGetValue(region, out var volume) || maxVolume <= 0)
+        if (!volumeByRegion.TryGetValue(region, out var volume) || volume <= 0)
         {
             return 0;
         }
 
-        var intensity = Math.Clamp(volume / maxVolume, 0.0, 1.0);
-        return 0.2 + (intensity * 0.8);
+        // Around 30 means roughly a "very hard" region for the day, e.g. several
+        // challenging work sets at a substantial percentage of body weight.
+        var intensity = Math.Clamp(volume / 30.0, 0.0, 1.0);
+        var easedIntensity = Math.Pow(intensity, 1.35);
+        return 0.05 + (easedIntensity * 0.7);
     }
 }

@@ -118,37 +118,37 @@
                         <Label Text="Heat Guide"
                                FontAttributes="Bold"
                                HorizontalOptions="Center" />
-                        <HorizontalStackLayout HorizontalOptions="Center"
-                                               Spacing="16">
+                            <HorizontalStackLayout HorizontalOptions="Center"
+                                                   Spacing="16">
                             <HorizontalStackLayout Spacing="8">
                                 <Border WidthRequest="18"
                                         HeightRequest="18"
-                                        BackgroundColor="#D7D9DE"
+                                        BackgroundColor="#F7D6D6"
                                         StrokeThickness="0"
                                         StrokeShape="RoundRectangle 9" />
-                                <Label Text="Light work"
-                                       VerticalOptions="Center"
-                                       FontSize="12" />
+                                <Label Text="Light"
+                                        VerticalOptions="Center"
+                                        FontSize="12" />
                             </HorizontalStackLayout>
                             <HorizontalStackLayout Spacing="8">
                                 <Border WidthRequest="18"
                                         HeightRequest="18"
-                                        BackgroundColor="#FFB08F"
+                                        BackgroundColor="#E97878"
                                         StrokeThickness="0"
                                         StrokeShape="RoundRectangle 9" />
                                 <Label Text="Moderate"
-                                       VerticalOptions="Center"
-                                       FontSize="12" />
+                                        VerticalOptions="Center"
+                                        FontSize="12" />
                             </HorizontalStackLayout>
                             <HorizontalStackLayout Spacing="8">
                                 <Border WidthRequest="18"
                                         HeightRequest="18"
-                                        BackgroundColor="#FF7043"
+                                        BackgroundColor="#FF0000"
                                         StrokeThickness="0"
                                         StrokeShape="RoundRectangle 9" />
-                                <Label Text="Heavy focus"
-                                       VerticalOptions="Center"
-                                       FontSize="12" />
+                                <Label Text="High effort"
+                                        VerticalOptions="Center"
+                                        FontSize="12" />
                             </HorizontalStackLayout>
                         </HorizontalStackLayout>
                     </VerticalStackLayout>
