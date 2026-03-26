@@ -34,73 +34,92 @@
                            HorizontalTextAlignment="Center"
                            TextColor="Gray" />
 
-                    <Grid ColumnDefinitions="*,Auto"
-                          HorizontalOptions="Center"
-                          ColumnSpacing="24">
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="16">
                         <VerticalStackLayout Grid.Column="0"
-                                             Spacing="8"
-                                             HorizontalOptions="Center">
-                            <Border BackgroundColor="{Binding HeadColor}"
-                                    StrokeThickness="0"
-                                    WidthRequest="54"
-                                    HeightRequest="54"
-                                    StrokeShape="RoundRectangle 27"
-                                    HorizontalOptions="Center" />
-
-                            <Grid ColumnDefinitions="34,86,34"
-                                  RowDefinitions="24,60,58,78"
-                                  ColumnSpacing="6"
-                                  RowSpacing="6"
-                                  HorizontalOptions="Center">
-                                <Border Grid.Row="0"
-                                        Grid.Column="0"
-                                        Grid.ColumnSpan="3"
-                                        BackgroundColor="{Binding ShouldersColor}"
-                                        StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 12" />
-                                <Border Grid.Row="1"
-                                        Grid.Column="0"
-                                        BackgroundColor="{Binding LeftArmColor}"
-                                        StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 16" />
-                                <Border Grid.Row="1"
-                                        Grid.Column="1"
-                                        BackgroundColor="{Binding ChestColor}"
-                                        StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 18" />
-                                <Border Grid.Row="1"
-                                        Grid.Column="2"
-                                        BackgroundColor="{Binding RightArmColor}"
-                                        StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 16" />
-                                <Border Grid.Row="2"
-                                        Grid.Column="1"
-                                        BackgroundColor="{Binding AbsColor}"
-                                        StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 18" />
-                                <Border Grid.Row="3"
-                                        Grid.Column="1">
-                                    <Grid ColumnDefinitions="*,10,*"
-                                          ColumnSpacing="6">
-                                        <Border Grid.Column="0"
-                                                BackgroundColor="{Binding LeftLegColor}"
-                                                StrokeThickness="0"
-                                                StrokeShape="RoundRectangle 16" />
-                                        <Border Grid.Column="2"
-                                                BackgroundColor="{Binding RightLegColor}"
-                                                StrokeThickness="0"
-                                                StrokeShape="RoundRectangle 16" />
-                                    </Grid>
-                                </Border>
-                            </Grid>
+                                             HorizontalOptions="Center"
+                                             Spacing="8">
+                            <Label Text="Front"
+                                   FontAttributes="Bold"
+                                   HorizontalOptions="Center" />
+                            <Border Stroke="#ECEEF2"
+                                    StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 18"
+                                    BackgroundColor="#FFFFFF"
+                                    Padding="6">
+                                <Grid WidthRequest="190"
+                                      HeightRequest="360">
+                                    <Image Source="body_front_base.png"
+                                           Aspect="AspectFit" />
+                                    <Image Source="body_front_shoulders.png"
+                                           Aspect="AspectFit"
+                                           Opacity="{Binding FrontShouldersOpacity}" />
+                                    <Image Source="body_front_chest.png"
+                                           Aspect="AspectFit"
+                                           Opacity="{Binding FrontChestOpacity}" />
+                                    <Image Source="body_front_biceps.png"
+                                           Aspect="AspectFit"
+                                           Opacity="{Binding FrontBicepsOpacity}" />
+                                    <Image Source="body_front_triceps.png"
+                                           Aspect="AspectFit"
+                                           Opacity="{Binding FrontTricepsOpacity}" />
+                                    <Image Source="body_front_abs.png"
+                                           Aspect="AspectFit"
+                                           Opacity="{Binding FrontAbsOpacity}" />
+                                    <Image Source="body_front_quads.png"
+                                           Aspect="AspectFit"
+                                           Opacity="{Binding FrontQuadsOpacity}" />
+                                </Grid>
+                            </Border>
                         </VerticalStackLayout>
 
                         <VerticalStackLayout Grid.Column="1"
-                                             VerticalOptions="Center"
-                                             Spacing="10">
-                            <Label Text="Cooler = less volume"
-                                   FontSize="12"
-                                   TextColor="Gray" />
+                                             HorizontalOptions="Center"
+                                             Spacing="8">
+                            <Label Text="Back"
+                                   FontAttributes="Bold"
+                                   HorizontalOptions="Center" />
+                            <Border Stroke="#ECEEF2"
+                                    StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 18"
+                                    BackgroundColor="#FFFFFF"
+                                    Padding="6">
+                                <Grid WidthRequest="190"
+                                      HeightRequest="360">
+                                    <Image Source="body_back_base.png"
+                                           Aspect="AspectFit" />
+                                    <Image Source="body_back_shoulders.png"
+                                           Aspect="AspectFit"
+                                           Opacity="{Binding BackShouldersOpacity}" />
+                                    <Image Source="body_back_triceps.png"
+                                           Aspect="AspectFit"
+                                           Opacity="{Binding BackTricepsOpacity}" />
+                                    <Image Source="body_back_lats.png"
+                                           Aspect="AspectFit"
+                                           Opacity="{Binding BackLatsOpacity}" />
+                                    <Image Source="body_back_lower_back.png"
+                                           Aspect="AspectFit"
+                                           Opacity="{Binding BackLowerBackOpacity}" />
+                                    <Image Source="body_back_glutes.png"
+                                           Aspect="AspectFit"
+                                           Opacity="{Binding BackGlutesOpacity}" />
+                                    <Image Source="body_back_hamstrings.png"
+                                           Aspect="AspectFit"
+                                           Opacity="{Binding BackHamstringsOpacity}" />
+                                    <Image Source="body_back_calves.png"
+                                           Aspect="AspectFit"
+                                           Opacity="{Binding BackCalvesOpacity}" />
+                                </Grid>
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Heat Guide"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center" />
+                        <HorizontalStackLayout HorizontalOptions="Center"
+                                               Spacing="16">
                             <HorizontalStackLayout Spacing="8">
                                 <Border WidthRequest="18"
                                         HeightRequest="18"
@@ -131,8 +150,8 @@
                                        VerticalOptions="Center"
                                        FontSize="12" />
                             </HorizontalStackLayout>
-                        </VerticalStackLayout>
-                    </Grid>
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
                 </VerticalStackLayout>
             </Border>
 

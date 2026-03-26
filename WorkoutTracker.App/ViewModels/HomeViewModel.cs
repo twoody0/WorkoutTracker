@@ -11,14 +11,19 @@ public class HomeViewModel : BaseViewModel
     private readonly IServiceProvider _services;
     private string _welcomeMessage = string.Empty;
     private string _todaySummary = "No lifting logged yet today.";
-    private Color _headColor = Color.FromArgb("#D7D9DE");
-    private Color _shouldersColor = Color.FromArgb("#D7D9DE");
-    private Color _leftArmColor = Color.FromArgb("#D7D9DE");
-    private Color _rightArmColor = Color.FromArgb("#D7D9DE");
-    private Color _chestColor = Color.FromArgb("#D7D9DE");
-    private Color _absColor = Color.FromArgb("#D7D9DE");
-    private Color _leftLegColor = Color.FromArgb("#D7D9DE");
-    private Color _rightLegColor = Color.FromArgb("#D7D9DE");
+    private double _frontShouldersOpacity;
+    private double _frontChestOpacity;
+    private double _frontBicepsOpacity;
+    private double _frontTricepsOpacity;
+    private double _frontAbsOpacity;
+    private double _frontQuadsOpacity;
+    private double _backShouldersOpacity;
+    private double _backTricepsOpacity;
+    private double _backLatsOpacity;
+    private double _backLowerBackOpacity;
+    private double _backGlutesOpacity;
+    private double _backHamstringsOpacity;
+    private double _backCalvesOpacity;
 
     public HomeViewModel(IAuthService authService, IWorkoutService workoutService, IServiceProvider services)
     {
@@ -26,7 +31,6 @@ public class HomeViewModel : BaseViewModel
         _workoutService = workoutService;
         _services = services;
         UpdateWelcomeMessage();
-        _ = RefreshHeatMapAsync();
     }
 
     public string WelcomeMessage
@@ -49,52 +53,82 @@ public class HomeViewModel : BaseViewModel
         set => SetProperty(ref _todaySummary, value);
     }
 
-    public Color HeadColor
+    public double FrontShouldersOpacity
     {
-        get => _headColor;
-        set => SetProperty(ref _headColor, value);
+        get => _frontShouldersOpacity;
+        set => SetProperty(ref _frontShouldersOpacity, value);
     }
 
-    public Color ShouldersColor
+    public double FrontChestOpacity
     {
-        get => _shouldersColor;
-        set => SetProperty(ref _shouldersColor, value);
+        get => _frontChestOpacity;
+        set => SetProperty(ref _frontChestOpacity, value);
     }
 
-    public Color LeftArmColor
+    public double FrontBicepsOpacity
     {
-        get => _leftArmColor;
-        set => SetProperty(ref _leftArmColor, value);
+        get => _frontBicepsOpacity;
+        set => SetProperty(ref _frontBicepsOpacity, value);
     }
 
-    public Color RightArmColor
+    public double FrontTricepsOpacity
     {
-        get => _rightArmColor;
-        set => SetProperty(ref _rightArmColor, value);
+        get => _frontTricepsOpacity;
+        set => SetProperty(ref _frontTricepsOpacity, value);
     }
 
-    public Color ChestColor
+    public double FrontAbsOpacity
     {
-        get => _chestColor;
-        set => SetProperty(ref _chestColor, value);
+        get => _frontAbsOpacity;
+        set => SetProperty(ref _frontAbsOpacity, value);
     }
 
-    public Color AbsColor
+    public double FrontQuadsOpacity
     {
-        get => _absColor;
-        set => SetProperty(ref _absColor, value);
+        get => _frontQuadsOpacity;
+        set => SetProperty(ref _frontQuadsOpacity, value);
     }
 
-    public Color LeftLegColor
+    public double BackShouldersOpacity
     {
-        get => _leftLegColor;
-        set => SetProperty(ref _leftLegColor, value);
+        get => _backShouldersOpacity;
+        set => SetProperty(ref _backShouldersOpacity, value);
     }
 
-    public Color RightLegColor
+    public double BackTricepsOpacity
     {
-        get => _rightLegColor;
-        set => SetProperty(ref _rightLegColor, value);
+        get => _backTricepsOpacity;
+        set => SetProperty(ref _backTricepsOpacity, value);
+    }
+
+    public double BackLatsOpacity
+    {
+        get => _backLatsOpacity;
+        set => SetProperty(ref _backLatsOpacity, value);
+    }
+
+    public double BackLowerBackOpacity
+    {
+        get => _backLowerBackOpacity;
+        set => SetProperty(ref _backLowerBackOpacity, value);
+    }
+
+    public double BackGlutesOpacity
+    {
+        get => _backGlutesOpacity;
+        set => SetProperty(ref _backGlutesOpacity, value);
+    }
+
+    public double BackHamstringsOpacity
+    {
+        get => _backHamstringsOpacity;
+        set => SetProperty(ref _backHamstringsOpacity, value);
+    }
+
+    public double BackCalvesOpacity
+    {
+        get => _backCalvesOpacity;
+        set => SetProperty(ref _backCalvesOpacity, value);
     }
 
     public ICommand NavigateToLoginCommand => new Command(async () =>
@@ -153,75 +187,180 @@ public class HomeViewModel : BaseViewModel
             return;
         }
 
-        var volumeByRegion = workouts
-            .GroupBy(workout => NormalizeRegion(workout.MuscleGroup))
-            .ToDictionary(
-                group => group.Key,
-                group => group.Sum(workout => Math.Max(1, workout.Weight) * Math.Max(1, workout.Reps) * Math.Max(1, workout.Sets)));
+        var volumeByRegion = BuildVolumeByRegion(workouts);
 
         var maxVolume = volumeByRegion.Values.DefaultIfEmpty(0).Max();
 
-        var armsColor = GetHeatColor(volumeByRegion, "Arms", maxVolume);
-        var legsColor = GetHeatColor(volumeByRegion, "Legs", maxVolume);
+        FrontShouldersOpacity = GetHeatOpacity(volumeByRegion, "FrontShoulders", maxVolume);
+        FrontChestOpacity = GetHeatOpacity(volumeByRegion, "FrontChest", maxVolume);
+        FrontBicepsOpacity = GetHeatOpacity(volumeByRegion, "FrontBiceps", maxVolume);
+        FrontTricepsOpacity = GetHeatOpacity(volumeByRegion, "FrontTriceps", maxVolume);
+        FrontAbsOpacity = GetHeatOpacity(volumeByRegion, "FrontAbs", maxVolume);
+        FrontQuadsOpacity = GetHeatOpacity(volumeByRegion, "FrontQuads", maxVolume);
 
-        HeadColor = Color.FromArgb("#D7D9DE");
-        ShouldersColor = GetHeatColor(volumeByRegion, "Shoulders", maxVolume);
-        LeftArmColor = armsColor;
-        RightArmColor = armsColor;
-        ChestColor = GetHeatColor(volumeByRegion, "Chest", maxVolume);
-        AbsColor = GetHeatColor(volumeByRegion, "Abs", maxVolume);
-        LeftLegColor = legsColor;
-        RightLegColor = legsColor;
+        BackShouldersOpacity = GetHeatOpacity(volumeByRegion, "BackShoulders", maxVolume);
+        BackTricepsOpacity = GetHeatOpacity(volumeByRegion, "BackTriceps", maxVolume);
+        BackLatsOpacity = GetHeatOpacity(volumeByRegion, "BackLats", maxVolume);
+        BackLowerBackOpacity = GetHeatOpacity(volumeByRegion, "BackLowerBack", maxVolume);
+        BackGlutesOpacity = GetHeatOpacity(volumeByRegion, "BackGlutes", maxVolume);
+        BackHamstringsOpacity = GetHeatOpacity(volumeByRegion, "BackHamstrings", maxVolume);
+        BackCalvesOpacity = GetHeatOpacity(volumeByRegion, "BackCalves", maxVolume);
 
         TodaySummary = $"Today's muscle heat is based on {workouts.Count} lift{(workouts.Count == 1 ? string.Empty : "s")} logged on {today:MMMM d}.";
     }
 
     private void ResetHeatMap()
     {
-        var baseColor = Color.FromArgb("#D7D9DE");
-        HeadColor = baseColor;
-        ShouldersColor = baseColor;
-        LeftArmColor = baseColor;
-        RightArmColor = baseColor;
-        ChestColor = baseColor;
-        AbsColor = baseColor;
-        LeftLegColor = baseColor;
-        RightLegColor = baseColor;
+        FrontShouldersOpacity = 0;
+        FrontChestOpacity = 0;
+        FrontBicepsOpacity = 0;
+        FrontTricepsOpacity = 0;
+        FrontAbsOpacity = 0;
+        FrontQuadsOpacity = 0;
+        BackShouldersOpacity = 0;
+        BackTricepsOpacity = 0;
+        BackLatsOpacity = 0;
+        BackLowerBackOpacity = 0;
+        BackGlutesOpacity = 0;
+        BackHamstringsOpacity = 0;
+        BackCalvesOpacity = 0;
         TodaySummary = "No lifting logged yet today.";
     }
 
-    private static string NormalizeRegion(string muscleGroup)
+    private static Dictionary<string, double> BuildVolumeByRegion(IEnumerable<Workout> workouts)
     {
-        return muscleGroup.Trim().ToLowerInvariant() switch
+        var volumeByRegion = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var workout in workouts)
         {
-            "biceps" => "Arms",
-            "triceps" => "Arms",
-            "arms" => "Arms",
-            "shoulders" => "Shoulders",
-            "back" => "Shoulders",
-            "chest" => "Chest",
-            "abs" => "Abs",
-            "core" => "Abs",
-            "legs" => "Legs",
-            _ => "Chest"
+            var volume = Math.Max(1, workout.Weight) * Math.Max(1, workout.Reps) * Math.Max(1, workout.Sets);
+
+            foreach (var region in InferHeatRegions(workout))
+            {
+                if (volumeByRegion.TryGetValue(region, out var existing))
+                {
+                    volumeByRegion[region] = existing + volume;
+                }
+                else
+                {
+                    volumeByRegion[region] = volume;
+                }
+            }
+        }
+
+        return volumeByRegion;
+    }
+
+    private static IReadOnlyList<string> InferHeatRegions(Workout workout)
+    {
+        var tokens = GetSearchTokens(workout);
+        var muscleGroup = workout.MuscleGroup?.Trim().ToLowerInvariant() ?? string.Empty;
+
+        if (MatchesAny(tokens, "calf", "calves", "seated calf", "standing calf"))
+        {
+            return ["BackCalves"];
+        }
+
+        if (MatchesAny(tokens, "hamstring", "romanian deadlift", "rdl", "leg curl", "stiff leg", "good morning"))
+        {
+            return ["BackHamstrings"];
+        }
+
+        if (MatchesAny(tokens, "glute", "hip thrust", "glute bridge", "kickback"))
+        {
+            return ["BackGlutes"];
+        }
+
+        if (MatchesAny(tokens, "lat", "pull up", "pulldown", "row", "seated row", "cable row", "barbell row"))
+        {
+            return ["BackLats"];
+        }
+
+        if (MatchesAny(tokens, "lower back", "erector", "superman", "back extension"))
+        {
+            return ["BackLowerBack"];
+        }
+
+        if (MatchesAny(tokens, "rear delt", "reverse fly", "face pull"))
+        {
+            return ["BackShoulders"];
+        }
+
+        if (MatchesAny(tokens, "tricep", "skull crusher", "pushdown", "overhead extension", "dip"))
+        {
+            return ["FrontTriceps", "BackTriceps"];
+        }
+
+        if (MatchesAny(tokens, "bicep", "curl", "hammer curl", "preacher curl"))
+        {
+            return ["FrontBiceps"];
+        }
+
+        if (MatchesAny(tokens, "shoulder", "lateral raise", "front raise", "upright row", "overhead press", "shoulder press"))
+        {
+            return ["FrontShoulders", "BackShoulders"];
+        }
+
+        if (MatchesAny(tokens, "chest", "bench", "press", "pec", "fly", "push up"))
+        {
+            return ["FrontChest"];
+        }
+
+        if (MatchesAny(tokens, "ab", "core", "crunch", "sit up", "leg raise", "plank", "twist"))
+        {
+            return ["FrontAbs", "BackLowerBack"];
+        }
+
+        if (MatchesAny(tokens, "quad", "leg extension", "lunge", "split squat", "step up"))
+        {
+            return ["FrontQuads"];
+        }
+
+        if (MatchesAny(tokens, "leg", "squat", "deadlift"))
+        {
+            return ["FrontQuads", "BackGlutes", "BackHamstrings"];
+        }
+
+        return muscleGroup switch
+        {
+            "biceps" => ["FrontBiceps"],
+            "triceps" => ["FrontTriceps", "BackTriceps"],
+            "arms" => ["FrontBiceps", "FrontTriceps", "BackTriceps"],
+            "shoulders" => ["FrontShoulders", "BackShoulders"],
+            "rear delts" => ["BackShoulders"],
+            "back" => ["BackLats", "BackLowerBack"],
+            "lats" => ["BackLats"],
+            "lower back" => ["BackLowerBack"],
+            "chest" => ["FrontChest"],
+            "abs" => ["FrontAbs"],
+            "core" => ["FrontAbs", "BackLowerBack"],
+            "legs" => ["FrontQuads", "BackGlutes", "BackHamstrings"],
+            "quads" => ["FrontQuads"],
+            "glutes" => ["BackGlutes"],
+            "hamstrings" => ["BackHamstrings"],
+            "calves" => ["BackCalves"],
+            _ => ["FrontChest"]
         };
     }
 
-    private static Color GetHeatColor(IReadOnlyDictionary<string, double> volumeByRegion, string region, double maxVolume)
+    private static string GetSearchTokens(Workout workout)
     {
-        var baseColor = Color.FromArgb("#D7D9DE");
-        var warmColor = Color.FromArgb("#FF7043");
+        return $"{workout.MuscleGroup} {workout.Name}".Trim().ToLowerInvariant();
+    }
 
+    private static bool MatchesAny(string tokens, params string[] keywords)
+    {
+        return keywords.Any(keyword => tokens.Contains(keyword, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static double GetHeatOpacity(IReadOnlyDictionary<string, double> volumeByRegion, string region, double maxVolume)
+    {
         if (!volumeByRegion.TryGetValue(region, out var volume) || maxVolume <= 0)
         {
-            return baseColor;
+            return 0;
         }
 
         var intensity = Math.Clamp(volume / maxVolume, 0.0, 1.0);
-
-        return new Color(
-            red: (float)(baseColor.Red + ((warmColor.Red - baseColor.Red) * intensity)),
-            green: (float)(baseColor.Green + ((warmColor.Green - baseColor.Green) * intensity)),
-            blue: (float)(baseColor.Blue + ((warmColor.Blue - baseColor.Blue) * intensity)));
+        return 0.2 + (intensity * 0.8);
     }
 }
