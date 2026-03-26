@@ -168,10 +168,10 @@ namespace WorkoutTracker.Services
             });
         }
 
-        private static Workout StrengthWorkout(string name, int reps, int sets, string muscleGroup, DayOfWeek day, string gymLocation = "Main Gym")
+        private static Workout StrengthWorkout(string name, int reps, int sets, string muscleGroup, DayOfWeek day, string gymLocation = "")
             => new(name, 0, reps, sets, muscleGroup, day, DateTime.Now, WorkoutType.WeightLifting, gymLocation);
 
-        private static Workout CardioWorkout(string name, int sessions, int steps, string muscleGroup, DayOfWeek day, string gymLocation = "Cardio Area")
+        private static Workout CardioWorkout(string name, int sessions, int steps, string muscleGroup, DayOfWeek day, string gymLocation = "")
             => new(name, 0, 0, sessions, muscleGroup, day, DateTime.Now, WorkoutType.Cardio, gymLocation)
             {
                 Steps = steps

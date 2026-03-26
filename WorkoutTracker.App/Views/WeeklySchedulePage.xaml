@@ -5,75 +5,110 @@
              Title="Weekly Schedule">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="15">
-            <Label Text="Your Weekly Schedule" FontSize="24" FontAttributes="Bold" HorizontalOptions="Center" />
-            <Border Stroke="#D7E8DA"
-                    StrokeThickness="1"
-                    StrokeShape="RoundRectangle 12"
-                    BackgroundColor="#F6FBF7"
-                    Padding="12"
+        <VerticalStackLayout Padding="20,18,20,28"
+                             Spacing="16">
+            <Border Stroke="{AppThemeBinding Light=#D6DEE8, Dark=#2A3442}"
+                    BackgroundColor="{AppThemeBinding Light=#F4F8FB, Dark=#111A24}"
+                    StrokeShape="RoundRectangle 24"
+                    Padding="20">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Your Weekly Schedule"
+                           FontSize="28"
+                           FontAttributes="Bold" />
+                    <Label Text="Review each day, then jump into edit mode when you want to rebalance the plan."
+                           FontSize="14"
+                           TextColor="{AppThemeBinding Light=#5E6B7B, Dark=#A4B2C5}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Stroke="{AppThemeBinding Light=#D6E7DD, Dark=#214239}"
+                    BackgroundColor="{AppThemeBinding Light=#F3FBF6, Dark=#10211C}"
+                    StrokeShape="RoundRectangle 20"
+                    Padding="14"
                     IsVisible="{Binding HasActivePlan}">
                 <VerticalStackLayout Spacing="4">
                     <Label Text="{Binding ActivePlanName}"
                            FontSize="18"
                            FontAttributes="Bold"
-                           TextColor="#2F6F3E" />
+                           TextColor="{AppThemeBinding Light=#1E6B4E, Dark=#84E4C3}" />
                     <Label Text="{Binding ActivePlanTimelineSummary}"
                            FontSize="13"
-                           TextColor="Gray" />
+                           TextColor="{AppThemeBinding Light=#5D6A79, Dark=#A6B4C5}" />
                 </VerticalStackLayout>
             </Border>
 
-            <CollectionView ItemsSource="{Binding WeeklySchedule}">
+            <CollectionView ItemsSource="{Binding WeeklySchedule}"
+                            SelectionMode="None">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
-                        <Border Stroke="LightGray" StrokeThickness="1" StrokeShape="RoundRectangle 8" Padding="10" Margin="0,0,0,10">
-                            <VerticalStackLayout>
-                                <!-- Day Header with Edit Icon -->
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
+                        <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
+                                BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
+                                StrokeShape="RoundRectangle 22"
+                                Padding="16"
+                                Margin="0,0,0,14">
+                            <VerticalStackLayout Spacing="12">
+                                <Grid ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="10">
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="{Binding Key}"
+                                               FontSize="20"
+                                               FontAttributes="Bold" />
+                                        <Label Text="{Binding Value.Count, StringFormat='Planned sessions: {0}'}"
+                                               FontSize="12"
+                                               TextColor="{AppThemeBinding Light=#607084, Dark=#98A8BC}" />
+                                    </VerticalStackLayout>
 
-                                    <Label Text="{Binding Key}" FontSize="18" FontAttributes="Bold" Grid.Column="0" />
-
-                                    <Grid WidthRequest="24" HeightRequest="24"
-                                          VerticalOptions="Start"
-                                          HorizontalOptions="End"
-                                          Grid.Column="1">
-                                        <ImageButton Source="edit_icon.png"
-                                             Aspect="AspectFit"
-                                             BackgroundColor="Transparent"
-                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:WeeklyScheduleViewModel}}, Path=EditDayCommand}"
-                                             CommandParameter="{Binding Key}" />
-                                    </Grid>
+                                    <Button Grid.Column="1"
+                                            Text="Edit"
+                                            Padding="14,8"
+                                            VerticalOptions="Center"
+                                            BackgroundColor="{AppThemeBinding Light=#E7F6F4, Dark=#143936}"
+                                            TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:WeeklyScheduleViewModel}}, Path=EditDayCommand}"
+                                            CommandParameter="{Binding Key}" />
                                 </Grid>
 
-                                <!-- Workouts For The Day -->
-                                <CollectionView ItemsSource="{Binding Value}">
+                                <CollectionView ItemsSource="{Binding Value}"
+                                                SelectionMode="None">
                                     <CollectionView.EmptyView>
-                                        <Label Text="Rest Day" FontSize="16" FontAttributes="Italic" TextColor="Gray" HorizontalOptions="Center" />
+                                        <Border StrokeThickness="0"
+                                                BackgroundColor="{AppThemeBinding Light=#F5F7FA, Dark=#1B2431}"
+                                                StrokeShape="RoundRectangle 16"
+                                                Padding="14">
+                                            <Label Text="Rest day"
+                                                   FontSize="14"
+                                                   FontAttributes="Italic"
+                                                   HorizontalOptions="Center"
+                                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}" />
+                                        </Border>
                                     </CollectionView.EmptyView>
+
                                     <CollectionView.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Stroke="DarkGray" StrokeThickness="1" StrokeShape="RoundRectangle 8" Padding="8" Margin="0,0,0,8">
-                                                <VerticalStackLayout>
-                                                    <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="16" />
+                                            <Border Stroke="{AppThemeBinding Light=#E0E7EF, Dark=#334050}"
+                                                    BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#1A2230}"
+                                                    StrokeShape="RoundRectangle 18"
+                                                    Padding="12"
+                                                    Margin="0,0,0,10">
+                                                <VerticalStackLayout Spacing="4">
+                                                    <Label Text="{Binding Name}"
+                                                           FontSize="16"
+                                                           FontAttributes="Bold" />
 
-                                                    <!-- Show Sets/Reps for Weightlifting -->
-                                                    <StackLayout IsVisible="{Binding Type, Converter={StaticResource IsWeightLiftingConverter}}">
-                                                        <Label Text="{Binding Sets, StringFormat='Sets: {0}'}" FontSize="14" />
-                                                        <Label Text="{Binding Reps, StringFormat='Reps: {0}'}" FontSize="14" />
-                                                    </StackLayout>
+                                                    <Label Text="{Binding Sets, StringFormat='Strength: {0} sets'}"
+                                                           FontSize="13"
+                                                           IsVisible="{Binding Type, Converter={StaticResource IsWeightLiftingConverter}}" />
+                                                    <Label Text="{Binding Reps, StringFormat='Target reps: {0}'}"
+                                                           FontSize="13"
+                                                           IsVisible="{Binding Type, Converter={StaticResource IsWeightLiftingConverter}}" />
 
-                                                    <!-- Show Steps for Cardio -->
-                                                    <StackLayout IsVisible="{Binding Type, Converter={StaticResource IsCardioConverter}}">
-                                                        <Label Text="{Binding Steps, StringFormat='Steps: {0}'}" FontSize="14" />
-                                                    </StackLayout>
+                                                    <Label Text="{Binding Steps, StringFormat='Steps goal: {0}'}"
+                                                           FontSize="13"
+                                                           IsVisible="{Binding Type, Converter={StaticResource IsCardioConverter}}" />
 
-                                                    <Label Text="{Binding MuscleGroup, StringFormat='Muscle Group: {0}'}" FontSize="12" TextColor="Gray" />
-                                                    <Label Text="{Binding Type, StringFormat='Type: {0}'}" FontSize="12" TextColor="Gray" />
+                                                    <Label Text="{Binding MuscleGroup, StringFormat='Focus: {0}'}"
+                                                           FontSize="12"
+                                                           TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}" />
                                                 </VerticalStackLayout>
                                             </Border>
                                         </DataTemplate>

@@ -20,6 +20,7 @@ public class WorkoutPlanViewModel : BaseViewModel
     private bool _isCreatePlanVisible;
 
     public ObservableCollection<WorkoutPlan> WorkoutPlans { get; set; } = new();
+    public ObservableCollection<WorkoutPlanCategoryGroup> GroupedWorkoutPlans { get; } = new();
     public ObservableCollection<string> AvailableCategories { get; } = new();
     public ObservableCollection<string> AvailableNewPlanCategories { get; } = new();
     private List<WorkoutPlan> AllPlans { get; set; } = new();
@@ -27,6 +28,8 @@ public class WorkoutPlanViewModel : BaseViewModel
     public WorkoutPlan? CurrentPlan => _scheduleService.ActivePlan;
     public bool HasActivePlan => _scheduleService.ActivePlan != null;
     public string CurrentPlanTimelineSummary => _scheduleService.GetActivePlanTimelineSummary();
+    public bool ShowGroupedWorkoutPlans => SelectedCategory == AllCategoriesOption;
+    public bool ShowFlatWorkoutPlans => !ShowGroupedWorkoutPlans;
 
     public string NewPlanName
     {
@@ -143,26 +146,31 @@ public class WorkoutPlanViewModel : BaseViewModel
     private void RefreshWorkoutPlans()
     {
         WorkoutPlans.Clear();
+        GroupedWorkoutPlans.Clear();
 
-        foreach (var plan in AllPlans)
+        var filteredPlans = AllPlans
+            .Where(plan => plan != _scheduleService.ActivePlan)
+            .Where(plan => SelectedCategory == AllCategoriesOption ||
+                           string.Equals(plan.Category, SelectedCategory, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        foreach (var plan in filteredPlans)
         {
-            if (plan == _scheduleService.ActivePlan)
-            {
-                continue;
-            }
-
-            if (SelectedCategory != AllCategoriesOption &&
-                !string.Equals(plan.Category, SelectedCategory, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
             WorkoutPlans.Add(plan);
+        }
+
+        foreach (var group in filteredPlans
+                     .GroupBy(plan => string.IsNullOrWhiteSpace(plan.Category) ? CustomCategory : plan.Category)
+                     .OrderBy(group => group.Key))
+        {
+            GroupedWorkoutPlans.Add(new WorkoutPlanCategoryGroup(group.Key, group));
         }
 
         OnPropertyChanged(nameof(CurrentPlan));
         OnPropertyChanged(nameof(HasActivePlan));
         OnPropertyChanged(nameof(CurrentPlanTimelineSummary));
+        OnPropertyChanged(nameof(ShowGroupedWorkoutPlans));
+        OnPropertyChanged(nameof(ShowFlatWorkoutPlans));
     }
 
     private async void SelectWorkoutPlan(WorkoutPlan plan)
@@ -231,5 +239,16 @@ public class WorkoutPlanViewModel : BaseViewModel
     public void RefreshActivePlan()
     {
         RefreshWorkoutPlans();
+    }
+}
+
+public class WorkoutPlanCategoryGroup : List<WorkoutPlan>
+{
+    public string CategoryName { get; }
+
+    public WorkoutPlanCategoryGroup(string categoryName, IEnumerable<WorkoutPlan> plans)
+        : base(plans)
+    {
+        CategoryName = categoryName;
     }
 }

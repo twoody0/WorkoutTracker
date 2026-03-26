@@ -12,7 +12,7 @@ public class Workout
 {
     public required string Name { get; set; } = default!;
     public required string MuscleGroup { get; set; } = default!;
-    public required string GymLocation { get; set; } = default!;
+    public required string GymLocation { get; set; } = string.Empty;
 
     public double Weight { get; set; }
     public int Reps { get; set; }

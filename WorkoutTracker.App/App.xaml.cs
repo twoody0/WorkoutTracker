@@ -11,7 +11,7 @@ public partial class App : Application
     {
         InitializeComponent();
         Services = services;
-        UserAppTheme = AppTheme.Light;
+        services.GetRequiredService<IThemeService>().ApplySavedTheme();
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
     }

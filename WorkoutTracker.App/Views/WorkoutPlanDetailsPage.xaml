@@ -5,17 +5,19 @@
              Title="{Binding SelectedPlan.Name}">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="15">
+        <VerticalStackLayout Padding="20,18,20,28" Spacing="15">
             <Label Text="{Binding SelectedPlan.DurationDisplay, StringFormat='Duration: {0}'}"
                    FontSize="14"
-                   TextColor="#2F6F3E" />
-            <Label Text="{Binding SelectedPlan.Description}" FontSize="16" TextColor="Gray" />
+                   TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}" />
+            <Label Text="{Binding SelectedPlan.Description}"
+                   FontSize="16"
+                   TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
 
             <Button Text="Start Plan"
                     Command="{Binding StartPlanCommand}"
-                    BackgroundColor="#4CAF50"
+                    BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}"
                     TextColor="White"
-                    CornerRadius="8" />
+                    CornerRadius="12" />
 
             <CollectionView ItemsSource="{Binding WorkoutGroups}">
                 <CollectionView.ItemTemplate>
@@ -24,38 +26,45 @@
                             <Label Text="{Binding Day}"
                                    FontSize="18"
                                    FontAttributes="Bold"
-                                   TextColor="DarkSlateGray" />
+                                   TextColor="{AppThemeBinding Light=#244B58, Dark=#C3D7E7}" />
 
                             <CollectionView ItemsSource="{Binding Workouts}"
                                             SelectionMode="None">
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Stroke="LightGray" StrokeThickness="1" StrokeShape="RoundRectangle 8" Padding="10" Margin="0,0,0,10">
-                                            <VerticalStackLayout>
+                                        <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
+                                                StrokeThickness="1"
+                                                StrokeShape="RoundRectangle 18"
+                                                BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
+                                                Padding="12"
+                                                Margin="0,0,0,10">
+                                            <VerticalStackLayout Spacing="4">
                                                 <Label Text="{Binding Workout.Name}" FontAttributes="Bold" FontSize="16" />
 
-                                                <!-- Weightlifting Info -->
                                                 <StackLayout IsVisible="{Binding Workout.Type, Converter={StaticResource IsWeightLiftingConverter}}">
                                                     <Label Text="{Binding Workout.Sets, StringFormat='Sets: {0}'}" FontSize="14" />
                                                     <Label Text="{Binding Workout.Reps, StringFormat='Reps: {0}'}" FontSize="14" />
                                                 </StackLayout>
 
-                                                <!-- Cardio Info -->
                                                 <StackLayout IsVisible="{Binding Workout.Type, Converter={StaticResource IsCardioConverter}}">
                                                     <Label Text="{Binding Workout.Sets, StringFormat='Sessions: {0}'}" FontSize="14" />
                                                     <Label Text="{Binding Workout.Steps, StringFormat='Steps: {0}'}" FontSize="14" />
                                                 </StackLayout>
 
-                                                <Label Text="{Binding Workout.MuscleGroup, StringFormat='Muscle Group: {0}'}" FontSize="12" TextColor="Gray" />
-                                                <Label Text="{Binding Workout.Type, StringFormat='Type: {0}'}" FontSize="12" TextColor="Gray" />
+                                                <Label Text="{Binding Workout.MuscleGroup, StringFormat='Muscle Group: {0}'}"
+                                                       FontSize="12"
+                                                       TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                                                <Label Text="{Binding Workout.Type, StringFormat='Type: {0}'}"
+                                                       FontSize="12"
+                                                       TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
 
                                                 <Button Text="Change Day"
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:WorkoutPlanDetailsViewModel}}, Path=ChangeWorkoutDayCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    Margin="0,5,0,0"
-                                                    BackgroundColor="#2196F3"
-                                                    TextColor="White"
-                                                    CornerRadius="8" />
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:WorkoutPlanDetailsViewModel}}, Path=ChangeWorkoutDayCommand}"
+                                                        CommandParameter="{Binding .}"
+                                                        Margin="0,5,0,0"
+                                                        BackgroundColor="{AppThemeBinding Light=#E6EFFC, Dark=#1D324B}"
+                                                        TextColor="{AppThemeBinding Light=#1D4ED8, Dark=#93C5FD}"
+                                                        CornerRadius="12" />
                                             </VerticalStackLayout>
                                         </Border>
                                     </DataTemplate>

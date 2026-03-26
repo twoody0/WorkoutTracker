@@ -1,55 +1,204 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:WorkoutTracker.ViewModels"
              x:Class="WorkoutTracker.Views.EditDayPage"
              x:Name="EditPageRoot"
              Title="{Binding Day, StringFormat='Edit {0}'}">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="10">
-            <Label Text="{Binding Day, StringFormat='Editing {0}'}"
-                   FontSize="24" FontAttributes="Bold" HorizontalOptions="Center" />
+        <VerticalStackLayout Padding="20,18,20,28"
+                             Spacing="18">
+            <Border Stroke="{AppThemeBinding Light=#D6DEE8, Dark=#2A3442}"
+                    BackgroundColor="{AppThemeBinding Light=#EEF4FF, Dark=#111A24}"
+                    StrokeShape="RoundRectangle 24"
+                    Padding="20">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{Binding Day, StringFormat='Plan {0}'}"
+                           FontSize="30"
+                           FontAttributes="Bold" />
+                    <Label Text="{Binding DaySummary}"
+                           FontSize="14"
+                           TextColor="{AppThemeBinding Light=#5C6878, Dark=#A7B4C7}" />
 
-            <CollectionView ItemsSource="{Binding Workouts}">
+                    <Grid ColumnDefinitions="*,*,*"
+                          ColumnSpacing="10">
+                        <Border Grid.Column="0"
+                                StrokeThickness="0"
+                                BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1A2330}"
+                                StrokeShape="RoundRectangle 18"
+                                Padding="12">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="{Binding WorkoutCount}"
+                                       FontSize="24"
+                                       FontAttributes="Bold" />
+                                <Label Text="Total"
+                                       FontSize="12"
+                                       TextColor="{AppThemeBinding Light=#6A7686, Dark=#99A9BD}" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                StrokeThickness="0"
+                                BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1A2330}"
+                                StrokeShape="RoundRectangle 18"
+                                Padding="12">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="{Binding StrengthWorkoutCount}"
+                                       FontSize="24"
+                                       FontAttributes="Bold" />
+                                <Label Text="Strength"
+                                       FontSize="12"
+                                       TextColor="{AppThemeBinding Light=#6A7686, Dark=#99A9BD}" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border Grid.Column="2"
+                                StrokeThickness="0"
+                                BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1A2330}"
+                                StrokeShape="RoundRectangle 18"
+                                Padding="12">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="{Binding CardioWorkoutCount}"
+                                       FontSize="24"
+                                       FontAttributes="Bold" />
+                                <Label Text="Cardio"
+                                       FontSize="12"
+                                       TextColor="{AppThemeBinding Light=#6A7686, Dark=#99A9BD}" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Button Text="Add Workout"
+                    Command="{Binding AddWorkoutCommand}"
+                    BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}"
+                    TextColor="White"
+                    CornerRadius="16" />
+
+            <CollectionView ItemsSource="{Binding Workouts}"
+                            SelectionMode="None">
+                <CollectionView.EmptyView>
+                    <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
+                            BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
+                            StrokeShape="RoundRectangle 24"
+                            Padding="24">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="{Binding EmptyStateTitle}"
+                                   FontSize="22"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="Center" />
+                            <Label Text="{Binding EmptyStateMessage}"
+                                   FontSize="14"
+                                   HorizontalTextAlignment="Center"
+                                   TextColor="{AppThemeBinding Light=#647184, Dark=#9EABBC}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </CollectionView.EmptyView>
+
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
-                        <Border Stroke="Gray" StrokeThickness="1" StrokeShape="RoundRectangle 8" Padding="10" Margin="0,0,0,10">
-                            <VerticalStackLayout>
-                                <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="16" />
+                        <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
+                                BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
+                                StrokeShape="RoundRectangle 22"
+                                Padding="16"
+                                Margin="0,0,0,14">
+                            <VerticalStackLayout Spacing="14">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="{Binding Name}"
+                                           FontSize="18"
+                                           FontAttributes="Bold" />
+                                    <HorizontalStackLayout Spacing="8">
+                                        <Border StrokeThickness="0"
+                                                BackgroundColor="{AppThemeBinding Light=#E7F6F4, Dark=#143936}"
+                                                StrokeShape="RoundRectangle 999"
+                                                Padding="10,4">
+                                            <Label Text="{Binding Type}"
+                                                   FontSize="12"
+                                                   TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}" />
+                                        </Border>
+                                        <Border StrokeThickness="0"
+                                                BackgroundColor="{AppThemeBinding Light=#EEF2F6, Dark=#202B39}"
+                                                StrokeShape="RoundRectangle 999"
+                                                Padding="10,4">
+                                            <Label Text="{Binding MuscleGroup}"
+                                                   FontSize="12"
+                                                   TextColor="{AppThemeBinding Light=#516073, Dark=#A7B4C7}" />
+                                        </Border>
+                                    </HorizontalStackLayout>
+                                </VerticalStackLayout>
 
-                                <!-- Edit Reps/Sets -->
-                                <StackLayout IsVisible="{Binding Type, Converter={StaticResource IsWeightLiftingConverter}}">
-                                    <Entry Text="{Binding Sets, Mode=TwoWay}" Placeholder="Sets" Keyboard="Numeric" WidthRequest="100" />
-                                    <Entry Text="{Binding Reps, Mode=TwoWay}" Placeholder="Reps" Keyboard="Numeric" WidthRequest="100" />
-                                </StackLayout>
+                                <Grid ColumnDefinitions="*,*"
+                                      ColumnSpacing="12"
+                                      IsVisible="{Binding Type, Converter={StaticResource IsWeightLiftingConverter}}">
+                                    <VerticalStackLayout Grid.Column="0"
+                                                         Spacing="6">
+                                        <Label Text="Sets"
+                                               FontSize="12"
+                                               TextColor="{AppThemeBinding Light=#607084, Dark=#98A8BC}" />
+                                        <Border Stroke="{AppThemeBinding Light=#D9E1EB, Dark=#334050}"
+                                                BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#1A2230}"
+                                                StrokeShape="RoundRectangle 16"
+                                                Padding="12,6">
+                                            <Entry Text="{Binding Sets, Mode=TwoWay}"
+                                                   Keyboard="Numeric"
+                                                   HorizontalTextAlignment="Center" />
+                                        </Border>
+                                    </VerticalStackLayout>
 
-                                <!-- Edit Steps for Cardio -->
-                                <StackLayout IsVisible="{Binding Type, Converter={StaticResource IsCardioConverter}}">
-                                    <Entry Text="{Binding Steps, Mode=TwoWay}" Placeholder="Steps" Keyboard="Numeric" WidthRequest="150" />
-                                </StackLayout>
+                                    <VerticalStackLayout Grid.Column="1"
+                                                         Spacing="6">
+                                        <Label Text="Reps"
+                                               FontSize="12"
+                                               TextColor="{AppThemeBinding Light=#607084, Dark=#98A8BC}" />
+                                        <Border Stroke="{AppThemeBinding Light=#D9E1EB, Dark=#334050}"
+                                                BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#1A2230}"
+                                                StrokeShape="RoundRectangle 16"
+                                                Padding="12,6">
+                                            <Entry Text="{Binding Reps, Mode=TwoWay}"
+                                                   Keyboard="Numeric"
+                                                   HorizontalTextAlignment="Center" />
+                                        </Border>
+                                    </VerticalStackLayout>
+                                </Grid>
 
-                                <!-- Move Workout -->
-                                <Button Text="Move to Another Day"
-                                        Command="{Binding BindingContext.MoveWorkoutCommand, Source={x:Reference EditPageRoot}}"
-                                        CommandParameter="{Binding .}" />
+                                <VerticalStackLayout Spacing="6"
+                                                     IsVisible="{Binding Type, Converter={StaticResource IsCardioConverter}}">
+                                    <Label Text="Steps"
+                                           FontSize="12"
+                                           TextColor="{AppThemeBinding Light=#607084, Dark=#98A8BC}" />
+                                    <Border Stroke="{AppThemeBinding Light=#D9E1EB, Dark=#334050}"
+                                            BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#1A2230}"
+                                            StrokeShape="RoundRectangle 16"
+                                            Padding="12,6">
+                                        <Entry Text="{Binding Steps, Mode=TwoWay}"
+                                               Keyboard="Numeric"
+                                               HorizontalTextAlignment="Center" />
+                                    </Border>
+                                </VerticalStackLayout>
 
-                                <!-- Remove Workout -->
-                                <Button Text="Remove Workout"
-                                        Command="{Binding BindingContext.RemoveWorkoutCommand, Source={x:Reference EditPageRoot}}"
-                                        CommandParameter="{Binding .}"
-                                        BackgroundColor="Red" TextColor="White" />
+                                <Grid ColumnDefinitions="*,*"
+                                      ColumnSpacing="10">
+                                    <Button Grid.Column="0"
+                                            Text="Move Day"
+                                            Command="{Binding BindingContext.MoveWorkoutCommand, Source={x:Reference EditPageRoot}}"
+                                            CommandParameter="{Binding .}"
+                                            BackgroundColor="{AppThemeBinding Light=#E6EFFC, Dark=#1D324B}"
+                                            TextColor="{AppThemeBinding Light=#1D4ED8, Dark=#93C5FD}"
+                                            CornerRadius="14" />
+
+                                    <Button Grid.Column="1"
+                                            Text="Remove"
+                                            Command="{Binding BindingContext.RemoveWorkoutCommand, Source={x:Reference EditPageRoot}}"
+                                            CommandParameter="{Binding .}"
+                                            BackgroundColor="{AppThemeBinding Light=#FDECEC, Dark=#442327}"
+                                            TextColor="{AppThemeBinding Light=#C24141, Dark=#F4A4A4}"
+                                            CornerRadius="14" />
+                                </Grid>
                             </VerticalStackLayout>
                         </Border>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
-
-            <!-- Add Workout -->
-            <Button Text="Add Workout"
-                    Command="{Binding AddWorkoutCommand}"
-                    BackgroundColor="#4CAF50"
-                    TextColor="White"
-                    CornerRadius="8" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

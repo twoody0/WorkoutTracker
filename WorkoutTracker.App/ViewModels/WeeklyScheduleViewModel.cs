@@ -8,7 +8,10 @@ namespace WorkoutTracker.ViewModels;
 
 public class WeeklyScheduleViewModel : BaseViewModel
 {
+    private const double ProgressionEligibilityThreshold = 0.7;
+
     private readonly IWorkoutScheduleService _scheduleService;
+    private readonly IWorkoutService _workoutService;
     private string? _lastCompletedPlanPromptKey;
 
     public ICommand ChangeWorkoutDayCommand { get; }
@@ -18,9 +21,10 @@ public class WeeklyScheduleViewModel : BaseViewModel
     public string ActivePlanTimelineSummary => _scheduleService.GetActivePlanTimelineSummary();
     public bool HasActivePlan => _scheduleService.ActivePlan != null;
 
-    public WeeklyScheduleViewModel(IWorkoutScheduleService scheduleService)
+    public WeeklyScheduleViewModel(IWorkoutScheduleService scheduleService, IWorkoutService workoutService)
     {
         _scheduleService = scheduleService;
+        _workoutService = workoutService;
         ChangeWorkoutDayCommand = new Command<Workout>(ChangeWorkoutDay);
         EditDayCommand = new Command<DayOfWeek>(EditDay);
         LoadSchedule();
@@ -100,11 +104,16 @@ public class WeeklyScheduleViewModel : BaseViewModel
             return;
         }
 
-        var suggestedPlan = _scheduleService.GetSuggestedNextPlan();
+        var completionStats = await GetCompletionStatsAsync(_scheduleService.ActivePlan);
+        var isEligibleForProgression = completionStats.CompletionRate >= ProgressionEligibilityThreshold;
+        var suggestedPlan = isEligibleForProgression ? _scheduleService.GetSuggestedNextPlan() : null;
         var suggestionOption = suggestedPlan == null ? null : $"Try Suggested Plan: {suggestedPlan.Name}";
+        var completionTitle = isEligibleForProgression
+            ? $"Workout Plan Complete ({completionStats.CompletedSessions}/{completionStats.ExpectedSessions} sessions logged)"
+            : $"Workout Plan Complete ({completionStats.CompletedSessions}/{completionStats.ExpectedSessions} sessions logged, 70% needed for a harder suggestion)";
 
         var action = await page.DisplayActionSheet(
-            "Workout Plan Complete",
+            completionTitle,
             "Maybe Later",
             null,
             "Restart Current Plan",
@@ -135,5 +144,64 @@ public class WeeklyScheduleViewModel : BaseViewModel
                 $"You're now on '{suggestedPlan.Name}', a follow-up to the plan you completed.",
                 "OK");
         }
+    }
+
+    private async Task<PlanCompletionStats> GetCompletionStatsAsync(WorkoutPlan plan)
+    {
+        if (!_scheduleService.ActivePlanStartedOn.HasValue || !_scheduleService.ActivePlanEndsOn.HasValue)
+        {
+            return new PlanCompletionStats(0, 0);
+        }
+
+        var startDate = _scheduleService.ActivePlanStartedOn.Value.Date;
+        var endDate = _scheduleService.ActivePlanEndsOn.Value.Date;
+        var workoutHistory = (await _workoutService.GetWorkouts())
+            .Where(workout => workout.StartTime.Date >= startDate && workout.StartTime.Date <= endDate)
+            .ToList();
+
+        var expectedSessions = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        for (var date = startDate; date <= endDate; date = date.AddDays(1))
+        {
+            foreach (var plannedWorkout in plan.Workouts.Where(workout => workout.Day == date.DayOfWeek))
+            {
+                var key = GetCompletionKey(plannedWorkout, date);
+                expectedSessions[key] = expectedSessions.TryGetValue(key, out var count)
+                    ? count + 1
+                    : 1;
+            }
+        }
+
+        if (expectedSessions.Count == 0)
+        {
+            return new PlanCompletionStats(0, 0);
+        }
+
+        var completedSessions = workoutHistory
+            .GroupBy(workout => GetCompletionKey(workout, workout.StartTime.Date), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
+
+        var matchedSessions = expectedSessions.Sum(expectedSession =>
+            Math.Min(expectedSession.Value, completedSessions.GetValueOrDefault(expectedSession.Key, 0)));
+
+        return new PlanCompletionStats(matchedSessions, expectedSessions.Values.Sum());
+    }
+
+    private static string GetCompletionKey(Workout workout, DateTime date)
+    {
+        if (workout.Type == WorkoutType.Cardio)
+        {
+            return $"{date:yyyy-MM-dd}|{workout.Type}";
+        }
+
+        return string.Join("|",
+            date.ToString("yyyy-MM-dd"),
+            workout.Type,
+            workout.Name,
+            workout.MuscleGroup);
+    }
+
+    private readonly record struct PlanCompletionStats(int CompletedSessions, int ExpectedSessions)
+    {
+        public double CompletionRate => ExpectedSessions == 0 ? 0 : (double)CompletedSessions / ExpectedSessions;
     }
 }

@@ -25,6 +25,7 @@ public static class MauiProgram
 
         builder.Services.AddSingleton<IAppModeService, AppModeService>();
         builder.Services.AddSingleton<IBodyWeightService, BodyWeightService>();
+        builder.Services.AddSingleton<IThemeService, ThemeService>();
 
         // Existing services
         builder.Services.AddSingleton<IWorkoutService, WorkoutService>();

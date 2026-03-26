@@ -11,6 +11,7 @@ public class HomeViewModel : BaseViewModel
     private readonly IAppModeService _appModeService;
     private readonly IAuthService _authService;
     private readonly IBodyWeightService _bodyWeightService;
+    private readonly IThemeService _themeService;
     private readonly IWorkoutService _workoutService;
     private readonly IServiceProvider _services;
     private string _welcomeMessage = string.Empty;
@@ -31,11 +32,18 @@ public class HomeViewModel : BaseViewModel
     private double _backHamstringsOpacity;
     private double _backCalvesOpacity;
 
-    public HomeViewModel(IAppModeService appModeService, IAuthService authService, IBodyWeightService bodyWeightService, IWorkoutService workoutService, IServiceProvider services)
+    public HomeViewModel(
+        IAppModeService appModeService,
+        IAuthService authService,
+        IBodyWeightService bodyWeightService,
+        IThemeService themeService,
+        IWorkoutService workoutService,
+        IServiceProvider services)
     {
         _appModeService = appModeService;
         _authService = authService;
         _bodyWeightService = bodyWeightService;
+        _themeService = themeService;
         _workoutService = workoutService;
         _services = services;
         UpdateWelcomeMessage();
@@ -87,6 +95,16 @@ public class HomeViewModel : BaseViewModel
     public bool ShowBodyWeightReminder => !HasBodyWeight;
 
     public string BodyWeightReminderText => "Set your body weight to improve heat map accuracy.";
+
+    public bool IsDarkTheme => _themeService.IsDarkTheme;
+
+    public string ThemeLabel => IsDarkTheme ? "Dark theme is on" : "Light theme is on";
+
+    public string ThemeSupportingText => IsDarkTheme
+        ? "Lower glare and stronger contrast for evening use."
+        : "Bright, clean contrast for daylight and quick scanning.";
+
+    public string ThemeButtonText => IsDarkTheme ? "Switch to Light" : "Switch to Dark";
 
     public string TodaySummary
     {
@@ -187,6 +205,15 @@ public class HomeViewModel : BaseViewModel
     public ICommand NavigateToLoginCommand => new Command(async () =>
     {
         await Shell.Current.GoToAsync("LoginPage");
+    });
+
+    public ICommand ToggleThemeCommand => new Command(() =>
+    {
+        _themeService.ToggleTheme();
+        OnPropertyChanged(nameof(IsDarkTheme));
+        OnPropertyChanged(nameof(ThemeLabel));
+        OnPropertyChanged(nameof(ThemeSupportingText));
+        OnPropertyChanged(nameof(ThemeButtonText));
     });
 
     public ICommand ToggleHeatInfoCommand => new Command(() =>
