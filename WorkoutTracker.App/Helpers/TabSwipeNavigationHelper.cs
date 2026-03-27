@@ -52,7 +52,9 @@ public static class TabSwipeNavigationHelper
         public void UpdateRoute(string currentRoute, params MauiView[] additionalViews)
         {
             _currentRoute = currentRoute;
+#if ANDROID
             RefreshObservedViews(additionalViews);
+#endif
             TryAttach();
         }
 
@@ -202,7 +204,10 @@ public static class TabSwipeNavigationHelper
 
         private void OnPlatformViewTouch(object? sender, Android.Views.View.TouchEventArgs e)
         {
-            _gestureDetector.OnTouchEvent(e.Event);
+            if (e.Event != null)
+            {
+                _gestureDetector.OnTouchEvent(e.Event);
+            }
             e.Handled = false;
         }
 

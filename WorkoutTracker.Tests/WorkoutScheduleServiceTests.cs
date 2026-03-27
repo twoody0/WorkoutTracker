@@ -1,5 +1,6 @@
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
+using Microsoft.Data.Sqlite;
 
 namespace WorkoutTracker.Tests;
 
@@ -203,6 +204,7 @@ public class WorkoutScheduleServiceTests
         }
         finally
         {
+            SqliteConnection.ClearAllPools();
             if (File.Exists(tempFilePath))
             {
                 File.Delete(tempFilePath);
@@ -236,6 +238,7 @@ public class WorkoutScheduleServiceTests
         }
         finally
         {
+            SqliteConnection.ClearAllPools();
             if (File.Exists(tempFilePath))
             {
                 File.Delete(tempFilePath);

@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Text.Json;
+using Microsoft.Data.Sqlite;
 using WorkoutTracker.Models;
 
 namespace WorkoutTracker.Services
@@ -6,17 +8,18 @@ namespace WorkoutTracker.Services
     public class WorkoutPlanService : IWorkoutPlanService
     {
         private readonly List<WorkoutPlan> _plans = new();
-        private readonly string _customPlansFilePath;
+        private readonly WorkoutTrackerDatabase _database;
+        private readonly string _legacyCustomPlansFilePath;
         private static readonly JsonSerializerOptions JsonSerializerOptions = new()
         {
             WriteIndented = true
         };
 
-        public WorkoutPlanService(string? customPlansFilePath = null)
+        public WorkoutPlanService(string? databasePath = null)
         {
-            _customPlansFilePath = customPlansFilePath ?? Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "WorkoutTracker",
+            _database = new WorkoutTrackerDatabase(databasePath);
+            _legacyCustomPlansFilePath = Path.Combine(
+                Path.GetDirectoryName(_database.DatabasePath) ?? string.Empty,
                 "custom_workout_plans.json");
 
             _plans.Add(new WorkoutPlan
@@ -445,6 +448,7 @@ namespace WorkoutTracker.Services
                 IsCustom = false
             });
 
+            MigrateLegacyJsonIfNeeded();
             LoadCustomPlans();
         }
 
@@ -481,41 +485,184 @@ namespace WorkoutTracker.Services
 
         public void SavePlans()
         {
-            var customPlans = _plans
-                .Where(plan => plan.IsCustom)
-                .ToList();
+            using var connection = _database.CreateConnection();
+            using var transaction = connection.BeginTransaction();
 
-            var directoryPath = Path.GetDirectoryName(_customPlansFilePath);
-            if (!string.IsNullOrWhiteSpace(directoryPath))
+            ExecuteNonQuery(connection, transaction, "DELETE FROM CustomWorkoutPlanWorkouts;");
+            ExecuteNonQuery(connection, transaction, "DELETE FROM CustomWorkoutPlans;");
+
+            foreach (var plan in _plans.Where(plan => plan.IsCustom))
             {
-                Directory.CreateDirectory(directoryPath);
+                using var planCommand = connection.CreateCommand();
+                planCommand.Transaction = transaction;
+                planCommand.CommandText =
+                    """
+                    INSERT INTO CustomWorkoutPlans (Name, Description, Category, DurationInWeeks, IsCustom)
+                    VALUES ($name, $description, $category, $durationInWeeks, $isCustom);
+                    """;
+                planCommand.Parameters.AddWithValue("$name", plan.Name);
+                planCommand.Parameters.AddWithValue("$description", plan.Description ?? string.Empty);
+                planCommand.Parameters.AddWithValue("$category", plan.Category ?? "General");
+                planCommand.Parameters.AddWithValue("$durationInWeeks", plan.DurationInWeeks);
+                planCommand.Parameters.AddWithValue("$isCustom", 1);
+                planCommand.ExecuteNonQuery();
+
+                foreach (var workout in plan.Workouts)
+                {
+                    InsertWorkout(connection, transaction, "CustomWorkoutPlanWorkouts", workout, plan.Name);
+                }
             }
 
-            var json = JsonSerializer.Serialize(customPlans, JsonSerializerOptions);
-            File.WriteAllText(_customPlansFilePath, json);
+            transaction.Commit();
         }
 
         private void LoadCustomPlans()
         {
-            if (!File.Exists(_customPlansFilePath))
+            using var connection = _database.CreateConnection();
+            using var command = connection.CreateCommand();
+            command.CommandText =
+                """
+                SELECT p.Name, p.Description, p.Category, p.DurationInWeeks, p.IsCustom,
+                       w.Name, w.MuscleGroup, w.GymLocation, w.Weight, w.Reps, w.Sets,
+                       w.StartTime, w.EndTime, w.Steps, w.DurationMinutes, w.DistanceMiles,
+                       w.Type, w.Day, w.PlanWeekNumber
+                FROM CustomWorkoutPlans p
+                LEFT JOIN CustomWorkoutPlanWorkouts w ON w.PlanName = p.Name
+                ORDER BY p.Name, w.Id;
+                """;
+
+            using var reader = command.ExecuteReader();
+            var plansByName = new Dictionary<string, WorkoutPlan>(StringComparer.OrdinalIgnoreCase);
+
+            while (reader.Read())
+            {
+                var planName = reader.GetString(0);
+                if (!plansByName.TryGetValue(planName, out var plan))
+                {
+                    plan = new WorkoutPlan
+                    {
+                        Name = planName,
+                        Description = reader.GetString(1),
+                        Category = reader.GetString(2),
+                        DurationInWeeks = reader.GetInt32(3),
+                        IsCustom = reader.GetInt64(4) == 1
+                    };
+                    plansByName.Add(planName, plan);
+                    _plans.Add(plan);
+                }
+
+                if (!reader.IsDBNull(5))
+                {
+                    plan.Workouts.Add(ReadWorkout(reader, 5));
+                }
+            }
+        }
+
+        private void MigrateLegacyJsonIfNeeded()
+        {
+            if (GetCustomPlanCount() > 0 || !File.Exists(_legacyCustomPlansFilePath))
             {
                 return;
             }
 
             try
             {
-                var json = File.ReadAllText(_customPlansFilePath);
+                var json = File.ReadAllText(_legacyCustomPlansFilePath);
                 var savedPlans = JsonSerializer.Deserialize<List<WorkoutPlan>>(json, JsonSerializerOptions) ?? [];
 
                 foreach (var plan in savedPlans.Where(plan => plan.IsCustom && !string.IsNullOrWhiteSpace(plan.Name)))
                 {
                     _plans.Add(plan);
                 }
+
+                SavePlans();
+                File.Delete(_legacyCustomPlansFilePath);
+                _plans.RemoveAll(plan => plan.IsCustom);
             }
             catch
             {
-                // Ignore malformed saved plan data and keep built-in plans available.
+                // Keep built-in plans available even if old JSON cannot be migrated.
             }
+        }
+
+        private int GetCustomPlanCount()
+        {
+            using var connection = _database.CreateConnection();
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT COUNT(*) FROM CustomWorkoutPlans;";
+            return Convert.ToInt32(command.ExecuteScalar());
+        }
+
+        private static void ExecuteNonQuery(SqliteConnection connection, SqliteTransaction transaction, string commandText)
+        {
+            using var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText = commandText;
+            command.ExecuteNonQuery();
+        }
+
+        private static void InsertWorkout(SqliteConnection connection, SqliteTransaction transaction, string tableName, Workout workout, string? planName = null)
+        {
+            using var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText = tableName == "CustomWorkoutPlanWorkouts"
+                ? $"""
+                   INSERT INTO {tableName}
+                   (PlanName, Name, MuscleGroup, GymLocation, Weight, Reps, Sets, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber)
+                   VALUES ($planName, $name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $startTime, $endTime, $steps, $durationMinutes, $distanceMiles, $type, $day, $planWeekNumber);
+                   """
+                : $"""
+                   INSERT INTO {tableName}
+                   (Name, MuscleGroup, GymLocation, Weight, Reps, Sets, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber)
+                   VALUES ($name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $startTime, $endTime, $steps, $durationMinutes, $distanceMiles, $type, $day, $planWeekNumber);
+                   """;
+
+            if (planName != null)
+            {
+                command.Parameters.AddWithValue("$planName", planName);
+            }
+
+            AddWorkoutParameters(command, workout);
+            command.ExecuteNonQuery();
+        }
+
+        internal static void AddWorkoutParameters(SqliteCommand command, Workout workout)
+        {
+            command.Parameters.AddWithValue("$name", workout.Name);
+            command.Parameters.AddWithValue("$muscleGroup", workout.MuscleGroup);
+            command.Parameters.AddWithValue("$gymLocation", workout.GymLocation);
+            command.Parameters.AddWithValue("$weight", workout.Weight);
+            command.Parameters.AddWithValue("$reps", workout.Reps);
+            command.Parameters.AddWithValue("$sets", workout.Sets);
+            command.Parameters.AddWithValue("$startTime", workout.StartTime.ToString("O"));
+            command.Parameters.AddWithValue("$endTime", workout.EndTime.ToString("O"));
+            command.Parameters.AddWithValue("$steps", workout.Steps);
+            command.Parameters.AddWithValue("$durationMinutes", workout.DurationMinutes);
+            command.Parameters.AddWithValue("$distanceMiles", workout.DistanceMiles);
+            command.Parameters.AddWithValue("$type", (int)workout.Type);
+            command.Parameters.AddWithValue("$day", (int)workout.Day);
+            command.Parameters.AddWithValue("$planWeekNumber", workout.PlanWeekNumber.HasValue ? workout.PlanWeekNumber.Value : DBNull.Value);
+        }
+
+        internal static Workout ReadWorkout(SqliteDataReader reader, int offset)
+        {
+            return new Workout(
+                name: reader.GetString(offset),
+                weight: reader.GetDouble(offset + 3),
+                reps: reader.GetInt32(offset + 4),
+                sets: reader.GetInt32(offset + 5),
+                muscleGroup: reader.GetString(offset + 1),
+                day: (DayOfWeek)reader.GetInt32(offset + 12),
+                startTime: DateTime.Parse(reader.GetString(offset + 6), null, DateTimeStyles.RoundtripKind),
+                type: (WorkoutType)reader.GetInt32(offset + 11),
+                gymLocation: reader.GetString(offset + 2))
+            {
+                EndTime = DateTime.Parse(reader.GetString(offset + 7), null, DateTimeStyles.RoundtripKind),
+                Steps = reader.GetInt32(offset + 8),
+                DurationMinutes = reader.GetInt32(offset + 9),
+                DistanceMiles = reader.GetDouble(offset + 10),
+                PlanWeekNumber = reader.IsDBNull(offset + 13) ? null : reader.GetInt32(offset + 13)
+            };
         }
     }
 

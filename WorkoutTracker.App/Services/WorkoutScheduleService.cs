@@ -7,24 +7,21 @@ public class WorkoutScheduleService : IWorkoutScheduleService
 {
     private readonly Dictionary<DayOfWeek, List<Workout>> _weeklySchedule = new();
     private readonly IWorkoutPlanService _workoutPlanService;
-    private readonly string _scheduleStateFilePath;
+    private readonly WorkoutTrackerDatabase _database;
+    private readonly string _legacyScheduleStateFilePath;
     private int? _activePlanScheduleWeekNumber;
-    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
-    {
-        WriteIndented = true
-    };
 
     public WorkoutPlan? ActivePlan { get; private set; }
     public DateTime? ActivePlanStartedOn { get; private set; }
     public DateTime? ActivePlanEndsOn { get; private set; }
     public bool HasCompletedActivePlan => ActivePlanEndsOn.HasValue && DateTime.Today > ActivePlanEndsOn.Value.Date;
 
-    public WorkoutScheduleService(IWorkoutPlanService workoutPlanService, string? scheduleStateFilePath = null)
+    public WorkoutScheduleService(IWorkoutPlanService workoutPlanService, string? databasePath = null)
     {
         _workoutPlanService = workoutPlanService;
-        _scheduleStateFilePath = scheduleStateFilePath ?? Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "WorkoutTracker",
+        _database = new WorkoutTrackerDatabase(databasePath);
+        _legacyScheduleStateFilePath = Path.Combine(
+            Path.GetDirectoryName(_database.DatabasePath) ?? string.Empty,
             "active_workout_schedule.json");
 
         foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
@@ -32,6 +29,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
             _weeklySchedule[day] = new List<Workout>();
         }
 
+        MigrateLegacyJsonIfNeeded();
         RestoreState();
     }
 
@@ -215,15 +213,116 @@ public class WorkoutScheduleService : IWorkoutScheduleService
 
     private void RestoreState()
     {
-        if (!File.Exists(_scheduleStateFilePath))
+        using var connection = _database.CreateConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText =
+            """
+            SELECT ActivePlanName, ActivePlanStartedOn, ActivePlanEndsOn, ActivePlanScheduleWeekNumber
+            FROM ActivePlanState
+            WHERE Id = 1;
+            """;
+
+        using var reader = command.ExecuteReader();
+        if (!reader.Read())
+        {
+            return;
+        }
+
+        var activePlanName = reader.GetString(0);
+        var matchingPlan = _workoutPlanService.GetWorkoutPlans()
+            .FirstOrDefault(plan => string.Equals(plan.Name, activePlanName, StringComparison.OrdinalIgnoreCase));
+
+        if (matchingPlan == null)
+        {
+            ClearSavedState();
+            return;
+        }
+
+        ActivePlan = matchingPlan;
+        ActivePlanStartedOn = DateTime.Parse(reader.GetString(1), null, System.Globalization.DateTimeStyles.RoundtripKind);
+        ActivePlanEndsOn = DateTime.Parse(reader.GetString(2), null, System.Globalization.DateTimeStyles.RoundtripKind);
+        _activePlanScheduleWeekNumber = reader.GetInt32(3);
+
+        foreach (var day in _weeklySchedule.Keys.ToList())
+        {
+            _weeklySchedule[day].Clear();
+        }
+
+        using var workoutsCommand = connection.CreateCommand();
+        workoutsCommand.CommandText =
+            """
+            SELECT Name, MuscleGroup, GymLocation, Weight, Reps, Sets, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber
+            FROM ActivePlanScheduledWorkouts
+            ORDER BY Id;
+            """;
+
+        using var workoutReader = workoutsCommand.ExecuteReader();
+        var hasSavedWorkouts = false;
+        while (workoutReader.Read())
+        {
+            var workout = WorkoutPlanService.ReadWorkout(workoutReader, 0);
+            _weeklySchedule[workout.Day].Add(workout);
+            hasSavedWorkouts = true;
+        }
+
+        if (!hasSavedWorkouts)
+        {
+            PopulateWeeklyScheduleForActivePlanWeek(GetPlanWeekNumberForDate(DateTime.Today));
+        }
+    }
+
+    private void SaveState()
+    {
+        using var connection = _database.CreateConnection();
+        using var transaction = connection.BeginTransaction();
+
+        ExecuteNonQuery(connection, transaction, "DELETE FROM ActivePlanScheduledWorkouts;");
+        ExecuteNonQuery(connection, transaction, "DELETE FROM ActivePlanState;");
+
+        if (ActivePlan != null && ActivePlanStartedOn.HasValue && ActivePlanEndsOn.HasValue)
+        {
+            using var stateCommand = connection.CreateCommand();
+            stateCommand.Transaction = transaction;
+            stateCommand.CommandText =
+                """
+                INSERT INTO ActivePlanState (Id, ActivePlanName, ActivePlanStartedOn, ActivePlanEndsOn, ActivePlanScheduleWeekNumber)
+                VALUES (1, $activePlanName, $activePlanStartedOn, $activePlanEndsOn, $activePlanScheduleWeekNumber);
+                """;
+            stateCommand.Parameters.AddWithValue("$activePlanName", ActivePlan.Name);
+            stateCommand.Parameters.AddWithValue("$activePlanStartedOn", ActivePlanStartedOn.Value.ToString("O"));
+            stateCommand.Parameters.AddWithValue("$activePlanEndsOn", ActivePlanEndsOn.Value.ToString("O"));
+            stateCommand.Parameters.AddWithValue("$activePlanScheduleWeekNumber", _activePlanScheduleWeekNumber ?? GetPlanWeekNumberForDate(DateTime.Today));
+            stateCommand.ExecuteNonQuery();
+
+            foreach (var workout in _weeklySchedule.SelectMany(entry => entry.Value))
+            {
+                InsertScheduledWorkout(connection, transaction, workout);
+            }
+        }
+
+        transaction.Commit();
+    }
+
+    private void ClearSavedState()
+    {
+        using var connection = _database.CreateConnection();
+        using var transaction = connection.BeginTransaction();
+        ExecuteNonQuery(connection, transaction, "DELETE FROM ActivePlanScheduledWorkouts;");
+        ExecuteNonQuery(connection, transaction, "DELETE FROM ActivePlanState;");
+        transaction.Commit();
+    }
+
+    private void MigrateLegacyJsonIfNeeded()
+    {
+        if (HasSavedState() || !File.Exists(_legacyScheduleStateFilePath))
         {
             return;
         }
 
         try
         {
-            var json = File.ReadAllText(_scheduleStateFilePath);
-            var state = JsonSerializer.Deserialize<WorkoutScheduleState>(json, JsonSerializerOptions);
+            var json = File.ReadAllText(_legacyScheduleStateFilePath);
+            var state = JsonSerializer.Deserialize<LegacyWorkoutScheduleState>(json);
             if (state == null || string.IsNullOrWhiteSpace(state.ActivePlanName))
             {
                 return;
@@ -234,7 +333,6 @@ public class WorkoutScheduleService : IWorkoutScheduleService
 
             if (matchingPlan == null)
             {
-                ClearSavedState();
                 return;
             }
 
@@ -248,63 +346,60 @@ public class WorkoutScheduleService : IWorkoutScheduleService
                 _weeklySchedule[day].Clear();
             }
 
-            if (state.ScheduledWorkouts.Count > 0)
+            foreach (var workout in state.ScheduledWorkouts)
             {
-                foreach (var workout in state.ScheduledWorkouts)
-                {
-                    _weeklySchedule[workout.Day].Add(CloneWorkout(workout));
-                }
+                _weeklySchedule[workout.Day].Add(CloneWorkout(workout));
             }
-            else
+
+            SaveState();
+            File.Delete(_legacyScheduleStateFilePath);
+
+            ActivePlan = null;
+            ActivePlanStartedOn = null;
+            ActivePlanEndsOn = null;
+            _activePlanScheduleWeekNumber = null;
+            foreach (var day in _weeklySchedule.Keys.ToList())
             {
-                PopulateWeeklyScheduleForActivePlanWeek(GetPlanWeekNumberForDate(DateTime.Today));
+                _weeklySchedule[day].Clear();
             }
         }
         catch
         {
-            ClearSavedState();
+            // Leave the old file alone if migration fails.
         }
     }
 
-    private void SaveState()
+    private bool HasSavedState()
     {
-        if (ActivePlan == null || !ActivePlanStartedOn.HasValue || !ActivePlanEndsOn.HasValue)
-        {
-            ClearSavedState();
-            return;
-        }
-
-        var directoryPath = Path.GetDirectoryName(_scheduleStateFilePath);
-        if (!string.IsNullOrWhiteSpace(directoryPath))
-        {
-            Directory.CreateDirectory(directoryPath);
-        }
-
-        var state = new WorkoutScheduleState
-        {
-            ActivePlanName = ActivePlan.Name,
-            ActivePlanStartedOn = ActivePlanStartedOn.Value,
-            ActivePlanEndsOn = ActivePlanEndsOn.Value,
-            ActivePlanScheduleWeekNumber = _activePlanScheduleWeekNumber ?? GetPlanWeekNumberForDate(DateTime.Today),
-            ScheduledWorkouts = _weeklySchedule
-                .SelectMany(entry => entry.Value)
-                .Select(CloneWorkout)
-                .ToList()
-        };
-
-        var json = JsonSerializer.Serialize(state, JsonSerializerOptions);
-        File.WriteAllText(_scheduleStateFilePath, json);
+        using var connection = _database.CreateConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM ActivePlanState;";
+        return Convert.ToInt32(command.ExecuteScalar()) > 0;
     }
 
-    private void ClearSavedState()
+    private static void ExecuteNonQuery(Microsoft.Data.Sqlite.SqliteConnection connection, Microsoft.Data.Sqlite.SqliteTransaction transaction, string commandText)
     {
-        if (File.Exists(_scheduleStateFilePath))
-        {
-            File.Delete(_scheduleStateFilePath);
-        }
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = commandText;
+        command.ExecuteNonQuery();
     }
 
-    private sealed class WorkoutScheduleState
+    private static void InsertScheduledWorkout(Microsoft.Data.Sqlite.SqliteConnection connection, Microsoft.Data.Sqlite.SqliteTransaction transaction, Workout workout)
+    {
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText =
+            """
+            INSERT INTO ActivePlanScheduledWorkouts
+            (Name, MuscleGroup, GymLocation, Weight, Reps, Sets, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber)
+            VALUES ($name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $startTime, $endTime, $steps, $durationMinutes, $distanceMiles, $type, $day, $planWeekNumber);
+            """;
+        WorkoutPlanService.AddWorkoutParameters(command, workout);
+        command.ExecuteNonQuery();
+    }
+
+    private sealed class LegacyWorkoutScheduleState
     {
         public string ActivePlanName { get; set; } = string.Empty;
         public DateTime ActivePlanStartedOn { get; set; }

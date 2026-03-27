@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.Data.Sqlite;
 using WorkoutTracker.Models;
 
 namespace WorkoutTracker.Services;
@@ -8,24 +9,23 @@ namespace WorkoutTracker.Services;
 /// </summary>
 public class WorkoutService : IWorkoutService
 {
-    #region Fields
-
     private readonly SemaphoreSlim _syncLock = new(1, 1);
+    private readonly WorkoutTrackerDatabase _database;
     private readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = true
     };
-    private readonly string _workoutsFilePath = Path.Combine(FileSystem.AppDataDirectory, "workouts.json");
+    private readonly string _legacyWorkoutsFilePath;
     private List<Workout>? _cachedWorkouts;
 
-    #endregion
+    public WorkoutService(string? databasePath = null)
+    {
+        _database = new WorkoutTrackerDatabase(databasePath);
+        _legacyWorkoutsFilePath = Path.Combine(
+            Path.GetDirectoryName(_database.DatabasePath) ?? string.Empty,
+            "workouts.json");
+    }
 
-    #region Public Methods
-
-    /// <summary>
-    /// Adds a new workout to the user's history.
-    /// </summary>
-    /// <param name="workout">The workout to add.</param>
     public async Task AddWorkout(Workout workout)
     {
         await _syncLock.WaitAsync();
@@ -41,10 +41,6 @@ public class WorkoutService : IWorkoutService
         }
     }
 
-    /// <summary>
-    /// Retrieves all workouts saved on the device.
-    /// </summary>
-    /// <returns>A collection of workouts.</returns>
     public async Task<IEnumerable<Workout>> GetWorkouts()
     {
         await _syncLock.WaitAsync();
@@ -59,10 +55,6 @@ public class WorkoutService : IWorkoutService
         }
     }
 
-    #endregion
-
-    #region Private Methods
-
     private async Task<List<Workout>> LoadWorkoutsAsync()
     {
         if (_cachedWorkouts != null)
@@ -70,25 +62,88 @@ public class WorkoutService : IWorkoutService
             return _cachedWorkouts;
         }
 
-        if (!File.Exists(_workoutsFilePath))
+        await MigrateLegacyJsonIfNeededAsync();
+
+        using var connection = _database.CreateConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText =
+            """
+            SELECT Name, MuscleGroup, GymLocation, Weight, Reps, Sets, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber
+            FROM WorkoutHistory
+            ORDER BY StartTime, Id;
+            """;
+
+        using var reader = command.ExecuteReader();
+        var workouts = new List<Workout>();
+        while (reader.Read())
         {
-            _cachedWorkouts = new List<Workout>();
-            return _cachedWorkouts;
+            workouts.Add(WorkoutPlanService.ReadWorkout(reader, 0));
         }
 
-        await using var stream = File.OpenRead(_workoutsFilePath);
-        _cachedWorkouts = await JsonSerializer.DeserializeAsync<List<Workout>>(stream, _jsonOptions) ?? new List<Workout>();
+        _cachedWorkouts = workouts;
         return _cachedWorkouts;
     }
 
-    private async Task SaveWorkoutsAsync(List<Workout> workouts)
+    private Task SaveWorkoutsAsync(List<Workout> workouts)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(_workoutsFilePath)!);
+        using var connection = _database.CreateConnection();
+        using var transaction = connection.BeginTransaction();
 
-        await using var stream = File.Create(_workoutsFilePath);
-        await JsonSerializer.SerializeAsync(stream, workouts, _jsonOptions);
-        _cachedWorkouts = workouts;
+        using (var clearCommand = connection.CreateCommand())
+        {
+            clearCommand.Transaction = transaction;
+            clearCommand.CommandText = "DELETE FROM WorkoutHistory;";
+            clearCommand.ExecuteNonQuery();
+        }
+
+        foreach (var workout in workouts)
+        {
+            using var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText =
+                """
+                INSERT INTO WorkoutHistory
+                (Name, MuscleGroup, GymLocation, Weight, Reps, Sets, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber)
+                VALUES ($name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $startTime, $endTime, $steps, $durationMinutes, $distanceMiles, $type, $day, $planWeekNumber);
+                """;
+            WorkoutPlanService.AddWorkoutParameters(command, workout);
+            command.ExecuteNonQuery();
+        }
+
+        transaction.Commit();
+        _cachedWorkouts = workouts.ToList();
+        return Task.CompletedTask;
     }
 
-    #endregion
+    private async Task MigrateLegacyJsonIfNeededAsync()
+    {
+        if (_cachedWorkouts != null || !File.Exists(_legacyWorkoutsFilePath) || HasWorkoutRows())
+        {
+            return;
+        }
+
+        try
+        {
+            List<Workout> workouts;
+            await using (var stream = File.OpenRead(_legacyWorkoutsFilePath))
+            {
+                workouts = await JsonSerializer.DeserializeAsync<List<Workout>>(stream, _jsonOptions) ?? [];
+            }
+
+            await SaveWorkoutsAsync(workouts);
+            File.Delete(_legacyWorkoutsFilePath);
+        }
+        catch
+        {
+            // Keep going even if legacy migration fails.
+        }
+    }
+
+    private bool HasWorkoutRows()
+    {
+        using var connection = _database.CreateConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM WorkoutHistory;";
+        return Convert.ToInt32(command.ExecuteScalar()) > 0;
+    }
 }
