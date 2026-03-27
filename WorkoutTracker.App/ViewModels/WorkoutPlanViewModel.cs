@@ -36,7 +36,13 @@ public class WorkoutPlanViewModel : BaseViewModel
     public string NewPlanName
     {
         get => _newPlanName;
-        set => SetProperty(ref _newPlanName, value);
+        set
+        {
+            if (SetProperty(ref _newPlanName, value))
+            {
+                OnPropertyChanged(nameof(NewPlanNameSummary));
+            }
+        }
     }
 
     public string NewPlanDescription
@@ -48,7 +54,13 @@ public class WorkoutPlanViewModel : BaseViewModel
     public string NewPlanDurationInWeeks
     {
         get => _newPlanDurationInWeeks;
-        set => SetProperty(ref _newPlanDurationInWeeks, value);
+        set
+        {
+            if (SetProperty(ref _newPlanDurationInWeeks, value))
+            {
+                OnPropertyChanged(nameof(NewPlanDurationSummary));
+            }
+        }
     }
 
     public string? SelectedCategory
@@ -66,7 +78,13 @@ public class WorkoutPlanViewModel : BaseViewModel
     public string SelectedNewPlanCategory
     {
         get => _selectedNewPlanCategory;
-        set => SetProperty(ref _selectedNewPlanCategory, value);
+        set
+        {
+            if (SetProperty(ref _selectedNewPlanCategory, value))
+            {
+                OnPropertyChanged(nameof(NewPlanCategorySummary));
+            }
+        }
     }
 
     public bool IsCreatePlanVisible
@@ -82,6 +100,9 @@ public class WorkoutPlanViewModel : BaseViewModel
     }
 
     public string CreatePlanButtonText => IsCreatePlanVisible ? "Cancel" : "Create Your Own Plan";
+    public string NewPlanNameSummary => $"Plan Name: {(string.IsNullOrWhiteSpace(NewPlanName) ? "Untitled Plan" : NewPlanName.Trim())}";
+    public string NewPlanDurationSummary => $"Duration: {GetDurationSummary()}";
+    public string NewPlanCategorySummary => $"Category: {SelectedNewPlanCategory}";
 
     public Command AddWorkoutPlanCommand { get; }
     public Command SelectWorkoutPlanCommand { get; }
@@ -92,7 +113,7 @@ public class WorkoutPlanViewModel : BaseViewModel
         _workoutPlanService = workoutPlanService;
         _scheduleService = scheduleService;
 
-        AddWorkoutPlanCommand = new Command(AddWorkoutPlan);
+        AddWorkoutPlanCommand = new Command(async () => await AddWorkoutPlanAsync());
         SelectWorkoutPlanCommand = new Command<WorkoutPlan>(SelectWorkoutPlan);
         ToggleCreatePlanCommand = new Command(ToggleCreatePlan);
         LoadWorkoutPlans();
@@ -203,7 +224,7 @@ public class WorkoutPlanViewModel : BaseViewModel
         }
     }
 
-    private void AddWorkoutPlan()
+    private async Task AddWorkoutPlanAsync()
     {
         if (string.IsNullOrWhiteSpace(NewPlanName)) return;
         if (!int.TryParse(NewPlanDurationInWeeks, out var durationInWeeks) || durationInWeeks <= 0)
@@ -231,6 +252,12 @@ public class WorkoutPlanViewModel : BaseViewModel
         NewPlanDurationInWeeks = "4";
         SelectedNewPlanCategory = newPlan.Category;
         IsCreatePlanVisible = false;
+
+        var detailsPage = new WorkoutPlanDetailsPage(
+            App.Services.GetRequiredService<WorkoutPlanDetailsViewModel>(),
+            newPlan);
+
+        await Shell.Current.Navigation.PushAsync(detailsPage);
     }
 
     private void ToggleCreatePlan()
@@ -244,6 +271,18 @@ public class WorkoutPlanViewModel : BaseViewModel
         }
 
         IsCreatePlanVisible = !IsCreatePlanVisible;
+    }
+
+    private string GetDurationSummary()
+    {
+        if (!int.TryParse(NewPlanDurationInWeeks, out var durationInWeeks) || durationInWeeks <= 0)
+        {
+            durationInWeeks = 4;
+        }
+
+        return durationInWeeks == 1
+            ? "1 week"
+            : $"{durationInWeeks} weeks";
     }
 
     public void RefreshActivePlan()

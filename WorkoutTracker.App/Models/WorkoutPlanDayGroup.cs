@@ -16,7 +16,8 @@ public class WorkoutPlanDayGroup : INotifyPropertyChanged
     public string ToggleLabel => IsExpanded ? "Hide" : "Show";
     public int WorkoutCount => Workouts.Count;
     public bool HasWorkouts => WorkoutCount > 0;
-    public bool CanEditDay => HasWorkouts;
+    public bool CanEditDay => true;
+    public string DayActionText => HasWorkouts ? "Edit Day" : "Add Workout";
     public bool ShowRestDayMessage => IsExpanded && !HasWorkouts;
     public bool ShowToggle => HasWorkouts;
     public string WorkoutCountLabel => WorkoutCount switch

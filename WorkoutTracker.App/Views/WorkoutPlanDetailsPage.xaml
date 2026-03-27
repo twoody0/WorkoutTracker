@@ -13,6 +13,17 @@
                    FontSize="16"
                    TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
 
+            <Border IsVisible="{Binding SelectedPlan.IsCustom}"
+                    Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#101720}"
+                    Padding="14,12">
+                <Label Text="Tap Add Workout on any day to build out your week, then come back here to review the full plan."
+                       FontSize="13"
+                       TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+            </Border>
+
             <Button Text="Start Plan"
                     Command="{Binding StartPlanCommand}"
                     BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}"
@@ -59,7 +70,7 @@
                                                    TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
                                         </VerticalStackLayout>
                                         <Button Grid.Column="2"
-                                                Text="Edit Day"
+                                                Text="{Binding DayActionText}"
                                                 Padding="12,6"
                                                 VerticalOptions="Center"
                                                 IsVisible="{Binding CanEditDay}"

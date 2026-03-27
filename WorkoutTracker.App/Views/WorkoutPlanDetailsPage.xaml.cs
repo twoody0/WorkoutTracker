@@ -17,4 +17,14 @@ public partial class WorkoutPlanDetailsPage : ContentPage
         ViewModel = viewModel;
         BindingContext = ViewModel;
     }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+
+        if (ViewModel.SelectedPlan != null)
+        {
+            ViewModel.LoadPlan(ViewModel.SelectedPlan);
+        }
+    }
 }

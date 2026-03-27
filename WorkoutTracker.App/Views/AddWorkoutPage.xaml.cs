@@ -12,7 +12,27 @@ public partial class AddWorkoutPage : ContentPage
     public AddWorkoutPage(DayOfWeek day, IWorkoutScheduleService scheduleService, ObservableCollection<Workout> workouts)
     {
         InitializeComponent();
-        ViewModel = new AddWorkoutViewModel(day, scheduleService, workouts, Navigation);
+        ViewModel = new AddWorkoutViewModel(
+            day,
+            scheduleService,
+            App.Services.GetRequiredService<IWorkoutLibraryService>(),
+            workouts,
+            Navigation);
+        BindingContext = ViewModel;
+        ViewModel.InitializeDefaultRecommendation();
+    }
+
+    public AddWorkoutPage(DayOfWeek day, WorkoutPlan plan, ObservableCollection<Workout> workouts)
+    {
+        InitializeComponent();
+        ViewModel = new AddWorkoutViewModel(
+            day,
+            App.Services.GetRequiredService<IWorkoutLibraryService>(),
+            workouts,
+            Navigation,
+            plan.Workouts.Where(workout => workout.Day == day),
+            plan.Name,
+            workout => plan.Workouts.Add(workout));
         BindingContext = ViewModel;
         ViewModel.InitializeDefaultRecommendation();
     }

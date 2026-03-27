@@ -29,7 +29,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
 
     private async void EditDay(WorkoutPlanDayGroup? workoutGroup)
     {
-        if (workoutGroup == null || !workoutGroup.HasWorkouts || SelectedPlan == null)
+        if (workoutGroup == null || SelectedPlan == null)
         {
             return;
         }
@@ -40,26 +40,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
             return;
         }
 
-        var selectedWorkoutName = await page.DisplayActionSheet(
-            $"Edit {workoutGroup.DayLabel}",
-            "Cancel",
-            null,
-            workoutGroup.Workouts.Select(workout => workout.Workout.Name).ToArray());
-
-        if (string.IsNullOrWhiteSpace(selectedWorkoutName) || selectedWorkoutName == "Cancel")
-        {
-            return;
-        }
-
-        var workoutDisplay = workoutGroup.Workouts.FirstOrDefault(workout =>
-            string.Equals(workout.Workout.Name, selectedWorkoutName, StringComparison.Ordinal));
-
-        if (workoutDisplay == null)
-        {
-            return;
-        }
-
-        ChangeWorkoutDay(workoutDisplay);
+        await page.Navigation.PushAsync(new EditDayPage(workoutGroup.Day, SelectedPlan, _scheduleService));
     }
     private async void ChangeWorkoutDay(WorkoutDisplay workoutDisplay)
     {

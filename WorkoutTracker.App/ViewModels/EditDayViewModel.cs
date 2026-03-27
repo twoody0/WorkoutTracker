@@ -8,6 +8,7 @@ using WorkoutTracker.Views;
 public class EditDayViewModel : BaseViewModel
 {
     private readonly IWorkoutScheduleService _scheduleService;
+    private readonly WorkoutPlan? _plan;
 
     public DayOfWeek Day { get; }
     public ObservableCollection<Workout> Workouts { get; }
@@ -42,6 +43,19 @@ public class EditDayViewModel : BaseViewModel
         AddWorkoutCommand = new Command(AddWorkout);
     }
 
+    public EditDayViewModel(DayOfWeek day, WorkoutPlan plan, IWorkoutScheduleService scheduleService)
+    {
+        Day = day;
+        _plan = plan;
+        _scheduleService = scheduleService;
+        Workouts = new ObservableCollection<Workout>(plan.Workouts.Where(workout => workout.Day == day));
+        Workouts.CollectionChanged += (_, _) => NotifyOverviewChanged();
+
+        MoveWorkoutCommand = new Command<Workout>(MoveWorkout);
+        RemoveWorkoutCommand = new Command<Workout>(RemoveWorkout);
+        AddWorkoutCommand = new Command(AddWorkout);
+    }
+
     private async void MoveWorkout(Workout workout)
     {
         var days = Enum.GetNames(typeof(DayOfWeek));
@@ -53,10 +67,13 @@ public class EditDayViewModel : BaseViewModel
 
         if (!string.IsNullOrWhiteSpace(selectedDay) && Enum.TryParse(selectedDay, out DayOfWeek newDay))
         {
-            _scheduleService.RemoveWorkoutFromDay(Day, workout);
-            workout.Day = newDay;
-            _scheduleService.AddWorkoutToDay(newDay, workout);
+            if (_plan == null)
+            {
+                _scheduleService.RemoveWorkoutFromDay(Day, workout);
+                _scheduleService.AddWorkoutToDay(newDay, workout);
+            }
 
+            workout.Day = newDay;
             Workouts.Remove(workout);
         }
     }
@@ -66,16 +83,23 @@ public class EditDayViewModel : BaseViewModel
         if (workout == null)
             return;
 
-        // Remove from service
-        _scheduleService.RemoveWorkoutFromDay(Day, workout);
+        if (_plan == null)
+        {
+            _scheduleService.RemoveWorkoutFromDay(Day, workout);
+        }
+        else
+        {
+            _plan.Workouts.Remove(workout);
+        }
 
-        // Remove from ObservableCollection so UI updates
         Workouts.Remove(workout);
     }
 
     private async void AddWorkout()
     {
-        var addPage = new AddWorkoutPage(Day, _scheduleService, Workouts);
+        var addPage = _plan == null
+            ? new AddWorkoutPage(Day, _scheduleService, Workouts)
+            : new AddWorkoutPage(Day, _plan, Workouts);
         var page = Application.Current?.Windows.FirstOrDefault()?.Page;
         if (page != null)
             await page.Navigation.PushAsync(addPage);

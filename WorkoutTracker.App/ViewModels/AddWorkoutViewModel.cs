@@ -7,30 +7,55 @@ namespace WorkoutTracker.ViewModels;
 
 public class AddWorkoutViewModel : BaseViewModel
 {
-    private readonly IWorkoutScheduleService _scheduleService;
+    private readonly IWorkoutScheduleService? _scheduleService;
+    private readonly IWorkoutLibraryService _workoutLibraryService;
     private readonly ObservableCollection<Workout> _workouts;
     private readonly INavigation _navigation;
+    private readonly IReadOnlyList<Workout> _recommendedWorkoutSource;
+    private readonly string _recommendationSourceName;
+    private readonly Action<Workout> _saveWorkoutAction;
     private string _name = string.Empty;
     private string _muscleGroup = string.Empty;
+    private string _selectedMuscleGroup = string.Empty;
     private WorkoutType _selectedType;
     private int _sets;
     private int _reps;
     private int _steps;
     private string _recommendedWorkoutSummary = "Build a custom workout for this day.";
     private RecommendedWorkoutOption? _selectedRecommendedWorkout;
+    private bool _isApplyingLibrarySelection;
 
     public DayOfWeek Day { get; }
 
     public string Name
     {
         get => _name;
-        set => SetProperty(ref _name, value);
+        set
+        {
+            if (SetProperty(ref _name, value) && !_isApplyingLibrarySelection)
+            {
+                _ = UpdateExerciseSuggestionsAsync();
+            }
+        }
     }
 
     public string MuscleGroup
     {
         get => _muscleGroup;
         set => SetProperty(ref _muscleGroup, value);
+    }
+
+    public string SelectedMuscleGroup
+    {
+        get => _selectedMuscleGroup;
+        set
+        {
+            if (SetProperty(ref _selectedMuscleGroup, value))
+            {
+                MuscleGroup = value;
+                _ = UpdateExerciseSuggestionsAsync();
+            }
+        }
     }
 
     public WorkoutType SelectedType
@@ -42,6 +67,7 @@ public class AddWorkoutViewModel : BaseViewModel
             {
                 OnPropertyChanged(nameof(IsWeightLifting));
                 OnPropertyChanged(nameof(IsCardio));
+                _ = UpdateExerciseSuggestionsAsync();
             }
         }
     }
@@ -65,12 +91,15 @@ public class AddWorkoutViewModel : BaseViewModel
     }
 
     public List<WorkoutType> WorkoutTypes { get; } = Enum.GetValues(typeof(WorkoutType)).Cast<WorkoutType>().ToList();
+    public List<string> MuscleGroups { get; } = ["Back", "Biceps", "Cardio", "Chest", "Core", "Legs", "Shoulders", "Triceps"];
     public ObservableCollection<RecommendedWorkoutOption> RecommendedWorkouts { get; } = new();
+    public ObservableCollection<WeightliftingExercise> ExerciseSuggestions { get; } = new();
 
     public bool IsWeightLifting => SelectedType == WorkoutType.WeightLifting;
     public bool IsCardio => SelectedType == WorkoutType.Cardio;
     public bool HasRecommendedWorkouts => RecommendedWorkouts.Count > 0;
-    public string ActivePlanName => _scheduleService.ActivePlan?.Name ?? string.Empty;
+    public bool HasExerciseSuggestions => ExerciseSuggestions.Count > 0;
+    public string ActivePlanName => _recommendationSourceName;
     public string RecommendedWorkoutSummary
     {
         get => _recommendedWorkoutSummary;
@@ -79,17 +108,42 @@ public class AddWorkoutViewModel : BaseViewModel
 
     public ICommand SaveCommand { get; }
     public ICommand UseRecommendedWorkoutCommand { get; }
+    public ICommand SelectExerciseSuggestionCommand { get; }
 
-    public AddWorkoutViewModel(DayOfWeek day, IWorkoutScheduleService scheduleService, ObservableCollection<Workout> workouts, INavigation navigation)
+    public AddWorkoutViewModel(DayOfWeek day, IWorkoutScheduleService scheduleService, IWorkoutLibraryService workoutLibraryService, ObservableCollection<Workout> workouts, INavigation navigation)
+        : this(
+            day,
+            workoutLibraryService,
+            workouts,
+            navigation,
+            scheduleService.GetActivePlanWorkoutsForDay(day),
+            scheduleService.ActivePlan?.Name ?? string.Empty,
+            workout => scheduleService.AddWorkoutToDay(day, workout))
+    {
+        _scheduleService = scheduleService;
+    }
+
+    public AddWorkoutViewModel(
+        DayOfWeek day,
+        IWorkoutLibraryService workoutLibraryService,
+        ObservableCollection<Workout> workouts,
+        INavigation navigation,
+        IEnumerable<Workout>? recommendedWorkouts,
+        string recommendationSourceName,
+        Action<Workout> saveWorkoutAction)
     {
         Day = day;
-        _scheduleService = scheduleService;
+        _workoutLibraryService = workoutLibraryService;
         _workouts = workouts;
         _navigation = navigation;
+        _recommendedWorkoutSource = recommendedWorkouts?.ToList() ?? [];
+        _recommendationSourceName = recommendationSourceName;
+        _saveWorkoutAction = saveWorkoutAction;
 
         SelectedType = WorkoutType.WeightLifting; // Default
         SaveCommand = new Command(SaveWorkout);
         UseRecommendedWorkoutCommand = new Command<RecommendedWorkoutOption>(UseRecommendedWorkout);
+        SelectExerciseSuggestionCommand = new Command<WeightliftingExercise>(SelectExerciseSuggestion);
 
         LoadRecommendations();
     }
@@ -126,7 +180,7 @@ public class AddWorkoutViewModel : BaseViewModel
         }
 
         // Add to WeeklySchedule service
-        _scheduleService.AddWorkoutToDay(Day, newWorkout);
+        _saveWorkoutAction(newWorkout);
 
         // Add to EditDayPage ObservableCollection so UI updates live
         _workouts.Add(newWorkout);
@@ -139,7 +193,7 @@ public class AddWorkoutViewModel : BaseViewModel
     {
         RecommendedWorkouts.Clear();
 
-        foreach (var workout in _scheduleService.GetActivePlanWorkoutsForDay(Day))
+        foreach (var workout in _recommendedWorkoutSource)
         {
             RecommendedWorkouts.Add(new RecommendedWorkoutOption(workout));
         }
@@ -151,7 +205,7 @@ public class AddWorkoutViewModel : BaseViewModel
         {
             RecommendedWorkoutSummary = $"Use a workout from '{ActivePlanName}' or tweak it before saving.";
         }
-        else if (_scheduleService.ActivePlan != null)
+        else if (!string.IsNullOrWhiteSpace(ActivePlanName))
         {
             RecommendedWorkoutSummary = $"'{ActivePlanName}' has no workout on {Day}, so you can add one from scratch.";
         }
@@ -181,12 +235,51 @@ public class AddWorkoutViewModel : BaseViewModel
         _selectedRecommendedWorkout.IsSelected = true;
 
         var workout = workoutOption.Workout;
+        _isApplyingLibrarySelection = true;
         Name = workout.Name;
-        MuscleGroup = workout.MuscleGroup;
+        SelectedMuscleGroup = workout.MuscleGroup;
         SelectedType = workout.Type;
         Sets = workout.Sets;
         Reps = workout.Reps;
         Steps = workout.Steps;
+        _isApplyingLibrarySelection = false;
+        ExerciseSuggestions.Clear();
+        OnPropertyChanged(nameof(HasExerciseSuggestions));
+    }
+
+    private void SelectExerciseSuggestion(WeightliftingExercise? exercise)
+    {
+        if (exercise == null)
+        {
+            return;
+        }
+
+        _isApplyingLibrarySelection = true;
+        Name = exercise.Name;
+        SelectedMuscleGroup = exercise.MuscleGroup;
+        _isApplyingLibrarySelection = false;
+        ExerciseSuggestions.Clear();
+        OnPropertyChanged(nameof(HasExerciseSuggestions));
+    }
+
+    public async Task UpdateExerciseSuggestionsAsync()
+    {
+        if (SelectedType != WorkoutType.WeightLifting || string.IsNullOrWhiteSpace(SelectedMuscleGroup))
+        {
+            ExerciseSuggestions.Clear();
+            OnPropertyChanged(nameof(HasExerciseSuggestions));
+            return;
+        }
+
+        var results = await _workoutLibraryService.SearchExercisesByName(SelectedMuscleGroup, Name ?? string.Empty);
+
+        ExerciseSuggestions.Clear();
+        foreach (var exercise in results.OrderBy(exercise => exercise.Name).Take(6))
+        {
+            ExerciseSuggestions.Add(exercise);
+        }
+
+        OnPropertyChanged(nameof(HasExerciseSuggestions));
     }
 }
 

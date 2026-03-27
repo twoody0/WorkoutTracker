@@ -12,17 +12,18 @@
                    HorizontalOptions="Center"
                    TextColor="Gray" />
 
-            <Border Stroke="#D9E5D2"
+            <Border Stroke="{AppThemeBinding Light=#D9E5D2, Dark=#214239}"
                     StrokeThickness="1"
                     StrokeShape="RoundRectangle 12"
-                    BackgroundColor="#F7FBF4"
+                    BackgroundColor="{AppThemeBinding Light=#F7FBF4, Dark=#10211C}"
                     Padding="14">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="Workout Plan Suggestions"
                            FontAttributes="Bold"
-                           FontSize="18" />
+                           FontSize="18"
+                           TextColor="{AppThemeBinding Light=#0F172A, Dark=#CCFBF1}" />
                     <Label Text="{Binding RecommendedWorkoutSummary}"
-                           TextColor="#4F5B4B" />
+                           TextColor="{AppThemeBinding Light=#4F5B4B, Dark=#9FD7C8}" />
 
                     <CollectionView ItemsSource="{Binding RecommendedWorkouts}"
                                     IsVisible="{Binding HasRecommendedWorkouts}"
@@ -81,25 +82,131 @@
                 </VerticalStackLayout>
             </Border>
 
-            <Entry Placeholder="Workout Name" Text="{Binding Name}" />
-            <Entry Placeholder="Muscle Group" Text="{Binding MuscleGroup}" />
+            <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 18"
+                    BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
+                    Padding="16">
+                <VerticalStackLayout Spacing="14">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Workout Type"
+                               FontAttributes="Bold"
+                               FontSize="14" />
+                        <Picker Title="Choose a workout type"
+                                ItemsSource="{Binding WorkoutTypes}"
+                                SelectedItem="{Binding SelectedType}" />
+                    </VerticalStackLayout>
 
-            <!-- Workout Type Picker -->
-            <Picker Title="Workout Type" ItemsSource="{Binding WorkoutTypes}" SelectedItem="{Binding SelectedType}" />
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Muscle Group"
+                               FontAttributes="Bold"
+                               FontSize="14" />
+                        <Picker Title="Choose a muscle group"
+                                ItemsSource="{Binding MuscleGroups}"
+                                SelectedItem="{Binding SelectedMuscleGroup}" />
+                    </VerticalStackLayout>
 
-            <!-- Show Sets/Reps for Weightlifting -->
-            <StackLayout IsVisible="{Binding IsWeightLifting}">
-                <Entry Placeholder="Sets" Text="{Binding Sets}" Keyboard="Numeric" />
-                <Entry Placeholder="Reps" Text="{Binding Reps}" Keyboard="Numeric" />
-            </StackLayout>
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Workout Name"
+                               FontAttributes="Bold"
+                               FontSize="14" />
+                        <Entry Placeholder="Start typing an exercise name"
+                               Text="{Binding Name}" />
+                        <Label Text="If this exercise is in the library, tap it below to fill the name quickly."
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}"
+                               IsVisible="{Binding IsWeightLifting}" />
+                    </VerticalStackLayout>
 
-            <!-- Show Steps for Cardio -->
-            <StackLayout IsVisible="{Binding IsCardio}">
-                <Entry Placeholder="Steps" Text="{Binding Steps}" Keyboard="Numeric" />
-            </StackLayout>
+                    <Border IsVisible="{Binding HasExerciseSuggestions}"
+                            Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 16"
+                            BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#101720}"
+                            Padding="12">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Library Matches"
+                                   FontAttributes="Bold"
+                                   FontSize="15"
+                                   TextColor="{AppThemeBinding Light=#155E52, Dark=#8EE7D2}" />
+                            <CollectionView ItemsSource="{Binding ExerciseSuggestions}"
+                                            SelectionMode="None"
+                                            HeightRequest="220">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#334050}"
+                                                StrokeThickness="1"
+                                                StrokeShape="RoundRectangle 14"
+                                                BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
+                                                Padding="10"
+                                                Margin="0,0,0,8">
+                                            <Grid ColumnDefinitions="*,Auto"
+                                                  ColumnSpacing="10">
+                                                <VerticalStackLayout Spacing="2">
+                                                    <Label Text="{Binding Name}"
+                                                           FontAttributes="Bold" />
+                                                    <Label Text="{Binding MuscleGroup, StringFormat='Focus: {0}'}"
+                                                           FontSize="12"
+                                                           TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                                                </VerticalStackLayout>
+                                                <Button Grid.Column="1"
+                                                        Text="Use"
+                                                        Padding="12,6"
+                                                        VerticalOptions="Center"
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AddWorkoutViewModel}}, Path=SelectExerciseSuggestionCommand}"
+                                                        CommandParameter="{Binding .}"
+                                                        BackgroundColor="{AppThemeBinding Light=#E7F6F4, Dark=#143936}"
+                                                        TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}"
+                                                        CornerRadius="12" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </VerticalStackLayout>
+                    </Border>
 
-            <!-- Save Button -->
-            <Button Text="Save Workout" Command="{Binding SaveCommand}" BackgroundColor="#4CAF50" TextColor="White" CornerRadius="8" />
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="12"
+                          IsVisible="{Binding IsWeightLifting}">
+                        <VerticalStackLayout Grid.Column="0"
+                                             Spacing="6">
+                            <Label Text="Sets"
+                                   FontAttributes="Bold"
+                                   FontSize="14" />
+                            <Entry Placeholder="Sets: 3"
+                                   Text="{Binding Sets}"
+                                   Keyboard="Numeric" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Column="1"
+                                             Spacing="6">
+                            <Label Text="Reps"
+                                   FontAttributes="Bold"
+                                   FontSize="14" />
+                            <Entry Placeholder="Reps: 10"
+                                   Text="{Binding Reps}"
+                                   Keyboard="Numeric" />
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <VerticalStackLayout Spacing="6"
+                                         IsVisible="{Binding IsCardio}">
+                        <Label Text="Steps"
+                               FontAttributes="Bold"
+                               FontSize="14" />
+                        <Entry Placeholder="Steps: 4000"
+                               Text="{Binding Steps}"
+                               Keyboard="Numeric" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <Button Text="Save Workout"
+                    Command="{Binding SaveCommand}"
+                    BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}"
+                    TextColor="White"
+                    CornerRadius="8" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
