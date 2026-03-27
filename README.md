@@ -1,4 +1,4 @@
-# Dayvera
+# Megnor
 
 A cross-platform fitness tracker built with **.NET MAUI**, designed to help users stay on top of their fitness goals by logging cardio and weightlifting workouts, tracking progress, and viewing performance data.
 

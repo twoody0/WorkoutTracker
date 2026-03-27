@@ -90,7 +90,7 @@ public class HomeViewModel : BaseViewModel
 
     public string BodyWeightInputValue => _bodyWeightService.GetBodyWeight()?.ToString("0.#") ?? string.Empty;
 
-    public string BodyWeightButtonText => HasBodyWeight ? "Edit Body Weight" : "Enter Body Weight";
+    public string BodyWeightButtonText => HasBodyWeight ? "Edit Weight" : "Set Weight";
 
     public bool ShowBodyWeightReminder => !HasBodyWeight;
 
@@ -104,7 +104,7 @@ public class HomeViewModel : BaseViewModel
         ? "Lower glare and stronger contrast for evening use."
         : "Bright, clean contrast for daylight and quick scanning.";
 
-    public string ThemeButtonText => IsDarkTheme ? "Switch to Light" : "Switch to Dark";
+    public string ThemeButtonText => IsDarkTheme ? "Use Light Mode" : "Use Dark Mode";
 
     public string TodaySummary
     {
@@ -259,7 +259,7 @@ public class HomeViewModel : BaseViewModel
 
         WelcomeMessage = SupportsAccounts
             ? $"Welcome, {user.Username}"
-            : "Welcome to Dayvera";
+            : "Welcome to Megnor";
     }
 
     public async Task RefreshHeatMapAsync()

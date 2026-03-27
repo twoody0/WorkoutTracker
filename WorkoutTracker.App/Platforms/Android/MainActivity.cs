@@ -15,5 +15,11 @@ namespace WorkoutTracker;
         | ConfigChanges.Density)]
 public class MainActivity : MauiAppCompatActivity
 {
-    protected override void OnCreate(Bundle? savedInstanceState) => base.OnCreate(savedInstanceState);
+    protected override void OnCreate(Bundle? savedInstanceState)
+    {
+        // Ensure the activity switches off the splash theme before any Material-backed
+        // dialogs or controls are created on physical Android devices.
+        SetTheme(Resource.Style.Maui_MainTheme);
+        base.OnCreate(savedInstanceState);
+    }
 }

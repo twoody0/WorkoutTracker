@@ -33,13 +33,17 @@
                                FontAttributes="Bold"
                                FontSize="18" />
                         <Label Text="{Binding BodyWeightSummary}"
+                               LineBreakMode="WordWrap"
                                TextColor="{AppThemeBinding Light=#5A6472, Dark=#A4B2C5}" />
                         <Label Text="{Binding BodyWeightReminderText}"
                                TextColor="{AppThemeBinding Light=#B96A10, Dark=#F0BA74}"
                                FontSize="12"
+                               LineBreakMode="WordWrap"
                                IsVisible="{Binding ShowBodyWeightReminder}" />
                         <Button Text="{Binding BodyWeightButtonText}"
                                 Clicked="OnEditBodyWeightClicked"
+                                FontSize="14"
+                                LineBreakMode="WordWrap"
                                 BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}"
                                 TextColor="White" />
                     </VerticalStackLayout>
@@ -54,9 +58,12 @@
                         <Label Text="Theme"
                                FontAttributes="Bold"
                                FontSize="18" />
-                        <Label Text="{Binding ThemeLabel}" />
+                        <Label Text="{Binding ThemeLabel}"
+                               LineBreakMode="WordWrap" />
                         <Button Text="{Binding ThemeButtonText}"
                                 Command="{Binding ToggleThemeCommand}"
+                                FontSize="14"
+                                LineBreakMode="WordWrap"
                                 BackgroundColor="{AppThemeBinding Light=#1F2937, Dark=#334155}"
                                 TextColor="White" />
                     </VerticalStackLayout>

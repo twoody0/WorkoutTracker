@@ -31,7 +31,10 @@ public partial class HomePage : ContentPage
             if (!_hasCheckedForInitialBodyWeight && !vm.HasBodyWeight)
             {
                 _hasCheckedForInitialBodyWeight = true;
-                await PromptForBodyWeightAsync(vm, "Enter your body weight in pounds so workout calculations can stay accurate.");
+                await PromptForBodyWeightAsync(
+                    vm,
+                    "Enter your body weight in pounds so workout calculations can stay accurate.",
+                    useCurrentWeightAsInitialValue: false);
             }
 
             vm.UpdateWelcomeMessage();
@@ -43,20 +46,23 @@ public partial class HomePage : ContentPage
     {
         if (BindingContext is HomeViewModel vm)
         {
-            await PromptForBodyWeightAsync(vm, "Update your current body weight in pounds.");
+            await PromptForBodyWeightAsync(
+                vm,
+                "Update your current body weight in pounds.",
+                useCurrentWeightAsInitialValue: true);
         }
     }
 
-    private async Task PromptForBodyWeightAsync(HomeViewModel vm, string message)
+    private async Task PromptForBodyWeightAsync(
+        HomeViewModel vm,
+        string message,
+        bool useCurrentWeightAsInitialValue)
     {
-        var result = await DisplayPromptAsync(
+        var result = await BodyWeightPromptPage.ShowAsync(
+            this,
             "Body Weight",
             message,
-            accept: "Save",
-            cancel: "Cancel",
-            placeholder: "180",
-            initialValue: vm.BodyWeightInputValue,
-            keyboard: Keyboard.Numeric);
+            useCurrentWeightAsInitialValue ? vm.BodyWeightInputValue : string.Empty);
 
         if (result == null)
         {

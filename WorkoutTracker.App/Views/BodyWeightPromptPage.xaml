@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="WorkoutTracker.Views.BodyWeightPromptPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#80000000">
+
+    <Grid Padding="24">
+        <Border MaximumWidthRequest="420"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                Stroke="{AppThemeBinding Light=#D6DEE8, Dark=#2A3442}"
+                BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
+                StrokeShape="RoundRectangle 24"
+                Padding="20">
+            <VerticalStackLayout Spacing="16">
+                <VerticalStackLayout Spacing="6">
+                    <Label x:Name="TitleLabel"
+                           FontSize="22"
+                           FontAttributes="Bold" />
+                    <Label x:Name="MessageLabel"
+                           TextColor="{AppThemeBinding Light=#5A6472, Dark=#A4B2C5}" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Weight"
+                           FontAttributes="Bold"
+                           FontSize="14" />
+                    <Entry x:Name="WeightEntry"
+                           Keyboard="Numeric"
+                           Placeholder="Weight in lb"
+                           ClearButtonVisibility="WhileEditing" />
+                    <Label x:Name="ErrorLabel"
+                           Text="Enter a valid body weight greater than 0."
+                           FontSize="12"
+                           TextColor="{AppThemeBinding Light=#C24141, Dark=#F4A4A4}"
+                           IsVisible="False" />
+                </VerticalStackLayout>
+
+                <Grid ColumnDefinitions="*,*"
+                      ColumnSpacing="12">
+                    <Button Grid.Column="0"
+                            Text="Cancel"
+                            Clicked="OnCancelClicked"
+                            BackgroundColor="{AppThemeBinding Light=#E5EAF1, Dark=#334155}"
+                            TextColor="{AppThemeBinding Light=#1F2937, Dark=#FFFFFF}" />
+                    <Button Grid.Column="1"
+                            Text="Save"
+                            Clicked="OnSaveClicked"
+                            BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}"
+                            TextColor="White" />
+                </Grid>
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+</ContentPage>
