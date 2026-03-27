@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage 
+<ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:convertors="clr-namespace:WorkoutTracker.Converters"
@@ -7,19 +7,54 @@
     Title="Cardio Session">
     <ContentPage.Resources>
         <ResourceDictionary>
-            <!-- Converter to invert a bool -->
             <convertors:InverseBooleanConverter x:Key="InverseBooleanConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
-    <VerticalStackLayout Padding="20" Spacing="15">
-        <Label Text="Cardio Session" FontSize="24" HorizontalOptions="Center" />
-        <Label Text="Steps:" FontAttributes="Bold" />
-        <Label Text="{Binding SessionSteps}" FontSize="20" HorizontalOptions="Center" />
-        <!-- Show Start when not tracking -->
-        <Button Text="Start" Command="{Binding StartSessionCommand}" 
-                IsVisible="{Binding IsTracking, Converter={StaticResource InverseBooleanConverter}}" />
-        <!-- Show Stop when tracking -->
-        <Button Text="Stop" Command="{Binding StopSessionCommand}" 
-                IsVisible="{Binding IsTracking}" />
-    </VerticalStackLayout>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
+            <Label Text="Cardio Session"
+                   FontSize="24"
+                   HorizontalOptions="Center" />
+            <Label Text="Track cardio mainly by time and distance. Steps are optional if you're carrying your phone or using a watch."
+                   HorizontalTextAlignment="Center"
+                   TextColor="Gray" />
+
+            <Label Text="Session Name"
+                   FontAttributes="Bold" />
+            <Entry Text="{Binding SessionName}"
+                   Placeholder="Run, Walk, Bike Ride..." />
+
+            <Label Text="Distance (miles)"
+                   FontAttributes="Bold" />
+            <Entry Text="{Binding DistanceMilesText}"
+                   Placeholder="Optional while active, add before stopping"
+                   Keyboard="Numeric" />
+
+            <HorizontalStackLayout Spacing="10">
+                <CheckBox IsChecked="{Binding UseStepTracking}" />
+                <Label Text="Also track steps from my device"
+                       VerticalOptions="Center" />
+            </HorizontalStackLayout>
+
+            <Border Stroke="LightGray"
+                    StrokeShape="RoundRectangle 12"
+                    Padding="16">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{Binding ElapsedMinutes, StringFormat='Elapsed: {0} min'}"
+                           FontSize="20"
+                           HorizontalOptions="Center" />
+                    <Label Text="{Binding SessionSteps, StringFormat='Tracked steps: {0}'}"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Button Text="Start"
+                    Command="{Binding StartSessionCommand}"
+                    IsVisible="{Binding IsTracking, Converter={StaticResource InverseBooleanConverter}}" />
+            <Button Text="Stop and Save"
+                    Command="{Binding StopSessionCommand}"
+                    IsVisible="{Binding IsTracking}" />
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

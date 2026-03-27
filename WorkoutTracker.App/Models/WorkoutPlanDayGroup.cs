@@ -16,7 +16,7 @@ public class WorkoutPlanDayGroup : INotifyPropertyChanged
     public string ToggleLabel => IsExpanded ? "Hide" : "Show";
     public int WorkoutCount => Workouts.Count;
     public bool HasWorkouts => WorkoutCount > 0;
-    public bool CanEditDay => true;
+    public bool CanEditDay { get; }
     public string DayActionText => HasWorkouts ? "Edit Day" : "Add Workout";
     public bool ShowRestDayMessage => IsExpanded && !HasWorkouts;
     public bool ShowToggle => HasWorkouts;
@@ -54,9 +54,10 @@ public class WorkoutPlanDayGroup : INotifyPropertyChanged
         }
     }
 
-    public WorkoutPlanDayGroup(DayOfWeek day, IEnumerable<WorkoutDisplay> workouts, bool isExpanded = false)
+    public WorkoutPlanDayGroup(DayOfWeek day, IEnumerable<WorkoutDisplay> workouts, bool isExpanded = false, bool canEditDay = true)
     {
         Day = day;
+        CanEditDay = canEditDay;
         Workouts = new ObservableCollection<WorkoutDisplay>(workouts);
         MuscleGroups = new ObservableCollection<WorkoutPlanMuscleGroupGroup>(
             Workouts

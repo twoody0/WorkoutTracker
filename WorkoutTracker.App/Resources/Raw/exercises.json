@@ -222,5 +222,221 @@
     {
         "Name": "Flutter Kicks",
         "MuscleGroup": "Abs"
+    },
+    {
+        "Name": "Goblet Squat",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Box Squat",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Back Squat",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Pause Back Squat",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Hack Squat",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Bulgarian Split Squat",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Rear-Foot Elevated Split Squat",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Reverse Lunge",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Walking Lunge",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Step-Up",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Hip Thrust",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Trap Bar Deadlift",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Stiff-Leg Deadlift",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Hamstring Curl",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Chest-Supported Row",
+        "MuscleGroup": "Back"
+    },
+    {
+        "Name": "Seated Cable Row",
+        "MuscleGroup": "Back"
+    },
+    {
+        "Name": "Resistance Band Row",
+        "MuscleGroup": "Back"
+    },
+    {
+        "Name": "Assisted Pull-Up",
+        "MuscleGroup": "Back"
+    },
+    {
+        "Name": "Weighted Pull-Up",
+        "MuscleGroup": "Back"
+    },
+    {
+        "Name": "Neutral-Grip Lat Pulldown",
+        "MuscleGroup": "Back"
+    },
+    {
+        "Name": "Barbell Bench Press",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Incline Bench Press",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Dumbbell Bench Press",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Dumbbell Floor Press",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Incline Push-Up",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Wall Push-Up",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Pec Deck Fly",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Machine Incline Press",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Chest Press Machine",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Seated Dumbbell Shoulder Press",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Half-Kneeling Shoulder Press",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Push Press",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Landmine Press",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Machine Shoulder Press",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Face Pull",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Rear Delt Fly",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Rear Delt Cable Fly",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "EZ-Bar Curl",
+        "MuscleGroup": "Biceps"
+    },
+    {
+        "Name": "Dips",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Dead Bug",
+        "MuscleGroup": "Core"
+    },
+    {
+        "Name": "Bird Dog",
+        "MuscleGroup": "Core"
+    },
+    {
+        "Name": "Farmer Carry",
+        "MuscleGroup": "Core"
+    },
+    {
+        "Name": "Suitcase Carry",
+        "MuscleGroup": "Core"
+    },
+    {
+        "Name": "Pallof Press",
+        "MuscleGroup": "Core"
+    },
+    {
+        "Name": "Hanging Knee Raise",
+        "MuscleGroup": "Core"
+    },
+    {
+        "Name": "Hip Hinge Drill",
+        "MuscleGroup": "Core"
+    },
+    {
+        "Name": "Bodyweight Squat",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Backward Lunge",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Supported Split Squat",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Single-Leg Balance Hold",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Tandem Stance Hold",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Heel-to-Toe Walk",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Elevated Push-Up",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Plank Knee Drive",
+        "MuscleGroup": "Core"
     }
 ]

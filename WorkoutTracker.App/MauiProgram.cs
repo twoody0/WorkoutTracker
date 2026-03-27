@@ -73,13 +73,13 @@ public static class MauiProgram
         builder.Services.AddTransient<CardioSessionPage>();
         builder.Services.AddTransient<WeightliftingLibraryPage>();
         builder.Services.AddTransient<WorkoutPlanDetailsPage>();
-        builder.Services.AddSingleton<WorkoutPlanPage>();
-        builder.Services.AddSingleton<WeeklySchedulePage>();
+        builder.Services.AddTransient<WorkoutPlanPage>();
+        builder.Services.AddTransient<WeeklySchedulePage>();
         builder.Services.AddTransient<EditDayPage>();
 
         // Register shells
-        builder.Services.AddSingleton<AppShell>();
-        builder.Services.AddSingleton<SignedOutShell>();
+        builder.Services.AddTransient<AppShell>();
+        builder.Services.AddTransient<SignedOutShell>();
 
         return builder.Build();
     }

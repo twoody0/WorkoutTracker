@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using WorkoutTracker.ViewModels;
+using WorkoutTracker.Helpers;
 
 namespace WorkoutTracker.Views
 {
@@ -13,6 +14,7 @@ namespace WorkoutTracker.Views
             _viewModel = viewModel;
             BindingContext = viewModel;
             _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+            TabSwipeNavigationHelper.Attach(this, "workout-plans");
         }
 
         protected override void OnDisappearing()

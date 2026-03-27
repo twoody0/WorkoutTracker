@@ -38,7 +38,12 @@
                                     <Setter Property="IsVisible" Value="True"/>
                                 </DataTrigger>
                             </StackLayout.Triggers>
-                            <Label Text="{Binding Steps, StringFormat='Steps: {0}'}" />
+                            <Label Text="{Binding DurationMinutes, StringFormat='Time: {0} min'}"
+                                   IsVisible="{Binding HasDuration}" />
+                            <Label Text="{Binding DistanceMiles, StringFormat='Distance: {0:F1} mi'}"
+                                   IsVisible="{Binding HasDistance}" />
+                            <Label Text="{Binding Steps, StringFormat='Tracked steps: {0}'}"
+                                   IsVisible="{Binding HasSteps}" />
                         </StackLayout>
                         <Button
                             Text="Copy to Add"

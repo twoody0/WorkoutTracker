@@ -11,14 +11,14 @@ public partial class EditDayPage : ContentPage
     public EditDayPage(DayOfWeek day, IWorkoutScheduleService scheduleService)
     {
         InitializeComponent();
-        ViewModel = new EditDayViewModel(day, scheduleService);
+        ViewModel = new EditDayViewModel(day, scheduleService, App.Services.GetRequiredService<IWorkoutPlanService>());
         BindingContext = ViewModel;
     }
 
     public EditDayPage(DayOfWeek day, WorkoutPlan plan, IWorkoutScheduleService scheduleService)
     {
         InitializeComponent();
-        ViewModel = new EditDayViewModel(day, plan, scheduleService);
+        ViewModel = new EditDayViewModel(day, plan, scheduleService, App.Services.GetRequiredService<IWorkoutPlanService>());
         BindingContext = ViewModel;
     }
 }

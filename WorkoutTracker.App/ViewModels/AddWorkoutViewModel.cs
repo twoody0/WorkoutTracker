@@ -21,6 +21,8 @@ public class AddWorkoutViewModel : BaseViewModel
     private int _sets;
     private int _reps;
     private int _steps;
+    private int _durationMinutes;
+    private double _distanceMiles;
     private string _recommendedWorkoutSummary = "Build a custom workout for this day.";
     private RecommendedWorkoutOption? _selectedRecommendedWorkout;
     private bool _isApplyingLibrarySelection;
@@ -88,6 +90,18 @@ public class AddWorkoutViewModel : BaseViewModel
     {
         get => _steps;
         set => SetProperty(ref _steps, value);
+    }
+
+    public int DurationMinutes
+    {
+        get => _durationMinutes;
+        set => SetProperty(ref _durationMinutes, value);
+    }
+
+    public double DistanceMiles
+    {
+        get => _distanceMiles;
+        set => SetProperty(ref _distanceMiles, value);
     }
 
     public List<WorkoutType> WorkoutTypes { get; } = Enum.GetValues(typeof(WorkoutType)).Cast<WorkoutType>().ToList();
@@ -162,6 +176,14 @@ public class AddWorkoutViewModel : BaseViewModel
             return;
         }
 
+        if (SelectedType == WorkoutType.Cardio && DurationMinutes <= 0 && DistanceMiles <= 0 && Steps <= 0)
+        {
+            var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (page != null)
+                await page.DisplayAlert("Error", "For cardio, enter time, distance, or optional tracked steps.", "OK");
+            return;
+        }
+
         var newWorkout = new Workout(
             name: effectiveName,
             weight: 0, // User can edit later in EditDayPage
@@ -176,6 +198,8 @@ public class AddWorkoutViewModel : BaseViewModel
 
         if (SelectedType == WorkoutType.Cardio)
         {
+            newWorkout.DurationMinutes = DurationMinutes;
+            newWorkout.DistanceMiles = DistanceMiles;
             newWorkout.Steps = Steps;
         }
 
@@ -241,6 +265,8 @@ public class AddWorkoutViewModel : BaseViewModel
         SelectedType = workout.Type;
         Sets = workout.Sets;
         Reps = workout.Reps;
+        DurationMinutes = workout.DurationMinutes;
+        DistanceMiles = workout.DistanceMiles;
         Steps = workout.Steps;
         _isApplyingLibrarySelection = false;
         ExerciseSuggestions.Clear();

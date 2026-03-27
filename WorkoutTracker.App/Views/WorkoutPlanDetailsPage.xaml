@@ -13,6 +13,40 @@
                    FontSize="16"
                    TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
 
+            <VerticalStackLayout Spacing="6"
+                                 IsVisible="{Binding ShowWeekSelector}">
+                <HorizontalStackLayout Spacing="8">
+                    <Label Text="Week:"
+                           FontSize="13"
+                           FontAttributes="Bold"
+                           VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light=#244B58, Dark=#C3D7E7}" />
+                    <Picker ItemsSource="{Binding PreviewWeeks}"
+                            SelectedItem="{Binding SelectedPreviewWeek}"
+                            Title="Choose a week"
+                            HorizontalOptions="FillAndExpand" />
+                    <ImageButton Source="info.png"
+                                 HeightRequest="20"
+                                 WidthRequest="20"
+                                 Padding="0"
+                                 BackgroundColor="Transparent"
+                                 Command="{Binding ToggleWeekTemplateHelpCommand}" />
+                </HorizontalStackLayout>
+                <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 12"
+                        BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#101720}"
+                        Padding="12,10"
+                        IsVisible="{Binding ShowWeekTemplateHelp}">
+                    <Label Text="{Binding WeekTemplateHelpText}"
+                           FontSize="12"
+                           TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                </Border>
+                <Label Text="{Binding PreviewWeekSummary}"
+                       FontSize="13"
+                       TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}" />
+            </VerticalStackLayout>
+
             <Border IsVisible="{Binding SelectedPlan.IsCustom}"
                     Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
                     StrokeThickness="1"
@@ -26,6 +60,7 @@
 
             <Button Text="Start Plan"
                     Command="{Binding StartPlanCommand}"
+                    IsVisible="{Binding ShowStartPlanButton}"
                     BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}"
                     TextColor="White"
                     CornerRadius="12" />
@@ -110,8 +145,15 @@
                                                                         </StackLayout>
 
                                                                         <StackLayout IsVisible="{Binding Workout.Type, Converter={StaticResource IsCardioConverter}}">
-                                                                            <Label Text="{Binding Workout.Sets, StringFormat='Sessions: {0}'}" FontSize="14" />
-                                                                            <Label Text="{Binding Workout.Steps, StringFormat='Steps: {0}'}" FontSize="14" />
+                                                                            <Label Text="{Binding Workout.DurationMinutes, StringFormat='Time: {0} min'}"
+                                                                                   FontSize="14"
+                                                                                   IsVisible="{Binding Workout.HasDuration}" />
+                                                                            <Label Text="{Binding Workout.DistanceMiles, StringFormat='Distance: {0:F1} mi'}"
+                                                                                   FontSize="14"
+                                                                                   IsVisible="{Binding Workout.HasDistance}" />
+                                                                            <Label Text="{Binding Workout.Steps, StringFormat='Tracked steps: {0}'}"
+                                                                                   FontSize="14"
+                                                                                   IsVisible="{Binding Workout.HasSteps}" />
                                                                         </StackLayout>
                                                                     </VerticalStackLayout>
                                                                 </Border>

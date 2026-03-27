@@ -17,6 +17,7 @@ public class WeeklyScheduleViewModel : BaseViewModel
     public ICommand ChangeWorkoutDayCommand { get; }
     public ICommand EditDayCommand { get; }
     public ICommand ToggleDayCommand { get; }
+    public ICommand ViewPlanPreviewCommand { get; }
     public ObservableCollection<WeeklyScheduleDayGroup> WeeklySchedule { get; } = new();
     public string ActivePlanName => _scheduleService.ActivePlan?.Name ?? "No active plan";
     public string ActivePlanTimelineSummary => _scheduleService.GetActivePlanTimelineSummary();
@@ -29,6 +30,7 @@ public class WeeklyScheduleViewModel : BaseViewModel
         ChangeWorkoutDayCommand = new Command<Workout>(ChangeWorkoutDay);
         EditDayCommand = new Command<DayOfWeek>(EditDay);
         ToggleDayCommand = new Command<WeeklyScheduleDayGroup>(ToggleDay);
+        ViewPlanPreviewCommand = new Command(async () => await ViewPlanPreviewAsync());
         LoadSchedule();
     }
 
@@ -103,6 +105,20 @@ public class WeeklyScheduleViewModel : BaseViewModel
         }
 
         dayGroup.IsExpanded = !dayGroup.IsExpanded;
+    }
+
+    private async Task ViewPlanPreviewAsync()
+    {
+        if (_scheduleService.ActivePlan == null)
+        {
+            return;
+        }
+
+        var detailsPage = new WorkoutPlanDetailsPage(
+            App.Services.GetRequiredService<WorkoutPlanDetailsViewModel>(),
+            _scheduleService.ActivePlan);
+
+        await Shell.Current.Navigation.PushAsync(detailsPage);
     }
 
     private async Task PromptForCompletedPlanAsync()
@@ -184,7 +200,8 @@ public class WeeklyScheduleViewModel : BaseViewModel
         var expectedSessions = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         for (var date = startDate; date <= endDate; date = date.AddDays(1))
         {
-            foreach (var plannedWorkout in plan.Workouts.Where(workout => workout.Day == date.DayOfWeek))
+            var weekNumber = ((date - startDate).Days / 7) + 1;
+            foreach (var plannedWorkout in plan.GetWorkoutsForWeek(weekNumber).Where(workout => workout.Day == date.DayOfWeek))
             {
                 var key = GetCompletionKey(plannedWorkout, date);
                 expectedSessions[key] = expectedSessions.TryGetValue(key, out var count)

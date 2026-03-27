@@ -20,8 +20,14 @@ public class Workout
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
     public int Steps { get; set; }
+    public int DurationMinutes { get; set; }
+    public double DistanceMiles { get; set; }
     public WorkoutType Type { get; set; }
     public DayOfWeek Day { get; set; }
+    public int? PlanWeekNumber { get; set; }
+    public bool HasSteps => Steps > 0;
+    public bool HasDuration => DurationMinutes > 0;
+    public bool HasDistance => DistanceMiles > 0;
 
     public Workout() { }
 

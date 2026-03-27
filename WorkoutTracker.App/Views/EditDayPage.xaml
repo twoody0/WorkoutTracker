@@ -161,20 +161,53 @@
                                     </VerticalStackLayout>
                                 </Grid>
 
-                                <VerticalStackLayout Spacing="6"
-                                                     IsVisible="{Binding Type, Converter={StaticResource IsCardioConverter}}">
-                                    <Label Text="Steps"
-                                           FontSize="12"
-                                           TextColor="{AppThemeBinding Light=#607084, Dark=#98A8BC}" />
-                                    <Border Stroke="{AppThemeBinding Light=#D9E1EB, Dark=#334050}"
-                                            BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#1A2230}"
-                                            StrokeShape="RoundRectangle 16"
-                                            Padding="12,6">
-                                        <Entry Text="{Binding Steps, Mode=TwoWay}"
-                                               Keyboard="Numeric"
-                                               HorizontalTextAlignment="Center" />
-                                    </Border>
-                                </VerticalStackLayout>
+                                 <VerticalStackLayout Spacing="6"
+                                                      IsVisible="{Binding Type, Converter={StaticResource IsCardioConverter}}">
+                                     <Grid ColumnDefinitions="*,*"
+                                           ColumnSpacing="12">
+                                         <VerticalStackLayout Grid.Column="0"
+                                                              Spacing="6">
+                                             <Label Text="Minutes"
+                                                    FontSize="12"
+                                                    TextColor="{AppThemeBinding Light=#607084, Dark=#98A8BC}" />
+                                             <Border Stroke="{AppThemeBinding Light=#D9E1EB, Dark=#334050}"
+                                                     BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#1A2230}"
+                                                     StrokeShape="RoundRectangle 16"
+                                                     Padding="12,6">
+                                                 <Entry Text="{Binding DurationMinutes, Mode=TwoWay}"
+                                                        Keyboard="Numeric"
+                                                        HorizontalTextAlignment="Center" />
+                                             </Border>
+                                         </VerticalStackLayout>
+
+                                         <VerticalStackLayout Grid.Column="1"
+                                                              Spacing="6">
+                                             <Label Text="Miles"
+                                                    FontSize="12"
+                                                    TextColor="{AppThemeBinding Light=#607084, Dark=#98A8BC}" />
+                                             <Border Stroke="{AppThemeBinding Light=#D9E1EB, Dark=#334050}"
+                                                     BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#1A2230}"
+                                                     StrokeShape="RoundRectangle 16"
+                                                     Padding="12,6">
+                                                 <Entry Text="{Binding DistanceMiles, Mode=TwoWay}"
+                                                        Keyboard="Numeric"
+                                                        HorizontalTextAlignment="Center" />
+                                             </Border>
+                                         </VerticalStackLayout>
+                                     </Grid>
+
+                                     <Label Text="Tracked steps (optional)"
+                                            FontSize="12"
+                                            TextColor="{AppThemeBinding Light=#607084, Dark=#98A8BC}" />
+                                     <Border Stroke="{AppThemeBinding Light=#D9E1EB, Dark=#334050}"
+                                             BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#1A2230}"
+                                             StrokeShape="RoundRectangle 16"
+                                             Padding="12,6">
+                                         <Entry Text="{Binding Steps, Mode=TwoWay}"
+                                                Keyboard="Numeric"
+                                                HorizontalTextAlignment="Center" />
+                                     </Border>
+                                 </VerticalStackLayout>
 
                                 <Grid ColumnDefinitions="*,*"
                                       ColumnSpacing="10">

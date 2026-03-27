@@ -60,7 +60,12 @@ public class ViewWorkoutViewModel : BaseViewModel
                 startTime: workout.StartTime,
                 type: workout.Type,
                 gymLocation: workout.GymLocation
-            );
+            )
+            {
+                Steps = workout.Steps,
+                DurationMinutes = workout.DurationMinutes,
+                DistanceMiles = workout.DistanceMiles
+            };
 
             await Shell.Current.GoToAsync("//add-workout");
         }

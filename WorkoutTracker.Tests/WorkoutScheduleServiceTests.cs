@@ -95,6 +95,58 @@ public class WorkoutScheduleServiceTests
     }
 
     [TestMethod]
+    public void GetActivePlanWorkoutsForDay_UsesCurrentTemplateWeek()
+    {
+        var service = CreateServiceWithPlans();
+        var plan = new WorkoutPlan("Rotating Plan", "Plan with weekly variation", durationInWeeks: 4)
+        {
+            Workouts =
+            [
+                new Workout("Week 1 Bench", 0, 8, 3, "Chest", DayOfWeek.Monday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym")
+                {
+                    PlanWeekNumber = 1
+                },
+                new Workout("Week 2 Incline Bench", 0, 8, 3, "Chest", DayOfWeek.Monday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym")
+                {
+                    PlanWeekNumber = 2
+                }
+            ]
+        };
+
+        service.AddPlanToWeeklySchedule(plan);
+        SetPrivateAutoProperty(service, nameof(WorkoutScheduleService.ActivePlanStartedOn), DateTime.Today.AddDays(-7));
+
+        var mondayWorkouts = service.GetActivePlanWorkoutsForDay(DayOfWeek.Monday);
+
+        Assert.AreEqual(1, mondayWorkouts.Count);
+        Assert.AreEqual("Week 2 Incline Bench", mondayWorkouts[0].Name);
+    }
+
+    [TestMethod]
+    public void WorkoutPlan_GetWorkoutsForWeek_RepeatsTemplatesAcrossLongerPlan()
+    {
+        var plan = new WorkoutPlan("Rotating Plan", "Plan with weekly variation", durationInWeeks: 8)
+        {
+            Workouts =
+            [
+                new Workout("Week 1 Squat", 0, 5, 3, "Legs", DayOfWeek.Monday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym")
+                {
+                    PlanWeekNumber = 1
+                },
+                new Workout("Week 2 Front Squat", 0, 5, 3, "Legs", DayOfWeek.Monday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym")
+                {
+                    PlanWeekNumber = 2
+                }
+            ]
+        };
+
+        var weekFiveWorkouts = plan.GetWorkoutsForWeek(5);
+
+        Assert.AreEqual(1, weekFiveWorkouts.Count);
+        Assert.AreEqual("Week 1 Squat", weekFiveWorkouts[0].Name);
+    }
+
+    [TestMethod]
     public void RestartActivePlan_ResetsActivePlanDates()
     {
         var plan = new WorkoutPlan("Restartable", "Plan", category: "Beginner Strength", durationInWeeks: 4);
@@ -123,10 +175,79 @@ public class WorkoutScheduleServiceTests
         Assert.AreSame(nextPlan, suggestion);
     }
 
+    [TestMethod]
+    public void WorkoutScheduleService_RestoresSavedActivePlanState()
+    {
+        var tempFilePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}-active-plan.json");
+        var plan = new WorkoutPlan("Saved Plan", "Plan for persistence", durationInWeeks: 4)
+        {
+            Workouts =
+            [
+                new Workout("Saved Squat", 0, 8, 3, "Legs", DayOfWeek.Monday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym")
+            ]
+        };
+
+        try
+        {
+            var planService = new FakeWorkoutPlanService([plan]);
+            var firstService = new WorkoutScheduleService(planService, tempFilePath);
+            firstService.AddPlanToWeeklySchedule(plan);
+
+            var restoredService = new WorkoutScheduleService(planService, tempFilePath);
+
+            Assert.IsNotNull(restoredService.ActivePlan);
+            Assert.AreEqual("Saved Plan", restoredService.ActivePlan.Name);
+            Assert.AreEqual(DateTime.Today, restoredService.ActivePlanStartedOn);
+            Assert.AreEqual(DateTime.Today.AddDays(27), restoredService.ActivePlanEndsOn);
+            Assert.AreEqual("Saved Squat", restoredService.GetWeeklySchedule()[DayOfWeek.Monday][0].Name);
+        }
+        finally
+        {
+            if (File.Exists(tempFilePath))
+            {
+                File.Delete(tempFilePath);
+            }
+        }
+    }
+
+    [TestMethod]
+    public void WorkoutPlanService_LoadsSavedCustomPlans()
+    {
+        var tempFilePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}-custom-plans.json");
+
+        try
+        {
+            var firstService = new WorkoutPlanService(tempFilePath);
+            firstService.AddWorkoutPlan(new WorkoutPlan("Custom Plan", "Saved custom plan", isCustom: true)
+            {
+                Workouts =
+                [
+                    new Workout("Custom Press", 0, 10, 3, "Chest", DayOfWeek.Monday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym")
+                ]
+            });
+
+            var restoredService = new WorkoutPlanService(tempFilePath);
+            var restoredCustomPlan = restoredService.GetWorkoutPlans()
+                .FirstOrDefault(plan => plan.IsCustom && plan.Name == "Custom Plan");
+
+            Assert.IsNotNull(restoredCustomPlan);
+            Assert.AreEqual(1, restoredCustomPlan.Workouts.Count);
+            Assert.AreEqual("Custom Press", restoredCustomPlan.Workouts[0].Name);
+        }
+        finally
+        {
+            if (File.Exists(tempFilePath))
+            {
+                File.Delete(tempFilePath);
+            }
+        }
+    }
+
     private static WorkoutScheduleService CreateServiceWithPlans(params WorkoutPlan[] plans)
     {
         var planService = new FakeWorkoutPlanService(plans);
-        return new WorkoutScheduleService(planService);
+        var tempFilePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}-active-plan.json");
+        return new WorkoutScheduleService(planService, tempFilePath);
     }
 
     private sealed class FakeWorkoutPlanService : IWorkoutPlanService
@@ -144,5 +265,18 @@ public class WorkoutScheduleServiceTests
         {
             _plans.Add(plan);
         }
+
+        public void SavePlans()
+        {
+        }
+    }
+
+    private static void SetPrivateAutoProperty<T>(object target, string propertyName, T value)
+    {
+        var field = target.GetType().GetField($"<{propertyName}>k__BackingField",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+        Assert.IsNotNull(field, $"Could not find backing field for {propertyName}.");
+        field.SetValue(target, value);
     }
 }

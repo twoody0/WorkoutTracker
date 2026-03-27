@@ -80,7 +80,7 @@ public class DashboardViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// The estimated calories burned based on steps and body weight.
+    /// The estimated calories burned based on logged cardio duration and body weight.
     /// </summary>
     public double CaloriesBurned
     {
@@ -126,7 +126,7 @@ public class DashboardViewModel : BaseViewModel
         HasWeightlifting = filtered.Any(w =>
             w.Type == WorkoutType.WeightLifting && w.Reps > 0 && w.Sets > 0);
         HasCardio = filtered.Any(w =>
-            w.Type == WorkoutType.Cardio && w.Steps > 0);
+            w.Type == WorkoutType.Cardio && (w.DurationMinutes > 0 || w.DistanceMiles > 0 || w.Steps > 0));
 
         Workouts.Clear();
         double total = 0;
@@ -140,14 +140,35 @@ public class DashboardViewModel : BaseViewModel
 
         TotalWeightLifted = total;
 
-        int totalSteps = filtered
+        int totalCardioMinutes = filtered
             .Where(w => w.Type == WorkoutType.Cardio)
-            .Sum(w => w.Steps);
+            .Sum(w => GetEstimatedCardioMinutes(w));
 
         double weightLbs = _bodyWeightService.GetBodyWeight() ?? _authService.CurrentUser?.Weight ?? 154;
         double weightKg = weightLbs * 0.453592;
-        CaloriesBurned = totalSteps * 0.04 * (weightKg / 70);
+        const double moderateCardioMet = 6.0;
+        CaloriesBurned = totalCardioMinutes * 0.0175 * moderateCardioMet * weightKg;
         OnPropertyChanged(nameof(BodyWeightSummary));
+    }
+
+    private static int GetEstimatedCardioMinutes(Workout workout)
+    {
+        if (workout.DurationMinutes > 0)
+        {
+            return workout.DurationMinutes;
+        }
+
+        if (workout.DistanceMiles > 0)
+        {
+            return (int)Math.Round(workout.DistanceMiles * 12);
+        }
+
+        if (workout.Steps > 0)
+        {
+            return Math.Max(1, workout.Steps / 100);
+        }
+
+        return 0;
     }
 
     #endregion

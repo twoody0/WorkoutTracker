@@ -13,6 +13,12 @@ public class WorkoutPlan
     public string DurationDisplay => DurationInWeeks % 4 == 0 && DurationInWeeks >= 8
         ? $"{DurationInWeeks / 4} month{(DurationInWeeks == 4 ? string.Empty : "s")}"
         : $"{DurationInWeeks} week{(DurationInWeeks == 1 ? string.Empty : "s")}";
+    public int WeeklyVariationCount => Math.Max(1, Workouts
+        .Where(workout => workout.PlanWeekNumber.HasValue)
+        .Select(workout => workout.PlanWeekNumber!.Value)
+        .DefaultIfEmpty(1)
+        .Max());
+    public bool HasWeeklyVariation => Workouts.Any(workout => workout.PlanWeekNumber.HasValue);
 
     public WorkoutPlan() { }
 
@@ -24,5 +30,25 @@ public class WorkoutPlan
         IsCustom = isCustom;
         Category = category;
         DurationInWeeks = durationInWeeks;
+    }
+
+    public int NormalizeWeekNumber(int weekNumber)
+    {
+        if (weekNumber <= 0)
+        {
+            return 1;
+        }
+
+        var variationCount = WeeklyVariationCount;
+        return ((weekNumber - 1) % variationCount) + 1;
+    }
+
+    public IReadOnlyList<Workout> GetWorkoutsForWeek(int weekNumber)
+    {
+        var normalizedWeekNumber = NormalizeWeekNumber(weekNumber);
+
+        return Workouts
+            .Where(workout => !workout.PlanWeekNumber.HasValue || workout.PlanWeekNumber.Value == normalizedWeekNumber)
+            .ToList();
     }
 }

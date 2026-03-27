@@ -1,117 +1,152 @@
+using System.Diagnostics;
 using System.Windows.Input;
 using Microsoft.Maui.ApplicationModel;
-using WorkoutTracker.Models;
 using MauiPermissions = Microsoft.Maui.ApplicationModel.Permissions;
+using WorkoutTracker.Models;
 using WorkoutTracker.PlatformPermissions;
 using WorkoutTracker.Services;
 
 namespace WorkoutTracker.ViewModels;
 
-/// <summary>
-/// ViewModel for tracking and saving cardio workout sessions based on step count.
-/// </summary>
 public class CardioWorkoutViewModel : BaseViewModel
 {
-    #region Private Fields
-
     private readonly IWorkoutService _workoutService;
     private readonly IStepCounterService _stepCounterService;
+    private readonly Stopwatch _stopwatch = new();
+    private CancellationTokenSource? _sessionLoopCancellation;
     private int _sessionSteps;
+    private int _elapsedMinutes;
+    private string _distanceMilesText = string.Empty;
+    private string _sessionName = "Cardio Session";
     private bool _isTracking;
-
-    #endregion
-
-    #region Constructor
+    private bool _useStepTracking;
 
     public CardioWorkoutViewModel(IWorkoutService workoutService, IStepCounterService stepCounterService)
     {
         _workoutService = workoutService;
         _stepCounterService = stepCounterService;
-
         _stepCounterService.StepsUpdated += OnStepsUpdated;
-
-        SessionSteps = 0;
-        IsTracking = false;
     }
 
-    #endregion
-
-    #region Public Properties
-
-    /// <summary>
-    /// The number of steps taken during the current cardio session.
-    /// </summary>
     public int SessionSteps
     {
         get => _sessionSteps;
         set => SetProperty(ref _sessionSteps, value);
     }
 
-    /// <summary>
-    /// Indicates whether the step tracker is currently active.
-    /// </summary>
+    public int ElapsedMinutes
+    {
+        get => _elapsedMinutes;
+        set => SetProperty(ref _elapsedMinutes, value);
+    }
+
+    public string DistanceMilesText
+    {
+        get => _distanceMilesText;
+        set => SetProperty(ref _distanceMilesText, value);
+    }
+
+    public string SessionName
+    {
+        get => _sessionName;
+        set => SetProperty(ref _sessionName, value);
+    }
+
     public bool IsTracking
     {
         get => _isTracking;
         set => SetProperty(ref _isTracking, value);
     }
 
-    #endregion
-
-    #region Commands
-
-    /// <summary>
-    /// Starts a new cardio workout session and begins tracking steps.
-    /// </summary>
-    public ICommand StartSessionCommand => new Command(async () =>
+    public bool UseStepTracking
     {
-        if (!await EnsureActivityRecognitionPermissionAsync())
+        get => _useStepTracking;
+        set => SetProperty(ref _useStepTracking, value);
+    }
+
+    public ICommand StartSessionCommand => new Command(async () => await StartSessionAsync());
+    public ICommand StopSessionCommand => new Command(async () => await StopSessionAsync());
+
+    private async Task StartSessionAsync()
+    {
+        if (UseStepTracking && !await EnsureActivityRecognitionPermissionAsync())
         {
             return;
         }
 
         SessionSteps = 0;
-        _stepCounterService.StartTracking();
-        IsTracking = true;
-    });
+        ElapsedMinutes = 0;
+        _stopwatch.Restart();
 
-    /// <summary>
-    /// Stops the current cardio session, saves the workout, and resets steps.
-    /// </summary>
-    public ICommand StopSessionCommand => new Command(async () =>
+        _sessionLoopCancellation?.Cancel();
+        _sessionLoopCancellation = new CancellationTokenSource();
+        _ = RunSessionClockAsync(_sessionLoopCancellation.Token);
+
+        if (UseStepTracking)
+        {
+            _stepCounterService.StartTracking();
+        }
+
+        IsTracking = true;
+    }
+
+    private async Task StopSessionAsync()
     {
-        _stepCounterService.StopTracking();
+        _sessionLoopCancellation?.Cancel();
+        _stopwatch.Stop();
+
+        if (UseStepTracking)
+        {
+            _stepCounterService.StopTracking();
+        }
+
         IsTracking = false;
+        ElapsedMinutes = Math.Max(1, (int)Math.Ceiling(_stopwatch.Elapsed.TotalMinutes));
+        double.TryParse(DistanceMilesText, out var parsedDistanceMiles);
 
         var workout = new Workout(
-            name: "Cardio Session",
+            name: string.IsNullOrWhiteSpace(SessionName) ? "Cardio Session" : SessionName.Trim(),
             weight: 0,
             reps: 0,
             sets: 0,
-            muscleGroup: string.Empty,
-            startTime: DateTime.Now,
+            muscleGroup: "Cardio",
+            startTime: DateTime.Now.AddMinutes(-ElapsedMinutes),
             type: WorkoutType.Cardio,
-            gymLocation: "Outdoor"
-        )
+            gymLocation: "Outdoor")
         {
-            Steps = SessionSteps,
+            Steps = UseStepTracking ? SessionSteps : 0,
+            DurationMinutes = ElapsedMinutes,
+            DistanceMiles = parsedDistanceMiles,
             EndTime = DateTime.Now
         };
 
         await _workoutService.AddWorkout(workout);
         SessionSteps = 0;
-    });
+        ElapsedMinutes = 0;
+        DistanceMilesText = string.Empty;
+    }
 
-    #endregion
+    private async Task RunSessionClockAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                ElapsedMinutes = Math.Max(0, (int)_stopwatch.Elapsed.TotalMinutes);
+                await Task.Delay(1000, cancellationToken);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
 
-    #region Private Methods
-
-    /// <summary>
-    /// Handles step count updates from the step counter service.
-    /// </summary>
     private void OnStepsUpdated(object? sender, int steps)
     {
-        SessionSteps = steps;
+        if (UseStepTracking)
+        {
+            SessionSteps = steps;
+        }
     }
 
     private static async Task<bool> EnsureActivityRecognitionPermissionAsync()
@@ -139,7 +174,7 @@ public class CardioWorkoutViewModel : BaseViewModel
         {
             await page.DisplayAlert(
                 "Permission Needed",
-                "Allow activity recognition to track steps during cardio sessions.",
+                "Allow activity recognition if you want the session to capture steps from your phone or watch.",
                 "OK");
         }
 
@@ -149,6 +184,4 @@ public class CardioWorkoutViewModel : BaseViewModel
         return true;
 #endif
     }
-
-    #endregion
 }

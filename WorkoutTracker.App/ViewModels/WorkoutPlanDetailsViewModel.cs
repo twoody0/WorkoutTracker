@@ -9,22 +9,81 @@ namespace WorkoutTracker.ViewModels;
 public class WorkoutPlanDetailsViewModel : BaseViewModel
 {
     private readonly IWorkoutScheduleService _scheduleService;
+    private readonly IWorkoutPlanService _workoutPlanService;
+    private int _selectedPreviewWeek = 1;
+    private bool _showWeekTemplateHelp;
 
     public WorkoutPlan? SelectedPlan { get; private set; }
     public ObservableCollection<WorkoutPlanDayGroup> WorkoutGroups { get; } = new();
+    public ObservableCollection<int> PreviewWeeks { get; } = new();
+
+    public int SelectedPreviewWeek
+    {
+        get => _selectedPreviewWeek;
+        set
+        {
+            if (SetProperty(ref _selectedPreviewWeek, value))
+            {
+                RefreshWorkoutGroups();
+                OnPropertyChanged(nameof(PreviewWeekSummary));
+            }
+        }
+    }
+
+    public bool ShowWeekSelector => SelectedPlan != null && (SelectedPlan.DurationInWeeks > 1 || SelectedPlan.HasWeeklyVariation);
+    public bool ShowStartPlanButton => SelectedPlan != null && !IsSelectedPlanActive;
+    public bool IsSelectedPlanActive => SelectedPlan != null &&
+        _scheduleService.ActivePlan != null &&
+        string.Equals(_scheduleService.ActivePlan.Name, SelectedPlan.Name, StringComparison.OrdinalIgnoreCase);
+    public bool ShowWeekTemplateHelp
+    {
+        get => _showWeekTemplateHelp;
+        set => SetProperty(ref _showWeekTemplateHelp, value);
+    }
+
+    public string WeekTemplateHelpText => SelectedPlan == null
+        ? string.Empty
+        : SelectedPlan.HasWeeklyVariation
+            ? "Each week can change exercise selection, volume, or cardio goals. Some plans use a full week-by-week progression, while others rotate a smaller set of templates across the full plan."
+            : "This plan keeps the same weekly layout across the full plan length.";
+    public string PreviewWeekSummary
+    {
+        get
+        {
+            if (SelectedPlan == null)
+            {
+                return string.Empty;
+            }
+
+            if (!SelectedPlan.HasWeeklyVariation)
+            {
+                return "This plan uses the same weekly layout throughout the full duration.";
+            }
+
+            if (SelectedPlan.WeeklyVariationCount >= SelectedPlan.DurationInWeeks)
+            {
+                return $"Week {SelectedPreviewWeek} has its own progression.";
+            }
+
+            return $"Week {SelectedPreviewWeek} uses template {SelectedPlan.NormalizeWeekNumber(SelectedPreviewWeek)} of {SelectedPlan.WeeklyVariationCount}.";
+        }
+    }
 
     public ICommand ToggleExpandCommand { get; }
     public ICommand StartPlanCommand { get; }
     public ICommand ChangeWorkoutDayCommand { get; }
     public ICommand EditDayCommand { get; }
+    public ICommand ToggleWeekTemplateHelpCommand { get; }
 
-    public WorkoutPlanDetailsViewModel(IWorkoutScheduleService scheduleService)
+    public WorkoutPlanDetailsViewModel(IWorkoutScheduleService scheduleService, IWorkoutPlanService workoutPlanService)
     {
         _scheduleService = scheduleService;
+        _workoutPlanService = workoutPlanService;
         ToggleExpandCommand = new Command<WorkoutPlanDayGroup>(ToggleExpand);
         StartPlanCommand = new Command(StartPlan);
         ChangeWorkoutDayCommand = new Command<WorkoutDisplay>(ChangeWorkoutDay);
         EditDayCommand = new Command<WorkoutPlanDayGroup>(EditDay);
+        ToggleWeekTemplateHelpCommand = new Command(() => ShowWeekTemplateHelp = !ShowWeekTemplateHelp);
     }
 
     private async void EditDay(WorkoutPlanDayGroup? workoutGroup)
@@ -62,6 +121,10 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
         {
             // Update the workout's DayOfWeek
             workoutDisplay.Workout.Day = newDay;
+            if (SelectedPlan.IsCustom)
+            {
+                _workoutPlanService.SavePlans();
+            }
 
             // Refresh the grouped workouts by day
             LoadPlan(SelectedPlan);
@@ -77,20 +140,44 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
     public void LoadPlan(WorkoutPlan plan)
     {
         SelectedPlan = plan;
+        PreviewWeeks.Clear();
+        for (var weekNumber = 1; weekNumber <= plan.DurationInWeeks; weekNumber++)
+        {
+            PreviewWeeks.Add(weekNumber);
+        }
+
+        _selectedPreviewWeek = 1;
+        RefreshWorkoutGroups();
+        OnPropertyChanged(nameof(SelectedPlan));
+        OnPropertyChanged(nameof(WorkoutGroups));
+        OnPropertyChanged(nameof(PreviewWeeks));
+        OnPropertyChanged(nameof(SelectedPreviewWeek));
+        OnPropertyChanged(nameof(ShowWeekSelector));
+        OnPropertyChanged(nameof(ShowStartPlanButton));
+        OnPropertyChanged(nameof(IsSelectedPlanActive));
+        OnPropertyChanged(nameof(PreviewWeekSummary));
+        OnPropertyChanged(nameof(WeekTemplateHelpText));
+    }
+
+    private void RefreshWorkoutGroups()
+    {
         WorkoutGroups.Clear();
 
-        var workoutsByDay = plan.Workouts
+        if (SelectedPlan == null)
+        {
+            return;
+        }
+
+        var workoutsByDay = SelectedPlan.GetWorkoutsForWeek(SelectedPreviewWeek)
             .GroupBy(workout => workout.Day)
             .ToDictionary(group => group.Key, group => group.AsEnumerable());
 
         var orderedDays = Enum.GetValues<DayOfWeek>()
             .OrderBy(day => (int)day)
             .ToList();
-        var firstWorkoutDay = orderedDays.FirstOrDefault(day => workoutsByDay.ContainsKey(day));
 
-        for (var i = 0; i < orderedDays.Count; i++)
+        foreach (var day in orderedDays)
         {
-            var day = orderedDays[i];
             var workoutsForDay = workoutsByDay.TryGetValue(day, out var workouts)
                 ? workouts.OrderBy(workout => workout.Name)
                 : Enumerable.Empty<Workout>();
@@ -98,10 +185,10 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
             WorkoutGroups.Add(new WorkoutPlanDayGroup(
                 day,
                 workoutsForDay.Select(workout => new WorkoutDisplay(workout)),
-                isExpanded: false));
+                isExpanded: false,
+                canEditDay: SelectedPlan.IsCustom));
         }
 
-        OnPropertyChanged(nameof(SelectedPlan));
         OnPropertyChanged(nameof(WorkoutGroups));
     }
 

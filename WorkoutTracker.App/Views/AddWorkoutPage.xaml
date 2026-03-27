@@ -58,10 +58,18 @@
                                                FontSize="12"
                                                TextColor="Gray"
                                                IsVisible="{Binding ShowWeightLiftingDetails}" />
-                                        <Label Text="{Binding Steps, StringFormat='Steps: {0}'}"
-                                               FontSize="12"
-                                               TextColor="Gray"
-                                               IsVisible="{Binding ShowCardioDetails}" />
+                                         <Label Text="{Binding DurationMinutes, StringFormat='Time: {0} min'}"
+                                                FontSize="12"
+                                                TextColor="Gray"
+                                                IsVisible="{Binding HasDuration}" />
+                                         <Label Text="{Binding DistanceMiles, StringFormat='Distance: {0:F1} mi'}"
+                                                FontSize="12"
+                                                TextColor="Gray"
+                                                IsVisible="{Binding HasDistance}" />
+                                         <Label Text="{Binding Steps, StringFormat='Tracked steps: {0}'}"
+                                                FontSize="12"
+                                                TextColor="Gray"
+                                                IsVisible="{Binding HasSteps}" />
                                         <Button Text="Use This Workout"
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AddWorkoutViewModel}}, Path=UseRecommendedWorkoutCommand}"
                                                 CommandParameter="{Binding .}"
@@ -190,12 +198,24 @@
                         </VerticalStackLayout>
                     </Grid>
 
-                    <VerticalStackLayout Spacing="6"
-                                         IsVisible="{Binding IsCardio}">
-                        <Label Text="Steps"
+                     <VerticalStackLayout Spacing="6"
+                                          IsVisible="{Binding IsCardio}">
+                        <Label Text="Duration (minutes)"
+                                FontAttributes="Bold"
+                                FontSize="14" />
+                        <Entry Placeholder="Duration: 30"
+                               Text="{Binding DurationMinutes}"
+                               Keyboard="Numeric" />
+                        <Label Text="Distance (miles)"
                                FontAttributes="Bold"
                                FontSize="14" />
-                        <Entry Placeholder="Steps: 4000"
+                        <Entry Placeholder="Distance: 2.5"
+                               Text="{Binding DistanceMiles}"
+                               Keyboard="Numeric" />
+                        <Label Text="Tracked steps (optional)"
+                               FontAttributes="Bold"
+                               FontSize="14" />
+                        <Entry Placeholder="Only if tracked by watch or phone"
                                Text="{Binding Steps}"
                                Keyboard="Numeric" />
                     </VerticalStackLayout>

@@ -8,6 +8,7 @@ using WorkoutTracker.Views;
 public class EditDayViewModel : BaseViewModel
 {
     private readonly IWorkoutScheduleService _scheduleService;
+    private readonly IWorkoutPlanService _workoutPlanService;
     private readonly WorkoutPlan? _plan;
 
     public DayOfWeek Day { get; }
@@ -31,10 +32,11 @@ public class EditDayViewModel : BaseViewModel
 
     public string EmptyStateMessage => "Start with a suggested lift or cardio session and shape the day from there.";
 
-    public EditDayViewModel(DayOfWeek day, IWorkoutScheduleService scheduleService)
+    public EditDayViewModel(DayOfWeek day, IWorkoutScheduleService scheduleService, IWorkoutPlanService workoutPlanService)
     {
         Day = day;
         _scheduleService = scheduleService;
+        _workoutPlanService = workoutPlanService;
         Workouts = new ObservableCollection<Workout>(_scheduleService.GetWeeklySchedule()[day]);
         Workouts.CollectionChanged += (_, _) => NotifyOverviewChanged();
 
@@ -43,11 +45,12 @@ public class EditDayViewModel : BaseViewModel
         AddWorkoutCommand = new Command(AddWorkout);
     }
 
-    public EditDayViewModel(DayOfWeek day, WorkoutPlan plan, IWorkoutScheduleService scheduleService)
+    public EditDayViewModel(DayOfWeek day, WorkoutPlan plan, IWorkoutScheduleService scheduleService, IWorkoutPlanService workoutPlanService)
     {
         Day = day;
         _plan = plan;
         _scheduleService = scheduleService;
+        _workoutPlanService = workoutPlanService;
         Workouts = new ObservableCollection<Workout>(plan.Workouts.Where(workout => workout.Day == day));
         Workouts.CollectionChanged += (_, _) => NotifyOverviewChanged();
 
@@ -74,6 +77,10 @@ public class EditDayViewModel : BaseViewModel
             }
 
             workout.Day = newDay;
+            if (_plan != null)
+            {
+                _workoutPlanService.SavePlans();
+            }
             Workouts.Remove(workout);
         }
     }
@@ -90,6 +97,7 @@ public class EditDayViewModel : BaseViewModel
         else
         {
             _plan.Workouts.Remove(workout);
+            _workoutPlanService.SavePlans();
         }
 
         Workouts.Remove(workout);

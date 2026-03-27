@@ -209,19 +209,9 @@ public class WorkoutPlanViewModel : BaseViewModel
         if (plan == null)
             return;
 
-        // If selected plan is already active, go straight to WeeklySchedulePage
-        if (_scheduleService.ActivePlan != null && _scheduleService.ActivePlan == plan)
-        {
-            var schedulePage = App.Services.GetRequiredService<WeeklySchedulePage>();
-            await Shell.Current.Navigation.PushAsync(schedulePage);
-        }
-        else
-        {
-            // Otherwise, show details page first
-            var detailsPage = new WorkoutPlanDetailsPage(
-                App.Services.GetRequiredService<WorkoutPlanDetailsViewModel>(), plan);
-            await Shell.Current.Navigation.PushAsync(detailsPage);
-        }
+        var detailsPage = new WorkoutPlanDetailsPage(
+            App.Services.GetRequiredService<WorkoutPlanDetailsViewModel>(), plan);
+        await Shell.Current.Navigation.PushAsync(detailsPage);
     }
 
     private async Task AddWorkoutPlanAsync()

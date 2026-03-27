@@ -34,6 +34,12 @@
                     <Label Text="{Binding ActivePlanTimelineSummary}"
                            FontSize="13"
                            TextColor="{AppThemeBinding Light=#5D6A79, Dark=#A6B4C5}" />
+                    <Button Text="Preview Future Weeks"
+                            Command="{Binding ViewPlanPreviewCommand}"
+                            Margin="0,8,0,0"
+                            BackgroundColor="{AppThemeBinding Light=#E7F6F4, Dark=#143936}"
+                            TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}"
+                            CornerRadius="12" />
                 </VerticalStackLayout>
             </Border>
 
@@ -121,9 +127,15 @@
                                                            FontSize="13"
                                                            IsVisible="{Binding Type, Converter={StaticResource IsWeightLiftingConverter}}" />
 
-                                                    <Label Text="{Binding Steps, StringFormat='Steps goal: {0}'}"
+                                                    <Label Text="{Binding DurationMinutes, StringFormat='Time goal: {0} min'}"
                                                            FontSize="13"
-                                                           IsVisible="{Binding Type, Converter={StaticResource IsCardioConverter}}" />
+                                                           IsVisible="{Binding HasDuration}" />
+                                                    <Label Text="{Binding DistanceMiles, StringFormat='Distance goal: {0:F1} mi'}"
+                                                           FontSize="13"
+                                                           IsVisible="{Binding HasDistance}" />
+                                                    <Label Text="{Binding Steps, StringFormat='Tracked steps: {0}'}"
+                                                            FontSize="13"
+                                                            IsVisible="{Binding HasSteps}" />
 
                                                     <Label Text="{Binding MuscleGroup, StringFormat='Focus: {0}'}"
                                                            FontSize="12"

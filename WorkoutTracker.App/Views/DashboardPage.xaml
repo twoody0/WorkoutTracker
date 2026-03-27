@@ -1,48 +1,67 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage 
+<ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     x:Class="WorkoutTracker.Views.DashboardPage"
     Title="Dashboard">
 
-    <StackLayout Padding="20" Spacing="15">
-        <Label Text="Select Date:" />
-        <DatePicker Date="{Binding SelectedDate}" />
-        <Label Text="{Binding BodyWeightSummary}"
+    <Grid x:Name="DashboardRootLayout"
+          Padding="20"
+          RowDefinitions="Auto,Auto,Auto,*,Auto,Auto"
+          RowSpacing="15">
+        <Label Grid.Row="0"
+               Text="Select Date:" />
+
+        <DatePicker Grid.Row="1"
+                    x:Name="DashboardDatePicker"
+                    Date="{Binding SelectedDate}" />
+
+        <Label Grid.Row="2"
+               Text="{Binding BodyWeightSummary}"
                TextColor="Gray"
                FontAttributes="Italic" />
 
-        <CollectionView ItemsSource="{Binding Workouts}">
+        <CollectionView Grid.Row="3"
+                        x:Name="WorkoutHistoryList"
+                        VerticalOptions="FillAndExpand"
+                        ItemsSource="{Binding Workouts}">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Border Padding="10" Margin="5" Stroke="LightGray" StrokeShape="RoundRectangle 5">
-                        <StackLayout>
-                            <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="16"/>
+                    <Border Padding="10"
+                            Margin="5"
+                            Stroke="LightGray"
+                            StrokeShape="RoundRectangle 5">
+                        <VerticalStackLayout>
+                            <Label Text="{Binding Name}"
+                                   FontAttributes="Bold"
+                                   FontSize="16" />
                             <Label Text="{Binding StartTime, StringFormat='Time: {0:HH:mm}'}" />
                             <Label Text="{Binding Sets, StringFormat='Sets: {0}'}" />
                             <Label Text="{Binding Reps, StringFormat='Reps: {0}'}" />
                             <Label Text="{Binding Weight, StringFormat='Weight: {0} lbs'}" />
-                        </StackLayout>
+                            <Label Text="{Binding DurationMinutes, StringFormat='Time: {0} min'}" />
+                            <Label Text="{Binding DistanceMiles, StringFormat='Distance: {0:F1} mi'}" />
+                            <Label Text="{Binding Steps, StringFormat='Tracked steps: {0}'}" />
+                        </VerticalStackLayout>
                     </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
-        <!-- Total Weight Lifted -->
-        <Label 
-            Text="{Binding TotalWeightLifted, StringFormat='🏋️ Total Weight Lifted Today: {0:N0} lbs'}"
-            FontAttributes="Bold"
-            FontSize="18"
-            HorizontalOptions="Center"
-            Margin="0,20,0,10"
-            IsVisible="{Binding HasWeightlifting}" />
 
-        <!-- Calories Burned -->
-        <Label 
-            Text="{Binding CaloriesBurned, StringFormat='🔥 Calories Burned Today: {0:N0} kcal'}"
-            FontAttributes="Bold"
-            FontSize="18"
-            HorizontalOptions="Center"
-            Margin="0,0,0,10"
-            IsVisible="{Binding HasCardio}" />
-    </StackLayout>
+        <Label Grid.Row="4"
+               Text="{Binding TotalWeightLifted, StringFormat='🏋️ Total Weight Lifted Today: {0:N0} lbs'}"
+               FontAttributes="Bold"
+               FontSize="18"
+               HorizontalOptions="Center"
+               Margin="0,20,0,10"
+               IsVisible="{Binding HasWeightlifting}" />
+
+        <Label Grid.Row="5"
+               Text="{Binding CaloriesBurned, StringFormat='🔥 Calories Burned Today: {0:N0} kcal'}"
+               FontAttributes="Bold"
+               FontSize="18"
+               HorizontalOptions="Center"
+               Margin="0,0,0,10"
+               IsVisible="{Binding HasCardio}" />
+    </Grid>
 </ContentPage>

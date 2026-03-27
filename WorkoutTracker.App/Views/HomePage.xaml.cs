@@ -1,4 +1,5 @@
 using WorkoutTracker.ViewModels;
+using WorkoutTracker.Helpers;
 
 namespace WorkoutTracker.Views;
 
@@ -22,6 +23,7 @@ public partial class HomePage : ContentPage
         }
 
         BindingContext = viewModel;
+        TabSwipeNavigationHelper.Attach(this, "home");
     }
     protected override async void OnAppearing()
     {

@@ -1,4 +1,5 @@
 using WorkoutTracker.ViewModels;
+using WorkoutTracker.Helpers;
 
 namespace WorkoutTracker.Views;
 
@@ -8,5 +9,6 @@ public partial class LeaderboardPage : ContentPage
     {
         InitializeComponent();
         BindingContext = vm;
+        TabSwipeNavigationHelper.Attach(this, "leaderboard");
     }
 }

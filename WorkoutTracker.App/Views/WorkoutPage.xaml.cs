@@ -3,6 +3,7 @@ using System.Linq;
 using System.ComponentModel;
 using WorkoutTracker.Models;
 using WorkoutTracker.ViewModels;
+using WorkoutTracker.Helpers;
 
 namespace WorkoutTracker.Views;
 
@@ -13,6 +14,7 @@ public partial class WorkoutPage : ContentPage
         InitializeComponent();
         BindingContext = vm;
         vm.PropertyChanged += OnViewModelPropertyChanged;
+        TabSwipeNavigationHelper.Attach(this, "add-workout");
     }
 
     protected override void OnAppearing()

@@ -16,6 +16,11 @@ public class RecommendedWorkoutOption : INotifyPropertyChanged
     public int Sets => Workout.Sets;
     public int Reps => Workout.Reps;
     public int Steps => Workout.Steps;
+    public int DurationMinutes => Workout.DurationMinutes;
+    public double DistanceMiles => Workout.DistanceMiles;
+    public bool HasSteps => Workout.HasSteps;
+    public bool HasDuration => Workout.HasDuration;
+    public bool HasDistance => Workout.HasDistance;
     public bool IsWeightLifting => Type == WorkoutType.WeightLifting;
     public bool IsCardio => Type == WorkoutType.Cardio;
     public bool ShowDetails => !IsSelected;
