@@ -36,7 +36,7 @@
                             CommandParameter="{Binding CurrentPlan}"
                             Margin="0,10,0,0"
                             BackgroundColor="{AppThemeBinding Light=#E7F6F4, Dark=#143936}"
-                            TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}"
+                            TextColor="White"
                             CornerRadius="12" />
                 </VerticalStackLayout>
             </Border>
@@ -59,12 +59,25 @@
                     <Label Text="Pick a category to load ready-made workout plans."
                            FontSize="13"
                            TextColor="{AppThemeBinding Light=#D8FFFA, Dark=#CCFBF1}" />
-                    <Picker Title="Select a workout category"
-                            TitleColor="#0F172A"
-                            TextColor="{AppThemeBinding Light=#0F172A, Dark=#0F172A}"
+                    <Border StrokeThickness="0"
                             BackgroundColor="White"
-                            ItemsSource="{Binding AvailableCategories}"
-                            SelectedItem="{Binding SelectedCategory}" />
+                            StrokeShape="RoundRectangle 12"
+                            Padding="12,10">
+                        <Grid>
+                            <Picker Title=""
+                                    TitleColor="#0F172A"
+                                    TextColor="#0F172A"
+                                    BackgroundColor="White"
+                                    ItemsSource="{Binding AvailableCategories}"
+                                    SelectedItem="{Binding SelectedCategory}" />
+                            <Label Text="Select a workout category"
+                                   InputTransparent="True"
+                                   VerticalOptions="Center"
+                                   Margin="4,0,28,0"
+                                   TextColor="#0F172A"
+                                   IsVisible="{Binding ShowCategoryPrompt}" />
+                        </Grid>
+                    </Border>
                 </VerticalStackLayout>
             </Border>
 
@@ -116,7 +129,8 @@
                                                 <Button Text="View Plan"
                                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:WorkoutPlanViewModel}}, Path=SelectWorkoutPlanCommand}"
                                                         CommandParameter="{Binding .}"
-                                                        Margin="0,10,0,0" />
+                                                        Margin="0,10,0,0"
+                                                        TextColor="White" />
                                             </VerticalStackLayout>
                                         </Border>
                                     </DataTemplate>
@@ -156,7 +170,8 @@
                                 <Button Text="View Plan"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:WorkoutPlanViewModel}}, Path=SelectWorkoutPlanCommand}"
                                         CommandParameter="{Binding .}"
-                                        Margin="0,10,0,0" />
+                                        Margin="0,10,0,0"
+                                        TextColor="White" />
                             </VerticalStackLayout>
                         </Border>
                     </DataTemplate>
