@@ -14,6 +14,7 @@ public class WorkoutViewModel : BaseViewModel
     private readonly IWorkoutService _workoutService;
     private readonly IWorkoutLibraryService _workoutLibraryService;
     private readonly IWorkoutScheduleService _workoutScheduleService;
+    private readonly IBodyWeightService _bodyWeightService;
 
     private string _selectedMuscleGroup = string.Empty;
     private string _exerciseSearchQuery = string.Empty;
@@ -24,6 +25,7 @@ public class WorkoutViewModel : BaseViewModel
     private string _reps = string.Empty;
     private string _sets = string.Empty;
     private string _activePlanSummary = "No active workout plan. Add any workout you want.";
+    private string _resistanceAdjustment = string.Empty;
     private bool _hasLoadedTemplate;
     private readonly HashSet<string> _usedPlanWorkoutKeys = new();
     private bool _isQuickAddMode;
@@ -41,11 +43,13 @@ public class WorkoutViewModel : BaseViewModel
     public WorkoutViewModel(
         IWorkoutService workoutService,
         IWorkoutLibraryService workoutLibraryService,
-        IWorkoutScheduleService workoutScheduleService)
+        IWorkoutScheduleService workoutScheduleService,
+        IBodyWeightService bodyWeightService)
     {
         _workoutService = workoutService;
         _workoutLibraryService = workoutLibraryService;
         _workoutScheduleService = workoutScheduleService;
+        _bodyWeightService = bodyWeightService;
 
         MuscleGroups = new List<string> { "Back", "Biceps", "Chest", "Legs", "Shoulders", "Triceps", "Abs" };
         ExerciseSuggestions = new ObservableCollection<WeightliftingExercise>();
@@ -96,6 +100,7 @@ public class WorkoutViewModel : BaseViewModel
                 OnPropertyChanged(nameof(ShowAdvancedEditorSection));
                 OnPropertyChanged(nameof(ShowQuickAddReadOnlySummary));
                 OnPropertyChanged(nameof(ShowQuickAddInlineEditors));
+                OnPropertyChanged(nameof(ShowStandardWeightInput));
             }
         }
     }
@@ -111,6 +116,7 @@ public class WorkoutViewModel : BaseViewModel
                 OnPropertyChanged(nameof(ShowAdvancedEditorSection));
                 OnPropertyChanged(nameof(ShowQuickAddReadOnlySummary));
                 OnPropertyChanged(nameof(ShowQuickAddInlineEditors));
+                OnPropertyChanged(nameof(ShowStandardWeightInput));
             }
         }
     }
@@ -119,6 +125,41 @@ public class WorkoutViewModel : BaseViewModel
     public bool ShowAdvancedEditorSection => !IsQuickAddMode && IsAdvancedFieldsVisible;
     public bool ShowQuickAddReadOnlySummary => IsQuickAddMode && !IsAdvancedFieldsVisible;
     public bool ShowQuickAddInlineEditors => IsQuickAddMode && IsAdvancedFieldsVisible;
+    public bool HasBodyWeight => _bodyWeightService.HasBodyWeight();
+    public bool IsBodyweightExercise => IsBodyweightExerciseName(Name) || IsBodyweightExerciseName(ExerciseSearchQuery);
+    public bool ShowResistanceAdjustment => IsBodyweightExercise && HasBodyWeight;
+    public bool ShowStandardWeightInput => !ShowResistanceAdjustment;
+    public string BaseBodyWeightSummary => HasBodyWeight
+        ? $"Base body weight: {_bodyWeightService.GetBodyWeight():N0} lb"
+        : "Set your body weight in Profile to auto-fill bodyweight lifts.";
+    public string EffectiveLoadSummary
+    {
+        get
+        {
+            if (!ShowResistanceAdjustment)
+            {
+                return string.Empty;
+            }
+
+            var baseWeight = _bodyWeightService.GetBodyWeight() ?? 0;
+            double.TryParse(ResistanceAdjustment, out var adjustment);
+            var effectiveLoad = Math.Max(0, baseWeight + adjustment);
+            var adjustmentText = adjustment == 0
+                ? "no adjustment"
+                : adjustment > 0
+                    ? $"+{adjustment:N0} lb resistance"
+                    : $"{adjustment:N0} lb assistance";
+            return $"Effective load: {effectiveLoad:N0} lb ({adjustmentText})";
+        }
+    }
+    public string ResistanceAdjustmentDisplay
+    {
+        get
+        {
+            double.TryParse(ResistanceAdjustment, out var adjustment);
+            return adjustment > 0 ? $"+{adjustment:0}" : adjustment.ToString("0");
+        }
+    }
 
     public bool HasWorkouts
     {
@@ -141,6 +182,8 @@ public class WorkoutViewModel : BaseViewModel
             {
                 ExerciseSearchQuery = string.Empty;
                 ExerciseSuggestions.Clear();
+                ApplyBodyweightDefaultsIfNeeded();
+                NotifyBodyweightStateChanged();
                 SyncSelectedRecommendationState();
             }
         }
@@ -153,6 +196,8 @@ public class WorkoutViewModel : BaseViewModel
         {
             if (SetProperty(ref _exerciseSearchQuery, value))
             {
+                ApplyBodyweightDefaultsIfNeeded();
+                NotifyBodyweightStateChanged();
                 if (!_suppressSuggestionRefresh)
                 {
                     _ = UpdateExerciseSuggestionsAsync();
@@ -168,6 +213,8 @@ public class WorkoutViewModel : BaseViewModel
         {
             if (SetProperty(ref _name, value))
             {
+                ApplyBodyweightDefaultsIfNeeded();
+                NotifyBodyweightStateChanged();
                 SyncSelectedRecommendationState();
             }
         }
@@ -180,6 +227,7 @@ public class WorkoutViewModel : BaseViewModel
         {
             if (SetProperty(ref _weight, value))
             {
+                OnPropertyChanged(nameof(EffectiveLoadSummary));
                 SyncSelectedRecommendationState();
             }
         }
@@ -205,6 +253,19 @@ public class WorkoutViewModel : BaseViewModel
             if (SetProperty(ref _sets, value))
             {
                 SyncSelectedRecommendationState();
+            }
+        }
+    }
+
+    public string ResistanceAdjustment
+    {
+        get => _resistanceAdjustment;
+        set
+        {
+            if (SetProperty(ref _resistanceAdjustment, value))
+            {
+                OnPropertyChanged(nameof(EffectiveLoadSummary));
+                OnPropertyChanged(nameof(ResistanceAdjustmentDisplay));
             }
         }
     }
@@ -286,6 +347,11 @@ public class WorkoutViewModel : BaseViewModel
         double.TryParse(Weight, out double parsedWeight);
         int.TryParse(Reps, out int parsedReps);
         int.TryParse(Sets, out int parsedSets);
+        if (ShowResistanceAdjustment)
+        {
+            double.TryParse(ResistanceAdjustment, out var adjustment);
+            parsedWeight = Math.Max(0, parsedWeight + adjustment);
+        }
 
         var workout = new Workout(
             name: Name,
@@ -312,7 +378,7 @@ public class WorkoutViewModel : BaseViewModel
         }
         else
         {
-            Name = ExerciseSearchQuery = Weight = Reps = Sets = string.Empty;
+            Name = ExerciseSearchQuery = Weight = Reps = Sets = ResistanceAdjustment = string.Empty;
             ExerciseSuggestions.Clear();
             IsQuickAddMode = false;
             IsAdvancedFieldsVisible = true;
@@ -343,8 +409,11 @@ public class WorkoutViewModel : BaseViewModel
         Weight = historicalWeight.HasValue
             ? historicalWeight.Value.ToString()
             : workout.Weight > 0 ? workout.Weight.ToString() : string.Empty;
+        ResistanceAdjustment = string.Empty;
         Reps = workout.Reps.ToString();
         Sets = workout.Sets.ToString();
+        ApplyBodyweightDefaultsIfNeeded();
+        NotifyBodyweightStateChanged();
         IsQuickAddMode = collapseForQuickAdd;
         IsAdvancedFieldsVisible = !collapseForQuickAdd;
         IsNameFieldFocused = false;
@@ -522,6 +591,65 @@ public class WorkoutViewModel : BaseViewModel
         {
             ExerciseSuggestions.Clear();
         }
+    }
+
+    private void ApplyBodyweightDefaultsIfNeeded()
+    {
+        if (!IsBodyweightExercise || !HasBodyWeight)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Weight) || Weight == "0")
+        {
+            Weight = (_bodyWeightService.GetBodyWeight() ?? 0).ToString("0.#");
+        }
+
+        if (string.IsNullOrWhiteSpace(ResistanceAdjustment))
+        {
+            ResistanceAdjustment = "0";
+        }
+    }
+
+    private void NotifyBodyweightStateChanged()
+    {
+        OnPropertyChanged(nameof(HasBodyWeight));
+        OnPropertyChanged(nameof(IsBodyweightExercise));
+        OnPropertyChanged(nameof(ShowResistanceAdjustment));
+        OnPropertyChanged(nameof(ShowStandardWeightInput));
+        OnPropertyChanged(nameof(BaseBodyWeightSummary));
+        OnPropertyChanged(nameof(EffectiveLoadSummary));
+        OnPropertyChanged(nameof(ResistanceAdjustmentDisplay));
+    }
+
+    public void AdjustResistanceAdjustment(double delta)
+    {
+        double.TryParse(ResistanceAdjustment, out var adjustment);
+        adjustment += delta;
+        ResistanceAdjustment = adjustment.ToString("0");
+    }
+
+    private static bool IsBodyweightExerciseName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return false;
+        }
+
+        var normalized = name.Trim().ToLowerInvariant();
+        return normalized.Contains("pull-up") ||
+               normalized.Contains("pull up") ||
+               normalized.Contains("chin-up") ||
+               normalized.Contains("chin up") ||
+               normalized.Contains("push-up") ||
+               normalized.Contains("push up") ||
+               normalized.Contains("dip") ||
+               normalized.Contains("bodyweight") ||
+               normalized.Contains("wall push-up") ||
+               normalized.Contains("incline push-up") ||
+               normalized.Contains("elevated push-up") ||
+               normalized.Contains("assisted pull-up") ||
+               normalized.Contains("weighted pull-up");
     }
 
     #endregion
