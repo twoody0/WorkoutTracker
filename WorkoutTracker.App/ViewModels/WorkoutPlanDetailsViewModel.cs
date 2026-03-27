@@ -173,7 +173,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
             .ToDictionary(group => group.Key, group => group.AsEnumerable());
 
         var orderedDays = Enum.GetValues<DayOfWeek>()
-            .OrderBy(day => (int)day)
+            .OrderBy(day => day == DayOfWeek.Sunday ? 7 : (int)day)
             .ToList();
 
         foreach (var day in orderedDays)

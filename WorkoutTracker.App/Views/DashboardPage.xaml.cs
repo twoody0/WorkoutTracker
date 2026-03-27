@@ -25,4 +25,29 @@ public partial class DashboardPage : ContentPage
         TabSwipeNavigationHelper.Attach(this, "dashboard", DashboardRootLayout, DashboardDatePicker, WorkoutHistoryList);
         TabSwipeNavigationHelper.Refresh(this);
     }
+
+    private async void OnEditBodyWeightClicked(object sender, EventArgs e)
+    {
+        if (BindingContext is not DashboardViewModel vm)
+        {
+            return;
+        }
+
+        var result = await BodyWeightPromptPage.ShowAsync(
+            this,
+            "Body Weight",
+            "Update your current body weight in pounds.",
+            vm.BodyWeightInputValue);
+
+        if (result == null)
+        {
+            return;
+        }
+
+        var success = await vm.UpdateBodyWeightAsync(result);
+        if (!success)
+        {
+            await DisplayAlert("Invalid Weight", "Enter a valid body weight greater than 0.", "OK");
+        }
+    }
 }

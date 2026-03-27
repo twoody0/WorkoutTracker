@@ -1,20 +1,17 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 
 namespace WorkoutTracker.ViewModels;
 
-/// <summary>
-/// ViewModel for the dashboard page showing workouts and analytics per day.
-/// </summary>
 public class DashboardViewModel : BaseViewModel
 {
-    #region Private Fields
-
     private readonly IWorkoutService _workoutService;
     private readonly IAuthService _authService;
     private readonly IBodyWeightService _bodyWeightService;
+    private readonly IThemeService _themeService;
+    private readonly IWorkoutScheduleService _scheduleService;
 
     private ObservableCollection<Workout> _workouts = new();
     private DateTime _selectedDate;
@@ -22,42 +19,44 @@ public class DashboardViewModel : BaseViewModel
     private double _caloriesBurned;
     private bool _hasWeightlifting;
     private bool _hasCardio;
+    private int _totalWorkoutSessions;
+    private int _strengthWorkoutSessions;
+    private int _cardioWorkoutSessions;
 
-    #endregion
-
-    #region Constructor
-
-    public DashboardViewModel(IWorkoutService workoutService, IAuthService authService, IBodyWeightService bodyWeightService)
+    public DashboardViewModel(
+        IWorkoutService workoutService,
+        IAuthService authService,
+        IBodyWeightService bodyWeightService,
+        IThemeService themeService,
+        IWorkoutScheduleService scheduleService)
     {
         _workoutService = workoutService;
         _authService = authService;
         _bodyWeightService = bodyWeightService;
+        _themeService = themeService;
+        _scheduleService = scheduleService;
 
         LoadWorkoutsCommand = new Command(async () => await LoadWorkoutsAsync());
+        ToggleThemeCommand = new Command(() =>
+        {
+            _themeService.ToggleTheme();
+            OnPropertyChanged(nameof(IsDarkTheme));
+            OnPropertyChanged(nameof(ThemeLabel));
+            OnPropertyChanged(nameof(ThemeButtonText));
+        });
+
         SelectedDate = DateTime.Today;
     }
 
-    #endregion
-
-    #region Public Properties
-
-    /// <summary>
-    /// Command to trigger loading of workouts based on the selected date.
-    /// </summary>
     public ICommand LoadWorkoutsCommand { get; }
+    public ICommand ToggleThemeCommand { get; }
 
-    /// <summary>
-    /// Workouts displayed for the selected date.
-    /// </summary>
     public ObservableCollection<Workout> Workouts
     {
         get => _workouts;
         set => SetProperty(ref _workouts, value);
     }
 
-    /// <summary>
-    /// The currently selected date.
-    /// </summary>
     public DateTime SelectedDate
     {
         get => _selectedDate;
@@ -65,90 +64,154 @@ public class DashboardViewModel : BaseViewModel
         {
             if (SetProperty(ref _selectedDate, value))
             {
+                OnPropertyChanged(nameof(SelectedDateSummary));
                 LoadWorkoutsCommand.Execute(null);
             }
         }
     }
 
-    /// <summary>
-    /// The total amount of weight lifted for the selected day.
-    /// </summary>
     public double TotalWeightLifted
     {
         get => _totalWeightLifted;
         set => SetProperty(ref _totalWeightLifted, value);
     }
 
-    /// <summary>
-    /// The estimated calories burned based on logged cardio duration and body weight.
-    /// </summary>
     public double CaloriesBurned
     {
         get => _caloriesBurned;
         set => SetProperty(ref _caloriesBurned, value);
     }
 
-    /// <summary>
-    /// Indicates whether any weightlifting workouts were logged.
-    /// </summary>
     public bool HasWeightlifting
     {
         get => _hasWeightlifting;
         set => SetProperty(ref _hasWeightlifting, value);
     }
 
-    /// <summary>
-    /// Indicates whether any cardio workouts were logged.
-    /// </summary>
     public bool HasCardio
     {
         get => _hasCardio;
         set => SetProperty(ref _hasCardio, value);
     }
 
-    public string BodyWeightSummary => _bodyWeightService.HasBodyWeight()
-        ? $"Calories use body weight: {_bodyWeightService.GetBodyWeight():N0} lb"
-        : "Set your body weight on Home to improve calorie estimates.";
+    public int TotalWorkoutSessions
+    {
+        get => _totalWorkoutSessions;
+        set => SetProperty(ref _totalWorkoutSessions, value);
+    }
 
-    #endregion
+    public int StrengthWorkoutSessions
+    {
+        get => _strengthWorkoutSessions;
+        set => SetProperty(ref _strengthWorkoutSessions, value);
+    }
 
-    #region Private Methods
+    public int CardioWorkoutSessions
+    {
+        get => _cardioWorkoutSessions;
+        set => SetProperty(ref _cardioWorkoutSessions, value);
+    }
 
-    /// <summary>
-    /// Loads workouts for the selected date and calculates analytics.
-    /// </summary>
+    public bool HasWorkoutsForSelectedDate => Workouts.Count > 0;
+    public bool ShowEmptyWorkoutState => !HasWorkoutsForSelectedDate;
+
+    public bool HasBodyWeight => _bodyWeightService.HasBodyWeight();
+
+    public string BodyWeightSummary => HasBodyWeight
+        ? $"Weight: {_bodyWeightService.GetBodyWeight():N0} lb"
+        : "Weight not set yet";
+
+    public string BodyWeightInputValue => _bodyWeightService.GetBodyWeight()?.ToString("0.#") ?? string.Empty;
+
+    public string BodyWeightButtonText => HasBodyWeight ? "Edit Weight" : "Set Weight";
+
+    public bool IsDarkTheme => _themeService.IsDarkTheme;
+
+    public string ThemeLabel => IsDarkTheme ? "Dark mode on" : "Light mode on";
+
+    public string ThemeButtonText => IsDarkTheme ? "Use Light Mode" : "Use Dark Mode";
+
+    public string SelectedDateSummary => SelectedDate.Date == DateTime.Today
+        ? "Showing today’s workout history."
+        : $"Showing workouts from {SelectedDate:dddd, MMM d}.";
+
+    public string EmptyWorkoutMessage => "No workouts were logged for this date yet. Use this page to review past training as your history grows.";
+
+    public string TotalWorkoutSessionsSummary => $"{TotalWorkoutSessions} total logged session{(TotalWorkoutSessions == 1 ? string.Empty : "s")}";
+
+    public string StrengthWorkoutSessionsSummary => $"{StrengthWorkoutSessions} strength";
+
+    public string CardioWorkoutSessionsSummary => $"{CardioWorkoutSessions} cardio";
+
+    public string ActivePlanSummary => _scheduleService.ActivePlan == null
+        ? "No active plan right now."
+        : $"Active plan: {_scheduleService.ActivePlan.Name}";
+
+    public async Task<bool> UpdateBodyWeightAsync(string? weightText)
+    {
+        if (!double.TryParse(weightText?.Trim(), out var weight) || weight <= 0)
+        {
+            return false;
+        }
+
+        await _bodyWeightService.SetBodyWeightAsync(weight);
+        OnPropertyChanged(nameof(HasBodyWeight));
+        OnPropertyChanged(nameof(BodyWeightSummary));
+        OnPropertyChanged(nameof(BodyWeightInputValue));
+        OnPropertyChanged(nameof(BodyWeightButtonText));
+        await LoadWorkoutsAsync();
+        return true;
+    }
+
     private async Task LoadWorkoutsAsync()
     {
-        IEnumerable<Workout> allWorkouts = await _workoutService.GetWorkouts();
-        IEnumerable<Workout> filtered = allWorkouts
-            .Where(w => w.StartTime.Date == SelectedDate.Date);
+        var allWorkouts = (await _workoutService.GetWorkouts()).ToList();
+        var filtered = allWorkouts
+            .Where(workout => workout.StartTime.Date == SelectedDate.Date)
+            .OrderBy(workout => workout.StartTime)
+            .ToList();
 
-        HasWeightlifting = filtered.Any(w =>
-            w.Type == WorkoutType.WeightLifting && w.Reps > 0 && w.Sets > 0);
-        HasCardio = filtered.Any(w =>
-            w.Type == WorkoutType.Cardio && (w.DurationMinutes > 0 || w.DistanceMiles > 0 || w.Steps > 0));
+        TotalWorkoutSessions = allWorkouts.Count;
+        StrengthWorkoutSessions = allWorkouts.Count(workout => workout.Type == WorkoutType.WeightLifting);
+        CardioWorkoutSessions = allWorkouts.Count(workout => workout.Type == WorkoutType.Cardio);
+
+        HasWeightlifting = filtered.Any(workout =>
+            workout.Type == WorkoutType.WeightLifting && workout.Reps > 0 && workout.Sets > 0);
+        HasCardio = filtered.Any(workout =>
+            workout.Type == WorkoutType.Cardio && (workout.DurationMinutes > 0 || workout.DistanceMiles > 0 || workout.Steps > 0));
 
         Workouts.Clear();
         double total = 0;
 
-        foreach (var w in filtered)
+        foreach (var workout in filtered)
         {
-            Workouts.Add(w);
-            if (w.Type == WorkoutType.WeightLifting && w.Reps > 0 && w.Sets > 0)
-                total += w.Weight * w.Reps * w.Sets;
+            Workouts.Add(workout);
+            if (workout.Type == WorkoutType.WeightLifting && workout.Reps > 0 && workout.Sets > 0)
+            {
+                total += workout.Weight * workout.Reps * workout.Sets;
+            }
         }
 
         TotalWeightLifted = total;
 
-        int totalCardioMinutes = filtered
-            .Where(w => w.Type == WorkoutType.Cardio)
-            .Sum(w => GetEstimatedCardioMinutes(w));
+        var totalCardioMinutes = filtered
+            .Where(workout => workout.Type == WorkoutType.Cardio)
+            .Sum(GetEstimatedCardioMinutes);
 
-        double weightLbs = _bodyWeightService.GetBodyWeight() ?? _authService.CurrentUser?.Weight ?? 154;
-        double weightKg = weightLbs * 0.453592;
+        var weightLbs = _bodyWeightService.GetBodyWeight() ?? _authService.CurrentUser?.Weight ?? 154;
+        var weightKg = weightLbs * 0.453592;
         const double moderateCardioMet = 6.0;
         CaloriesBurned = totalCardioMinutes * 0.0175 * moderateCardioMet * weightKg;
+
+        OnPropertyChanged(nameof(HasWorkoutsForSelectedDate));
+        OnPropertyChanged(nameof(ShowEmptyWorkoutState));
         OnPropertyChanged(nameof(BodyWeightSummary));
+        OnPropertyChanged(nameof(BodyWeightInputValue));
+        OnPropertyChanged(nameof(BodyWeightButtonText));
+        OnPropertyChanged(nameof(TotalWorkoutSessionsSummary));
+        OnPropertyChanged(nameof(StrengthWorkoutSessionsSummary));
+        OnPropertyChanged(nameof(CardioWorkoutSessionsSummary));
+        OnPropertyChanged(nameof(ActivePlanSummary));
     }
 
     private static int GetEstimatedCardioMinutes(Workout workout)
@@ -170,6 +233,4 @@ public class DashboardViewModel : BaseViewModel
 
         return 0;
     }
-
-    #endregion
 }

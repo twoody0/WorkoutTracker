@@ -228,7 +228,7 @@ public class HomeViewModel : BaseViewModel
 
     public ICommand NavigateToDashboardCommand => new Command(async () =>
     {
-        await Shell.Current.GoToAsync("DashboardPage");
+        await Shell.Current.GoToAsync("//dashboard");
     });
 
     public ICommand NavigateToLeaderboardCommand => new Command(async () =>

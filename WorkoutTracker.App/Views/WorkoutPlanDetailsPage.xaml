@@ -88,18 +88,16 @@
                                                IsVisible="{Binding HasWorkouts}"
                                                TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}" />
                                         <VerticalStackLayout Grid.Column="1" Spacing="4">
-                                            <HorizontalStackLayout Spacing="8">
-                                                <Label Text="{Binding DayLabel}"
-                                                       FontSize="18"
-                                                       FontAttributes="Bold"
-                                                       VerticalOptions="Center"
-                                                       TextColor="{AppThemeBinding Light=#244B58, Dark=#C3D7E7}" />
-                                                <Label Text="{Binding MuscleGroupSummary}"
-                                                       FontSize="13"
-                                                       LineBreakMode="TailTruncation"
-                                                       VerticalOptions="Center"
-                                                       TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}" />
-                                            </HorizontalStackLayout>
+                                            <Label Text="{Binding DayLabel}"
+                                                   FontSize="18"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{AppThemeBinding Light=#244B58, Dark=#C3D7E7}" />
+                                            <Label Text="{Binding MuscleGroupSummary}"
+                                                   FontSize="13"
+                                                   LineBreakMode="WordWrap"
+                                                   MaxLines="3"
+                                                   TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}"
+                                                   IsVisible="{Binding HasWorkouts}" />
                                             <Label Text="{Binding WorkoutCountLabel}"
                                                    FontSize="12"
                                                    TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />

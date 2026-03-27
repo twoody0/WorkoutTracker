@@ -44,14 +44,6 @@ public partial class AppShell : Shell
 
         tabBar.Items.Add(new ShellContent
         {
-            Route = "dashboard",
-            Title = "Dashboard",
-            ContentTemplate = new DataTemplate(() => App.Services.GetRequiredService<DashboardPage>()),
-            Icon = "dashboard.png"
-        });
-
-        tabBar.Items.Add(new ShellContent
-        {
             Route = "add-workout",
             Title = "Add Workout",
             ContentTemplate = new DataTemplate(() => App.Services.GetRequiredService<WorkoutPage>()),
@@ -75,6 +67,14 @@ public partial class AppShell : Shell
             Title = "Workout Plans",
             ContentTemplate = new DataTemplate(() => App.Services.GetRequiredService<WorkoutPlanPage>()),
             Icon = "workoutplans.png"
+        });
+
+        tabBar.Items.Add(new ShellContent
+        {
+            Route = "dashboard",
+            Title = "Profile",
+            ContentTemplate = new DataTemplate(() => App.Services.GetRequiredService<DashboardPage>()),
+            Icon = "profile.png"
         });
 
         Items.Add(tabBar);
@@ -103,7 +103,6 @@ public partial class AppShell : Shell
         var routes = new List<string>
         {
             "home",
-            "dashboard",
             "add-workout"
         };
 
@@ -113,6 +112,7 @@ public partial class AppShell : Shell
         }
 
         routes.Add("workout-plans");
+        routes.Add("dashboard");
         return routes;
     }
 }

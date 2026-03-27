@@ -3,65 +3,218 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     x:Class="WorkoutTracker.Views.DashboardPage"
-    Title="Dashboard">
+    Title="Profile">
 
-    <Grid x:Name="DashboardRootLayout"
-          Padding="20"
-          RowDefinitions="Auto,Auto,Auto,*,Auto,Auto"
-          RowSpacing="15">
-        <Label Grid.Row="0"
-               Text="Select Date:" />
+    <ScrollView>
+        <VerticalStackLayout x:Name="DashboardRootLayout"
+                             Padding="20,18,20,28"
+                             Spacing="16">
+            <Border StrokeThickness="0"
+                    BackgroundColor="{AppThemeBinding Light=#F4F8FB, Dark=#111A24}"
+                    StrokeShape="RoundRectangle 28"
+                    Padding="22">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Profile"
+                           FontSize="28"
+                           FontAttributes="Bold" />
+                    <Label Text="Manage your setup, review your training calendar, and check your recent history in one place."
+                           FontSize="14"
+                           TextColor="{AppThemeBinding Light=#5E6B7B, Dark=#A4B2C5}" />
+                </VerticalStackLayout>
+            </Border>
 
-        <DatePicker Grid.Row="1"
-                    x:Name="DashboardDatePicker"
-                    Date="{Binding SelectedDate}" />
+            <Grid ColumnDefinitions="*,*"
+                  ColumnSpacing="12">
+                <Border Grid.Column="0"
+                        Stroke="{AppThemeBinding Light=#D6DEE8, Dark=#2A3442}"
+                        BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
+                        StrokeShape="RoundRectangle 22"
+                        Padding="16">
+                    <VerticalStackLayout Spacing="6">
+                        <Label
+                               Text="Body Weight"
+                               FontAttributes="Bold"
+                               FontSize="18" />
+                        <Label
+                               Text="{Binding BodyWeightSummary}"
+                               LineBreakMode="WordWrap" />
+                        <Button
+                                Text="{Binding BodyWeightButtonText}"
+                                Clicked="OnEditBodyWeightClicked"
+                                BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}"
+                                TextColor="White" />
+                    </VerticalStackLayout>
+                </Border>
 
-        <Label Grid.Row="2"
-               Text="{Binding BodyWeightSummary}"
-               TextColor="Gray"
-               FontAttributes="Italic" />
+                <Border Grid.Column="1"
+                        Stroke="{AppThemeBinding Light=#D6DEE8, Dark=#2A3442}"
+                        BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
+                        StrokeShape="RoundRectangle 22"
+                        Padding="16">
+                    <VerticalStackLayout Spacing="6">
+                        <Label
+                               Text="Theme"
+                               FontAttributes="Bold"
+                               FontSize="18" />
+                        <Label
+                               Text="{Binding ThemeLabel}"
+                               LineBreakMode="WordWrap" />
+                        <Button
+                                Text="{Binding ThemeButtonText}"
+                                Command="{Binding ToggleThemeCommand}"
+                                BackgroundColor="{AppThemeBinding Light=#1F2937, Dark=#334155}"
+                                TextColor="White" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
 
-        <CollectionView Grid.Row="3"
-                        x:Name="WorkoutHistoryList"
-                        VerticalOptions="FillAndExpand"
-                        ItemsSource="{Binding Workouts}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Border Padding="10"
-                            Margin="5"
-                            Stroke="LightGray"
-                            StrokeShape="RoundRectangle 5">
-                        <VerticalStackLayout>
-                            <Label Text="{Binding Name}"
-                                   FontAttributes="Bold"
-                                   FontSize="16" />
-                            <Label Text="{Binding StartTime, StringFormat='Time: {0:HH:mm}'}" />
-                            <Label Text="{Binding Sets, StringFormat='Sets: {0}'}" />
-                            <Label Text="{Binding Reps, StringFormat='Reps: {0}'}" />
-                            <Label Text="{Binding Weight, StringFormat='Weight: {0} lbs'}" />
-                            <Label Text="{Binding DurationMinutes, StringFormat='Time: {0} min'}" />
-                            <Label Text="{Binding DistanceMiles, StringFormat='Distance: {0:F1} mi'}" />
-                            <Label Text="{Binding Steps, StringFormat='Tracked steps: {0}'}" />
-                        </VerticalStackLayout>
+            <Grid ColumnDefinitions="*,*"
+                  ColumnSpacing="12">
+                <Border Grid.Column="0"
+                        Stroke="{AppThemeBinding Light=#D6E7DD, Dark=#214239}"
+                        BackgroundColor="{AppThemeBinding Light=#F3FBF6, Dark=#10211C}"
+                        StrokeShape="RoundRectangle 22"
+                        Padding="16">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Training Snapshot"
+                               FontAttributes="Bold"
+                               FontSize="18"
+                               TextColor="{AppThemeBinding Light=#1E6B4E, Dark=#84E4C3}" />
+                        <Label Text="{Binding TotalWorkoutSessionsSummary}"
+                               FontSize="14" />
+                        <Label Text="{Binding StrengthWorkoutSessionsSummary}"
+                               FontSize="13"
+                               TextColor="{AppThemeBinding Light=#5D6A79, Dark=#A6B4C5}" />
+                        <Label Text="{Binding CardioWorkoutSessionsSummary}"
+                               FontSize="13"
+                               TextColor="{AppThemeBinding Light=#5D6A79, Dark=#A6B4C5}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Grid.Column="1"
+                        Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
+                        BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
+                        StrokeShape="RoundRectangle 22"
+                        Padding="16">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Plan Status"
+                               FontAttributes="Bold"
+                               FontSize="18" />
+                        <Label Text="{Binding ActivePlanSummary}"
+                               FontSize="14"
+                               LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
+                    BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
+                    StrokeShape="RoundRectangle 24"
+                    Padding="18">
+                <VerticalStackLayout Spacing="14">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Workout Calendar"
+                               FontSize="22"
+                               FontAttributes="Bold" />
+                        <Label Text="{Binding SelectedDateSummary}"
+                               FontSize="13"
+                               TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                    </VerticalStackLayout>
+
+                    <DatePicker x:Name="DashboardDatePicker"
+                                Date="{Binding SelectedDate}" />
+
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="12">
+                        <Border Grid.Column="0"
+                                Stroke="{AppThemeBinding Light=#E0E7EF, Dark=#334050}"
+                                BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#1A2230}"
+                                StrokeShape="RoundRectangle 18"
+                                Padding="14"
+                                IsVisible="{Binding HasWeightlifting}">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="Strength Volume"
+                                       FontAttributes="Bold"
+                                       FontSize="14" />
+                                <Label Text="{Binding TotalWeightLifted, StringFormat='{0:N0} lb moved'}"
+                                       FontSize="18"
+                                       FontAttributes="Bold" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                Stroke="{AppThemeBinding Light=#E0E7EF, Dark=#334050}"
+                                BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#1A2230}"
+                                StrokeShape="RoundRectangle 18"
+                                Padding="14"
+                                IsVisible="{Binding HasCardio}">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="Cardio Burn"
+                                       FontAttributes="Bold"
+                                       FontSize="14" />
+                                <Label Text="{Binding CaloriesBurned, StringFormat='{0:N0} kcal'}"
+                                       FontSize="18"
+                                       FontAttributes="Bold" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+
+                    <Border StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=#F5F7FA, Dark=#1B2431}"
+                            StrokeShape="RoundRectangle 18"
+                            Padding="18"
+                            IsVisible="{Binding ShowEmptyWorkoutState}">
+                        <Label Text="{Binding EmptyWorkoutMessage}"
+                               HorizontalTextAlignment="Center"
+                               TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}" />
                     </Border>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
 
-        <Label Grid.Row="4"
-               Text="{Binding TotalWeightLifted, StringFormat='🏋️ Total Weight Lifted Today: {0:N0} lbs'}"
-               FontAttributes="Bold"
-               FontSize="18"
-               HorizontalOptions="Center"
-               Margin="0,20,0,10"
-               IsVisible="{Binding HasWeightlifting}" />
-
-        <Label Grid.Row="5"
-               Text="{Binding CaloriesBurned, StringFormat='🔥 Calories Burned Today: {0:N0} kcal'}"
-               FontAttributes="Bold"
-               FontSize="18"
-               HorizontalOptions="Center"
-               Margin="0,0,0,10"
-               IsVisible="{Binding HasCardio}" />
-    </Grid>
+                    <CollectionView x:Name="WorkoutHistoryList"
+                                    ItemsSource="{Binding Workouts}"
+                                    IsVisible="{Binding HasWorkoutsForSelectedDate}"
+                                    SelectionMode="None">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="12"
+                                        Margin="0,0,0,10"
+                                        Stroke="{AppThemeBinding Light=#E0E7EF, Dark=#334050}"
+                                        BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#1A2230}"
+                                        StrokeShape="RoundRectangle 18">
+                                    <VerticalStackLayout Spacing="6">
+                                        <Label Text="{Binding Name}"
+                                               FontAttributes="Bold"
+                                               FontSize="16" />
+                                        <Label Text="{Binding StartTime, StringFormat='Logged at {0:HH:mm}'}"
+                                               FontSize="12"
+                                               TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                                        <Label Text="{Binding MuscleGroup, StringFormat='Focus: {0}'}"
+                                               FontSize="13"
+                                               TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}" />
+                                        <Label Text="{Binding Sets, StringFormat='Sets: {0}'}"
+                                               FontSize="13"
+                                               IsVisible="{Binding Type, Converter={StaticResource IsWeightLiftingConverter}}" />
+                                        <Label Text="{Binding Reps, StringFormat='Reps: {0}'}"
+                                               FontSize="13"
+                                               IsVisible="{Binding Type, Converter={StaticResource IsWeightLiftingConverter}}" />
+                                        <Label Text="{Binding Weight, StringFormat='Weight: {0} lbs'}"
+                                               FontSize="13"
+                                               IsVisible="{Binding Type, Converter={StaticResource IsWeightLiftingConverter}}" />
+                                        <Label Text="{Binding DurationMinutes, StringFormat='Time: {0} min'}"
+                                               FontSize="13"
+                                               IsVisible="{Binding HasDuration}" />
+                                        <Label Text="{Binding DistanceMiles, StringFormat='Distance: {0:F1} mi'}"
+                                               FontSize="13"
+                                               IsVisible="{Binding HasDistance}" />
+                                        <Label Text="{Binding Steps, StringFormat='Tracked steps: {0}'}"
+                                               FontSize="13"
+                                               IsVisible="{Binding HasSteps}" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>
