@@ -20,6 +20,24 @@
                    HorizontalTextAlignment="Center"
                    TextColor="Gray" />
 
+            <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
+                    StrokeShape="RoundRectangle 12"
+                    Padding="14"
+                    IsVisible="{Binding ShowPlannedTargets}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Planned cardio target"
+                           FontAttributes="Bold" />
+                    <HorizontalStackLayout Spacing="12">
+                        <Label Text="{Binding PlannedDurationText}"
+                               IsVisible="{Binding HasPlannedDuration}" />
+                        <Label Text="{Binding PlannedDistanceText}"
+                               IsVisible="{Binding HasPlannedDistance}" />
+                        <Label Text="{Binding PlannedTargetRpeText}"
+                               IsVisible="{Binding HasPlannedTargetRpe}" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
             <Label Text="Session Name"
                    FontAttributes="Bold" />
             <Entry Text="{Binding SessionName}"
@@ -41,11 +59,15 @@
                     StrokeShape="RoundRectangle 12"
                     Padding="16">
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="{Binding ElapsedMinutes, StringFormat='Elapsed: {0} min'}"
+                    <Label Text="{Binding ElapsedTimeDisplay, StringFormat='Elapsed: {0}'}"
                            FontSize="20"
                            HorizontalOptions="Center" />
                     <Label Text="{Binding SessionSteps, StringFormat='Tracked steps: {0}'}"
-                           HorizontalOptions="Center" />
+                            HorizontalOptions="Center" />
+                    <Label Text="The timer keeps its place across lock/resume so you can reopen and stop it when you're done."
+                           FontSize="12"
+                           HorizontalTextAlignment="Center"
+                           TextColor="Gray" />
                 </VerticalStackLayout>
             </Border>
 

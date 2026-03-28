@@ -7,6 +7,13 @@ namespace WorkoutTracker.ViewModels;
 
 public class DashboardViewModel : BaseViewModel
 {
+    private enum PlanStatsMode
+    {
+        None,
+        Strength,
+        Cardio
+    }
+
     private readonly IWorkoutService _workoutService;
     private readonly IAuthService _authService;
     private readonly IBodyWeightService _bodyWeightService;
@@ -27,8 +34,14 @@ public class DashboardViewModel : BaseViewModel
     private double _topDeadliftPatternOneRepMax;
     private double _topPullPatternOneRepMax;
     private double _lifetimeStrengthVolume;
+    private int _lifetimeCardioMinutes;
+    private double _lifetimeCardioDistance;
+    private int _longestCardioSessionMinutes;
+    private double _longestCardioDistance;
     private string _biggestLiftSummary = "Biggest lift: log a few strength sessions first.";
     private string _favoriteTrainingDaySummary = "Most active day: not enough history yet.";
+    private string _favoriteCardioWorkoutSummary = "Favorite cardio session: not enough history yet.";
+    private PlanStatsMode _activePlanStatsMode;
 
     public DashboardViewModel(
         IWorkoutService workoutService,
@@ -119,10 +132,18 @@ public class DashboardViewModel : BaseViewModel
         set => SetProperty(ref _cardioWorkoutSessions, value);
     }
 
-    public bool ShowStrengthStats => StrengthWorkoutSessions > 0;
-    public bool ShowEmptyStrengthStats => !ShowStrengthStats;
+    public bool ShowPlanStats => _activePlanStatsMode != PlanStatsMode.None;
+    public bool ShowStrengthStatsSection => _activePlanStatsMode == PlanStatsMode.Strength;
+    public bool ShowCardioStatsSection => _activePlanStatsMode == PlanStatsMode.Cardio;
+    public bool ShowStrengthStats => ShowStrengthStatsSection && StrengthWorkoutSessions > 0;
+    public bool ShowEmptyStrengthStats => ShowStrengthStatsSection && !ShowStrengthStats;
+    public bool ShowCardioStats => ShowCardioStatsSection && CardioWorkoutSessions > 0;
+    public bool ShowEmptyCardioStats => ShowCardioStatsSection && !ShowCardioStats;
+    public bool ShowTrainingSnapshot => true;
+    public bool ShowStrengthDaySummaryCard => ShowStrengthStatsSection && HasWeightlifting;
+    public bool ShowCardioDaySummaryCard => ShowCardioStatsSection && HasCardio;
     public string StrengthStatsSubtitle => "Estimated 1RMs update from your logged weight and reps.";
-    public string EmptyStrengthStatsMessage => "Log a few strength workouts and your estimated 1RM stats will show up here.";
+    public string EmptyStrengthStatsMessage => "Log a few strength workouts to see these stats.";
     public string TopBenchPatternSummary => FormatWeightStat(_topBenchPatternOneRepMax);
     public string TopSquatPatternSummary => FormatWeightStat(_topSquatPatternOneRepMax);
     public string TopDeadliftPatternSummary => FormatWeightStat(_topDeadliftPatternOneRepMax);
@@ -132,6 +153,21 @@ public class DashboardViewModel : BaseViewModel
         : "No lifetime strength volume yet.";
     public string BiggestLiftSummary => _biggestLiftSummary;
     public string FavoriteTrainingDaySummary => _favoriteTrainingDaySummary;
+    public string CardioStatsSubtitle => "Cardio stats update from your logged time and distance.";
+    public string EmptyCardioStatsMessage => "Log a few cardio sessions to see these stats.";
+    public string LifetimeCardioMinutesSummary => _lifetimeCardioMinutes > 0
+        ? $"{_lifetimeCardioMinutes:N0} total cardio minutes"
+        : "No cardio minutes yet.";
+    public string LifetimeCardioDistanceSummary => _lifetimeCardioDistance > 0
+        ? $"{_lifetimeCardioDistance:0.#} total cardio miles"
+        : "No cardio distance yet.";
+    public string LongestCardioSessionSummary => _longestCardioSessionMinutes > 0
+        ? $"{_longestCardioSessionMinutes} min longest session"
+        : "--";
+    public string LongestCardioDistanceSummary => _longestCardioDistance > 0
+        ? $"{_longestCardioDistance:0.#} mi longest distance"
+        : "--";
+    public string FavoriteCardioWorkoutSummary => _favoriteCardioWorkoutSummary;
 
     public bool HasWorkoutsForSelectedDate => Workouts.Count > 0;
     public bool ShowEmptyWorkoutState => !HasWorkoutsForSelectedDate;
@@ -153,7 +189,7 @@ public class DashboardViewModel : BaseViewModel
     public string ThemeButtonText => IsDarkTheme ? "Use Light Mode" : "Use Dark Mode";
 
     public string SelectedDateSummary => SelectedDate.Date == DateTime.Today
-        ? "Showing today’s workout history."
+        ? "Showing today's workout history."
         : $"Showing workouts from {SelectedDate:dddd, MMM d}.";
 
     public string EmptyWorkoutMessage => "No workouts were logged for this date yet. Use this page to review past training as your history grows.";
@@ -199,14 +235,23 @@ public class DashboardViewModel : BaseViewModel
         var strengthHistory = allWorkouts
             .Where(workout => workout.Type == WorkoutType.WeightLifting)
             .ToList();
+        var cardioHistory = allWorkouts
+            .Where(workout => workout.Type == WorkoutType.Cardio)
+            .ToList();
 
         _topBenchPatternOneRepMax = GetBestEstimatedOneRepMax(strengthHistory, "bench press", "close-grip bench press");
         _topSquatPatternOneRepMax = GetBestEstimatedOneRepMax(strengthHistory, "squat");
         _topDeadliftPatternOneRepMax = GetBestEstimatedOneRepMax(strengthHistory, "deadlift");
         _topPullPatternOneRepMax = GetBestEstimatedOneRepMax(strengthHistory, "pull-up", "pull up", "weighted pull-up", "weighted pull up");
         _lifetimeStrengthVolume = strengthHistory.Sum(workout => workout.TrainingVolume);
+        _lifetimeCardioMinutes = cardioHistory.Sum(GetEstimatedCardioMinutes);
+        _lifetimeCardioDistance = cardioHistory.Sum(workout => workout.DistanceMiles);
+        _longestCardioSessionMinutes = cardioHistory.Select(GetEstimatedCardioMinutes).DefaultIfEmpty(0).Max();
+        _longestCardioDistance = cardioHistory.Select(workout => workout.DistanceMiles).DefaultIfEmpty(0).Max();
         _biggestLiftSummary = GetBiggestLiftSummary(strengthHistory);
         _favoriteTrainingDaySummary = GetFavoriteTrainingDaySummary(allWorkouts);
+        _favoriteCardioWorkoutSummary = GetFavoriteCardioWorkoutSummary(cardioHistory);
+        _activePlanStatsMode = GetActivePlanStatsMode();
 
         HasWeightlifting = filtered.Any(workout =>
             workout.Type == WorkoutType.WeightLifting && workout.Reps > 0 && workout.Sets > 0);
@@ -245,9 +290,18 @@ public class DashboardViewModel : BaseViewModel
         OnPropertyChanged(nameof(StrengthWorkoutSessionsSummary));
         OnPropertyChanged(nameof(CardioWorkoutSessionsSummary));
         OnPropertyChanged(nameof(ActivePlanSummary));
+        OnPropertyChanged(nameof(ShowPlanStats));
+        OnPropertyChanged(nameof(ShowTrainingSnapshot));
+        OnPropertyChanged(nameof(ShowStrengthStatsSection));
+        OnPropertyChanged(nameof(ShowCardioStatsSection));
         OnPropertyChanged(nameof(ShowStrengthStats));
         OnPropertyChanged(nameof(ShowEmptyStrengthStats));
+        OnPropertyChanged(nameof(ShowCardioStats));
+        OnPropertyChanged(nameof(ShowEmptyCardioStats));
+        OnPropertyChanged(nameof(ShowStrengthDaySummaryCard));
+        OnPropertyChanged(nameof(ShowCardioDaySummaryCard));
         OnPropertyChanged(nameof(StrengthStatsSubtitle));
+        OnPropertyChanged(nameof(EmptyStrengthStatsMessage));
         OnPropertyChanged(nameof(TopBenchPatternSummary));
         OnPropertyChanged(nameof(TopSquatPatternSummary));
         OnPropertyChanged(nameof(TopDeadliftPatternSummary));
@@ -255,6 +309,41 @@ public class DashboardViewModel : BaseViewModel
         OnPropertyChanged(nameof(LifetimeStrengthVolumeSummary));
         OnPropertyChanged(nameof(BiggestLiftSummary));
         OnPropertyChanged(nameof(FavoriteTrainingDaySummary));
+        OnPropertyChanged(nameof(CardioStatsSubtitle));
+        OnPropertyChanged(nameof(EmptyCardioStatsMessage));
+        OnPropertyChanged(nameof(LifetimeCardioMinutesSummary));
+        OnPropertyChanged(nameof(LifetimeCardioDistanceSummary));
+        OnPropertyChanged(nameof(LongestCardioSessionSummary));
+        OnPropertyChanged(nameof(LongestCardioDistanceSummary));
+        OnPropertyChanged(nameof(FavoriteCardioWorkoutSummary));
+    }
+
+    private PlanStatsMode GetActivePlanStatsMode()
+    {
+        var activePlan = _scheduleService.ActivePlan;
+        if (activePlan == null)
+        {
+            return PlanStatsMode.None;
+        }
+
+        var category = activePlan.Category?.Trim() ?? string.Empty;
+        if (category.Contains("Running", StringComparison.OrdinalIgnoreCase) ||
+            category.Contains("Conditioning", StringComparison.OrdinalIgnoreCase) ||
+            category.Contains("Cardio", StringComparison.OrdinalIgnoreCase) ||
+            category.Contains("Fat Loss", StringComparison.OrdinalIgnoreCase))
+        {
+            return PlanStatsMode.Cardio;
+        }
+
+        var cardioCount = activePlan.Workouts.Count(workout => workout.Type == WorkoutType.Cardio);
+        var strengthCount = activePlan.Workouts.Count(workout => workout.Type == WorkoutType.WeightLifting);
+
+        if (cardioCount == 0 && strengthCount == 0)
+        {
+            return PlanStatsMode.None;
+        }
+
+        return cardioCount > strengthCount ? PlanStatsMode.Cardio : PlanStatsMode.Strength;
     }
 
     private static int GetEstimatedCardioMinutes(Workout workout)
@@ -315,5 +404,18 @@ public class DashboardViewModel : BaseViewModel
         return favoriteDay == null
             ? "Most active day: not enough history yet."
             : $"Most active day: {favoriteDay.Key} ({favoriteDay.Count()} session{(favoriteDay.Count() == 1 ? string.Empty : "s")})";
+    }
+
+    private static string GetFavoriteCardioWorkoutSummary(IEnumerable<Workout> workouts)
+    {
+        var favoriteWorkout = workouts
+            .GroupBy(workout => workout.Name)
+            .OrderByDescending(group => group.Count())
+            .ThenBy(group => group.Key)
+            .FirstOrDefault();
+
+        return favoriteWorkout == null
+            ? "Favorite cardio session: not enough history yet."
+            : $"Favorite cardio session: {favoriteWorkout.Key} ({favoriteWorkout.Count()} time{(favoriteWorkout.Count() == 1 ? string.Empty : "s")})";
     }
 }

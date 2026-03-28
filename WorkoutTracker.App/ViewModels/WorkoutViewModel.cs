@@ -68,7 +68,7 @@ public class WorkoutViewModel : BaseViewModel
     private bool _suppressSuggestionRefresh;
     private bool _isApplyingRecommendation;
     private List<Workout> _workoutHistory = new();
-    private bool _hasScheduledWeightliftingWorkoutsToday;
+    private bool _hasScheduledPlanWorkoutsToday;
     private WorkoutRecommendation? _selectedRecommendation;
     private bool _showRpeHelp;
 
@@ -118,16 +118,19 @@ public class WorkoutViewModel : BaseViewModel
     public ObservableCollection<WorkoutRecommendation> RecommendedPlanWorkouts { get; }
     public string TodayLabel => DateTime.Today.DayOfWeek.ToString();
     public bool HasActivePlan => _workoutScheduleService.ActivePlan != null;
+    public bool CanEditSelectedMuscleGroup => !(_selectedRecommendation != null && _workoutScheduleService.ActivePlan is { IsCustom: false });
     public bool HasRecommendedPlanWorkouts => RecommendedPlanWorkouts.Count > 0;
     public bool ShowPlanSection => HasActivePlan;
     public bool ShowPlanSuggestionsSection => HasRecommendedPlanWorkouts;
     public bool ShowPlanCompletedState => HasActivePlan && !HasRecommendedPlanWorkouts;
     public bool ShowManualWorkoutPrompt => ShowPlanCompletedState && !ShowManualWorkoutEntry;
-    public bool ShowWorkoutEditor => !HasActivePlan || HasRecommendedPlanWorkouts || ShowManualWorkoutEntry;
+    public bool HasRecommendedStrengthWorkouts => RecommendedPlanWorkouts.Any(workout => workout.IsWeightLifting);
+    public bool HasRecommendedCardioWorkouts => RecommendedPlanWorkouts.Any(workout => workout.IsCardio);
+    public bool ShowWorkoutEditor => !HasActivePlan || HasRecommendedStrengthWorkouts || ShowManualWorkoutEntry;
     public bool ShowQuickAddCard => ShowWorkoutEditor && IsQuickAddMode;
     public bool ShowStandaloneWeightEditor => ShowWorkoutEditor && ShowStandaloneWeightField;
     public bool ShowAdvancedEditorContent => ShowWorkoutEditor && ShowAdvancedEditorSection;
-    public string ManualWorkoutButtonText => _hasScheduledWeightliftingWorkoutsToday
+    public string ManualWorkoutButtonText => _hasScheduledPlanWorkoutsToday
         ? "Add Extra Workout"
         : "Add Workout Anyway";
 
@@ -179,6 +182,7 @@ public class WorkoutViewModel : BaseViewModel
     public bool ShowAdvancedEditorSection => !IsQuickAddMode && IsAdvancedFieldsVisible;
     public bool ShowQuickAddReadOnlySummary => IsQuickAddMode && !IsAdvancedFieldsVisible;
     public bool ShowQuickAddInlineEditors => IsQuickAddMode && IsAdvancedFieldsVisible;
+    public bool ShowStandaloneWeightValueInput => ShowStandardWeightInput || ShowResistanceAdjustment;
     public bool HasPlannedRepRange => _plannedMinReps.HasValue && _plannedMaxReps.HasValue && _plannedMaxReps.Value >= _plannedMinReps.Value;
     public string PlannedRepRangeSummary => HasPlannedRepRange ? $"Reps: {_plannedMinReps}-{_plannedMaxReps}" : string.Empty;
     public string CurrentRepsSummary => HasPlannedRepRange ? $"Reps: {_plannedMinReps}-{_plannedMaxReps}" : $"Reps: {Reps}";
@@ -420,12 +424,20 @@ public class WorkoutViewModel : BaseViewModel
     #region Commands
 
     public ICommand AddWorkoutCommand => new Command(async () => await AddWorkoutAsync());
-    public ICommand UseRecommendedWorkoutCommand => new Command<WorkoutRecommendation>(recommendation =>
+    public ICommand UseRecommendedWorkoutCommand => new Command<WorkoutRecommendation>(async recommendation =>
     {
-        if (recommendation != null)
+        if (recommendation == null)
         {
-            ApplyWorkoutTemplate(recommendation, collapseForQuickAdd: true);
+            return;
         }
+
+        if (recommendation.IsCardio)
+        {
+            await NavigateToCardioWorkoutAsync(recommendation.Workout);
+            return;
+        }
+
+        ApplyWorkoutTemplate(recommendation, collapseForQuickAdd: true);
     });
     public ICommand ToggleAdvancedFieldsCommand => new Command(() =>
     {
@@ -450,6 +462,8 @@ public class WorkoutViewModel : BaseViewModel
     {
         await Shell.Current.Navigation.PushAsync(App.Services.GetRequiredService<ViewWorkoutPage>());
     });
+    public ICommand IncreaseSetsCommand => new Command(() => AdjustSets(1));
+    public ICommand DecreaseSetsCommand => new Command(() => AdjustSets(-1));
     public ICommand IncreaseRepsCommand => new Command(() => AdjustReps(1));
     public ICommand DecreaseRepsCommand => new Command(() => AdjustReps(-1));
     public ICommand ToggleRpeHelpCommand => new Command(() => ShowRpeHelp = !ShowRpeHelp);
@@ -537,9 +551,10 @@ public class WorkoutViewModel : BaseViewModel
 
         RefreshPlanRecommendations();
 
-        if (RecommendedPlanWorkouts.Count > 0)
+        var nextStrengthRecommendation = RecommendedPlanWorkouts.FirstOrDefault(recommendation => recommendation.IsWeightLifting);
+        if (nextStrengthRecommendation != null)
         {
-            ApplyWorkoutTemplate(RecommendedPlanWorkouts[0], collapseForQuickAdd: true);
+            ApplyWorkoutTemplate(nextStrengthRecommendation, collapseForQuickAdd: true);
         }
         else
         {
@@ -563,6 +578,44 @@ public class WorkoutViewModel : BaseViewModel
             IsQuickAddMode = false;
             IsAdvancedFieldsVisible = true;
         }
+    }
+
+    private static Workout CloneWorkoutTemplate(Workout workout)
+    {
+        return new Workout(
+            name: workout.Name,
+            weight: workout.Weight,
+            reps: workout.Reps,
+            sets: workout.Sets,
+            muscleGroup: workout.MuscleGroup,
+            day: workout.Day,
+            startTime: workout.StartTime,
+            type: workout.Type,
+            gymLocation: workout.GymLocation)
+        {
+            MinReps = workout.MinReps,
+            MaxReps = workout.MaxReps,
+            TargetRpe = workout.TargetRpe,
+            TargetRestRange = workout.TargetRestRange,
+            EndTime = workout.EndTime,
+            Steps = workout.Steps,
+            DurationMinutes = workout.DurationMinutes,
+            DistanceMiles = workout.DistanceMiles,
+            PlanWeekNumber = workout.PlanWeekNumber
+        };
+    }
+
+    private static bool IsTemplateMatch(Workout left, Workout right)
+    {
+        return string.Equals(left.Name, right.Name, StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(left.MuscleGroup, right.MuscleGroup, StringComparison.OrdinalIgnoreCase) &&
+               left.Type == right.Type;
+    }
+
+    private async Task NavigateToCardioWorkoutAsync(Workout workout)
+    {
+        WorkoutTemplateCache.Template = CloneWorkoutTemplate(workout);
+        await Shell.Current.Navigation.PushAsync(App.Services.GetRequiredService<CardioSessionPage>());
     }
 
     private void ApplyWorkoutTemplate(WorkoutRecommendation recommendation, bool collapseForQuickAdd)
@@ -614,11 +667,10 @@ public class WorkoutViewModel : BaseViewModel
         _selectedRecommendation = null;
 
         var todaysPlannedWorkouts = _workoutScheduleService.GetActivePlanWorkoutsForDay(DateTime.Today.DayOfWeek)
-            .Where(workout => workout.Type == WorkoutType.WeightLifting)
             .ToList();
         var completedPlanWorkoutCounts = BuildCompletedPlanWorkoutCounts(todaysPlannedWorkouts);
 
-        _hasScheduledWeightliftingWorkoutsToday = todaysPlannedWorkouts.Count > 0;
+        _hasScheduledPlanWorkoutsToday = todaysPlannedWorkouts.Count > 0;
 
         foreach (var workout in todaysPlannedWorkouts)
         {
@@ -636,6 +688,8 @@ public class WorkoutViewModel : BaseViewModel
                 Workout = workout,
                 LastUsedWeight = lastUsedWeight,
                 RepDisplayText = GetRecommendationRepText(workout),
+                DurationDisplayText = GetRecommendationDurationText(workout),
+                DistanceDisplayText = GetRecommendationDistanceText(workout),
                 TargetRpeText = workout.HasTargetRpe ? $"RPE: {workout.TargetRpeDisplay}" : string.Empty,
                 TargetRestText = workout.HasTargetRestRange ? $"Rest: {workout.TargetRestRange}" : string.Empty,
                 WeightDisplayPrefix = GetRecommendationWeightPrefix(),
@@ -645,7 +699,10 @@ public class WorkoutViewModel : BaseViewModel
         }
 
         OnPropertyChanged(nameof(HasRecommendedPlanWorkouts));
+        OnPropertyChanged(nameof(HasRecommendedStrengthWorkouts));
+        OnPropertyChanged(nameof(HasRecommendedCardioWorkouts));
         OnPropertyChanged(nameof(HasActivePlan));
+        OnPropertyChanged(nameof(CanEditSelectedMuscleGroup));
         OnPropertyChanged(nameof(ShowPlanSection));
         OnPropertyChanged(nameof(ShowPlanSuggestionsSection));
         OnPropertyChanged(nameof(ShowPlanCompletedState));
@@ -663,7 +720,11 @@ public class WorkoutViewModel : BaseViewModel
         {
             if (!_hasLoadedTemplate && string.IsNullOrWhiteSpace(Name) && string.IsNullOrWhiteSpace(ExerciseSearchQuery))
             {
-                ApplyWorkoutTemplate(RecommendedPlanWorkouts[0], collapseForQuickAdd: true);
+                var defaultStrengthRecommendation = RecommendedPlanWorkouts.FirstOrDefault(recommendation => recommendation.IsWeightLifting);
+                if (defaultStrengthRecommendation != null)
+                {
+                    ApplyWorkoutTemplate(defaultStrengthRecommendation, collapseForQuickAdd: true);
+                }
             }
             else
             {
@@ -681,6 +742,15 @@ public class WorkoutViewModel : BaseViewModel
                     _selectedRecommendation = matchingRecommendation;
                     _selectedRecommendation.IsSelected = true;
                     OnPropertyChanged(nameof(SelectedRecommendationItem));
+                    OnPropertyChanged(nameof(CanEditSelectedMuscleGroup));
+                }
+                else if (_selectedRecommendation == null && HasRecommendedStrengthWorkouts && string.IsNullOrWhiteSpace(Name))
+                {
+                    var fallbackStrengthRecommendation = RecommendedPlanWorkouts.FirstOrDefault(recommendation => recommendation.IsWeightLifting);
+                    if (fallbackStrengthRecommendation != null)
+                    {
+                        ApplyWorkoutTemplate(fallbackStrengthRecommendation, collapseForQuickAdd: true);
+                    }
                 }
             }
         }
@@ -694,7 +764,6 @@ public class WorkoutViewModel : BaseViewModel
 
         return _workoutHistory
             .Where(workout =>
-                workout.Type == WorkoutType.WeightLifting &&
                 workout.StartTime.Date == DateTime.Today &&
                 plannedWorkoutKeys.Contains(GetWorkoutKey(workout)))
             .GroupBy(GetWorkoutKey, StringComparer.OrdinalIgnoreCase)
@@ -722,6 +791,7 @@ public class WorkoutViewModel : BaseViewModel
         ClearPlannedTargetRpe();
         ClearPlannedTargetRest();
         OnPropertyChanged(nameof(SelectedRecommendationItem));
+        OnPropertyChanged(nameof(CanEditSelectedMuscleGroup));
     }
 
     private void UpdateActivePlanSummary()
@@ -729,13 +799,13 @@ public class WorkoutViewModel : BaseViewModel
         if (HasRecommendedPlanWorkouts)
         {
             var activePlanName = _workoutScheduleService.ActivePlan?.Name ?? "your active plan";
-            ActivePlanSummary = $"Today is {TodayLabel}. Start from '{activePlanName}' instead of entering everything manually.";
+            ActivePlanSummary = $"Today is {TodayLabel}. Start from '{activePlanName}' so your workout matches today's plan.";
         }
         else if (_workoutScheduleService.ActivePlan != null)
         {
-            ActivePlanSummary = _hasScheduledWeightliftingWorkoutsToday
+            ActivePlanSummary = _hasScheduledPlanWorkoutsToday
                 ? $"You finished the workout plan exercises for {TodayLabel}. You can keep training if you want."
-                : $"'{_workoutScheduleService.ActivePlan.Name}' has no weightlifting workout for {TodayLabel}, but you can still train if you want.";
+                : $"'{_workoutScheduleService.ActivePlan.Name}' has no scheduled workout for {TodayLabel}, but you can still train if you want.";
         }
         else
         {
@@ -768,11 +838,19 @@ public class WorkoutViewModel : BaseViewModel
             workout.Type,
             workout.Sets,
             workout.Reps,
-            workout.Steps);
+            workout.Steps,
+            workout.DurationMinutes,
+            workout.DistanceMiles.ToString("0.###"),
+            workout.PlanWeekNumber);
     }
 
     private double? GetLastUsedWeight(Workout workout)
     {
+        if (workout.Type != WorkoutType.WeightLifting)
+        {
+            return null;
+        }
+
         return _workoutHistory
             .Where(historyWorkout =>
                 historyWorkout.Type == WorkoutType.WeightLifting &&
@@ -850,6 +928,7 @@ public class WorkoutViewModel : BaseViewModel
         OnPropertyChanged(nameof(IsPerSideDumbbellExercise));
         OnPropertyChanged(nameof(ShowResistanceAdjustment));
         OnPropertyChanged(nameof(ShowStandardWeightInput));
+        OnPropertyChanged(nameof(ShowStandaloneWeightValueInput));
         OnPropertyChanged(nameof(ShowDumbbellWeightHelper));
         OnPropertyChanged(nameof(HasWeightHelperText));
         OnPropertyChanged(nameof(ShowWeightTotalPreview));
@@ -884,6 +963,53 @@ public class WorkoutViewModel : BaseViewModel
         }
 
         Reps = currentReps.ToString();
+    }
+
+    public void AdjustSets(int delta)
+    {
+        var currentSets = 0;
+        int.TryParse(Sets, out currentSets);
+        currentSets = Math.Max(1, currentSets + delta);
+        Sets = currentSets.ToString();
+    }
+
+    public void AdjustBodyweightDisplayedWeight(double delta)
+    {
+        if (!ShowResistanceAdjustment)
+        {
+            return;
+        }
+
+        var baseWeight = _bodyWeightService.GetBodyWeight() ?? 0;
+        var currentWeight = baseWeight;
+
+        if (double.TryParse(Weight, out var parsedWeight) && parsedWeight > 0)
+        {
+            currentWeight = parsedWeight;
+        }
+
+        currentWeight = Math.Max(0, currentWeight + delta);
+        Weight = currentWeight.ToString("0");
+        ResistanceAdjustment = (currentWeight - baseWeight).ToString("0");
+    }
+
+    public void CommitBodyweightWeightInput()
+    {
+        if (!ShowResistanceAdjustment || !HasBodyWeight)
+        {
+            return;
+        }
+
+        var baseWeight = _bodyWeightService.GetBodyWeight() ?? 0;
+        if (!double.TryParse(Weight, out var enteredWeight) || enteredWeight <= 0)
+        {
+            Weight = baseWeight.ToString("0.#");
+            return;
+        }
+
+        var adjustment = enteredWeight - baseWeight;
+        ResistanceAdjustment = adjustment.ToString("0");
+        Weight = baseWeight.ToString("0.#");
     }
 
     private void ApplyPlannedRepRange(int? minReps, int? maxReps)
@@ -963,6 +1089,17 @@ public class WorkoutViewModel : BaseViewModel
                normalized.Contains("wall push-up") ||
                normalized.Contains("incline push-up") ||
                normalized.Contains("elevated push-up") ||
+               normalized.Contains("step-up") ||
+               normalized.Contains("step up") ||
+               normalized.Contains("dead bug") ||
+               normalized.Contains("bird dog") ||
+               normalized.Contains("sit-to-stand") ||
+               normalized.Contains("sit to stand") ||
+               normalized.Contains("single-leg balance hold") ||
+               normalized.Contains("single leg balance hold") ||
+               normalized.Contains("heel-to-toe walk") ||
+               normalized.Contains("heel to toe walk") ||
+               normalized.Contains("plank knee drive") ||
                normalized.Contains("assisted pull-up") ||
                normalized.Contains("weighted pull-up");
     }
@@ -978,6 +1115,7 @@ public class WorkoutViewModel : BaseViewModel
         return IsBodyweightExerciseName(normalized) ||
                normalized.Contains("plank") ||
                normalized.Contains("crunch") ||
+               normalized.Contains("bicycle crunch") ||
                normalized.Contains("sit up") ||
                normalized.Contains("sit-up") ||
                normalized.Contains("leg raise") ||
@@ -1077,6 +1215,11 @@ public class WorkoutViewModel : BaseViewModel
 
     private static string GetRecommendationWeightValue(Workout workout, double? lastUsedWeight)
     {
+        if (workout.Type != WorkoutType.WeightLifting)
+        {
+            return string.Empty;
+        }
+
         var weightToDisplay = lastUsedWeight ?? workout.Weight;
         if (weightToDisplay <= 0)
         {
@@ -1088,9 +1231,28 @@ public class WorkoutViewModel : BaseViewModel
 
     private static string GetRecommendationRepText(Workout workout)
     {
+        if (workout.Type != WorkoutType.WeightLifting)
+        {
+            return string.Empty;
+        }
+
         return workout.HasRepRange
             ? $"Reps: {workout.MinReps}-{workout.MaxReps}"
             : $"Reps: {workout.Reps}";
+    }
+
+    private static string GetRecommendationDurationText(Workout workout)
+    {
+        return workout.Type == WorkoutType.Cardio && workout.DurationMinutes > 0
+            ? $"Time: {workout.DurationMinutes} min"
+            : string.Empty;
+    }
+
+    private static string GetRecommendationDistanceText(Workout workout)
+    {
+        return workout.Type == WorkoutType.Cardio && workout.DistanceMiles > 0
+            ? $"Distance: {workout.DistanceMiles:0.#} mi"
+            : string.Empty;
     }
 
     #endregion

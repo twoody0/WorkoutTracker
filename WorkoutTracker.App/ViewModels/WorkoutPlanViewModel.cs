@@ -107,6 +107,7 @@ public class WorkoutPlanViewModel : BaseViewModel
     public Command AddWorkoutPlanCommand { get; }
     public Command SelectWorkoutPlanCommand { get; }
     public Command ToggleCreatePlanCommand { get; }
+    public Command OpenWeeklyScheduleCommand { get; }
 
     public WorkoutPlanViewModel(IWorkoutPlanService workoutPlanService, IWorkoutScheduleService scheduleService)
     {
@@ -116,6 +117,7 @@ public class WorkoutPlanViewModel : BaseViewModel
         AddWorkoutPlanCommand = new Command(async () => await AddWorkoutPlanAsync());
         SelectWorkoutPlanCommand = new Command<WorkoutPlan>(SelectWorkoutPlan);
         ToggleCreatePlanCommand = new Command(ToggleCreatePlan);
+        OpenWeeklyScheduleCommand = new Command(async () => await OpenWeeklyScheduleAsync());
         LoadWorkoutPlans();
     }
 
@@ -212,6 +214,16 @@ public class WorkoutPlanViewModel : BaseViewModel
         var detailsPage = new WorkoutPlanDetailsPage(
             App.Services.GetRequiredService<WorkoutPlanDetailsViewModel>(), plan);
         await Shell.Current.Navigation.PushAsync(detailsPage);
+    }
+
+    private async Task OpenWeeklyScheduleAsync()
+    {
+        if (!HasActivePlan)
+        {
+            return;
+        }
+
+        await Shell.Current.Navigation.PushAsync(App.Services.GetRequiredService<WeeklySchedulePage>());
     }
 
     private async Task AddWorkoutPlanAsync()

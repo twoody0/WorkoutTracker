@@ -15,6 +15,10 @@ public partial class DashboardPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+        if (BindingContext is DashboardViewModel vm)
+        {
+            vm.LoadWorkoutsCommand.Execute(null);
+        }
         RefreshSwipeTargets();
         Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(150), () => TabSwipeNavigationHelper.Refresh(this));
         Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(500), () => TabSwipeNavigationHelper.Refresh(this));

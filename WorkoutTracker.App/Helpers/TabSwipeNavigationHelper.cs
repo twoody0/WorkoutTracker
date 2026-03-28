@@ -226,14 +226,37 @@ public static class TabSwipeNavigationHelper
             private const double SwipeMinDistance = 120;
             private const double SwipeMinVelocity = 250;
             private const double HorizontalDominanceRatio = 1.5;
+            private const double VerticalScrollLockDistance = 24;
             private readonly SwipeAttachment _attachment;
+            private double _totalDeltaX;
+            private double _totalDeltaY;
+            private bool _isVerticalScrollLocked;
 
             public HorizontalFlingListener(SwipeAttachment attachment)
             {
                 _attachment = attachment;
             }
 
-            public override bool OnDown(MotionEvent? e) => true;
+            public override bool OnDown(MotionEvent? e)
+            {
+                _totalDeltaX = 0;
+                _totalDeltaY = 0;
+                _isVerticalScrollLocked = false;
+                return true;
+            }
+
+            public override bool OnScroll(MotionEvent? e1, MotionEvent? e2, float distanceX, float distanceY)
+            {
+                _totalDeltaX += Math.Abs(distanceX);
+                _totalDeltaY += Math.Abs(distanceY);
+
+                if (_totalDeltaY >= VerticalScrollLockDistance && _totalDeltaY > _totalDeltaX)
+                {
+                    _isVerticalScrollLocked = true;
+                }
+
+                return false;
+            }
 
             public override bool OnFling(MotionEvent? e1, MotionEvent? e2, float velocityX, float velocityY)
             {
@@ -244,6 +267,11 @@ public static class TabSwipeNavigationHelper
 
                 var deltaX = e2.GetX() - e1.GetX();
                 var deltaY = e2.GetY() - e1.GetY();
+
+                if (_isVerticalScrollLocked)
+                {
+                    return false;
+                }
 
                 if (Math.Abs(deltaX) < SwipeMinDistance)
                 {
@@ -256,6 +284,11 @@ public static class TabSwipeNavigationHelper
                 }
 
                 if (Math.Abs(deltaX) < Math.Abs(deltaY) * HorizontalDominanceRatio)
+                {
+                    return false;
+                }
+
+                if (Math.Abs(velocityX) < Math.Abs(velocityY) * HorizontalDominanceRatio)
                 {
                     return false;
                 }

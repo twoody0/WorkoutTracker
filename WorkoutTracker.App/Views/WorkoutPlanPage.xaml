@@ -31,9 +31,8 @@
                     <Label Text="{Binding CurrentPlanTimelineSummary}"
                            FontSize="12"
                            TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
-                    <Button Text="View Plan"
-                            Command="{Binding SelectWorkoutPlanCommand}"
-                            CommandParameter="{Binding CurrentPlan}"
+                    <Button Text="Weekly Schedule"
+                            Command="{Binding OpenWeeklyScheduleCommand}"
                             Margin="0,10,0,0"
                             BackgroundColor="{AppThemeBinding Light=#E7F6F4, Dark=#143936}"
                             TextColor="White"
