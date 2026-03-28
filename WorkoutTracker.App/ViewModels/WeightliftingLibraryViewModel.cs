@@ -12,6 +12,8 @@ public class WeightliftingLibraryViewModel : BaseViewModel
     private readonly IWorkoutLibraryService _libraryService;
     private string _searchText = string.Empty;
     private string _selectedMuscleGroup = string.Empty;
+    private CancellationTokenSource? _searchDebounceCts;
+    private int _searchRequestVersion;
 
     #endregion
 
@@ -41,7 +43,13 @@ public class WeightliftingLibraryViewModel : BaseViewModel
     public string SearchText
     {
         get => _searchText;
-        set => SetProperty(ref _searchText, value);
+        set
+        {
+            if (SetProperty(ref _searchText, value))
+            {
+                _ = SearchExercises();
+            }
+        }
     }
 
     /// <summary>
@@ -71,15 +79,35 @@ public class WeightliftingLibraryViewModel : BaseViewModel
 
     private async Task SearchExercises()
     {
+        _searchDebounceCts?.Cancel();
+
         if (string.IsNullOrWhiteSpace(SelectedMuscleGroup))
         {
             Exercises.Clear();
             return;
         }
 
+        var requestVersion = Interlocked.Increment(ref _searchRequestVersion);
+        var debounceCts = new CancellationTokenSource();
+        _searchDebounceCts = debounceCts;
+
+        try
+        {
+            await Task.Delay(175, debounceCts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
         var results = await _libraryService.SearchExercisesByName(
             SelectedMuscleGroup, SearchText ?? string.Empty
         );
+
+        if (debounceCts.IsCancellationRequested || requestVersion != _searchRequestVersion)
+        {
+            return;
+        }
 
         Exercises.Clear();
         foreach (var exercise in results)

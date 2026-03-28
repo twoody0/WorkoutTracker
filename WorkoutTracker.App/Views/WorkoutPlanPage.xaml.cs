@@ -7,20 +7,27 @@ namespace WorkoutTracker.Views
     public partial class WorkoutPlanPage : ContentPage
     {
         private readonly WorkoutPlanViewModel _viewModel;
+        private bool _isSubscribedToViewModel;
 
         public WorkoutPlanPage(WorkoutPlanViewModel viewModel)
         {
             InitializeComponent();
             _viewModel = viewModel;
             BindingContext = viewModel;
-            _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+            SubscribeToViewModel();
             TabSwipeNavigationHelper.Attach(this, "workout-plans");
+        }
+
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+            SubscribeToViewModel();
         }
 
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
-            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            UnsubscribeFromViewModel();
         }
 
         private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -36,6 +43,28 @@ namespace WorkoutTracker.Views
                 await PlanScrollView.ScrollToAsync(CreatePlanSection, ScrollToPosition.Start, true);
                 PlanNameEntry.Focus();
             });
+        }
+
+        private void SubscribeToViewModel()
+        {
+            if (_isSubscribedToViewModel)
+            {
+                return;
+            }
+
+            _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+            _isSubscribedToViewModel = true;
+        }
+
+        private void UnsubscribeFromViewModel()
+        {
+            if (!_isSubscribedToViewModel)
+            {
+                return;
+            }
+
+            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            _isSubscribedToViewModel = false;
         }
     }
 }

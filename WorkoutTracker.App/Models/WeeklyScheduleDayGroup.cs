@@ -55,6 +55,24 @@ public class WeeklyScheduleDayGroup : INotifyPropertyChanged
         _isExpanded = isExpanded;
     }
 
+    public void UpdateWorkouts(IEnumerable<Workout> workouts)
+    {
+        Workouts.Clear();
+
+        foreach (var workout in workouts)
+        {
+            Workouts.Add(workout);
+        }
+
+        OnPropertyChanged(nameof(HasWorkouts));
+        OnPropertyChanged(nameof(CanToggle));
+        OnPropertyChanged(nameof(WorkoutCount));
+        OnPropertyChanged(nameof(WorkoutCountLabel));
+        OnPropertyChanged(nameof(MuscleGroupSummary));
+        OnPropertyChanged(nameof(VisibleWorkouts));
+        OnPropertyChanged(nameof(ShowRestDayMessage));
+    }
+
     private void OnPropertyChanged([CallerMemberName] string propertyName = "")
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

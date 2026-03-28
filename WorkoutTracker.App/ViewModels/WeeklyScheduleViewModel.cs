@@ -12,7 +12,10 @@ public class WeeklyScheduleViewModel : BaseViewModel
 
     private readonly IWorkoutScheduleService _scheduleService;
     private readonly IWorkoutService _workoutService;
+    private readonly Dictionary<DayOfWeek, WeeklyScheduleDayGroup> _dayGroupsByDay = new();
     private string? _lastCompletedPlanPromptKey;
+    private int _lastLoadedScheduleVersion = -1;
+    private DateTime _lastLoadedDate = DateTime.MinValue;
 
     public ICommand ChangeWorkoutDayCommand { get; }
     public ICommand EditDayCommand { get; }
@@ -36,7 +39,13 @@ public class WeeklyScheduleViewModel : BaseViewModel
 
     public async Task OnAppearingAsync()
     {
-        LoadSchedule();
+        var today = DateTime.Today;
+        var currentScheduleVersion = _scheduleService.ScheduleVersion;
+        if (_lastLoadedScheduleVersion != currentScheduleVersion || _lastLoadedDate != today)
+        {
+            LoadSchedule();
+        }
+
         await PromptForCompletedPlanAsync();
     }
 
@@ -72,7 +81,6 @@ public class WeeklyScheduleViewModel : BaseViewModel
     private void LoadSchedule()
     {
         var schedule = _scheduleService.GetWeeklySchedule();
-        WeeklySchedule.Clear();
         var today = DateTime.Today.DayOfWeek;
         var orderedDays = Enum.GetValues<DayOfWeek>()
             .OrderBy(day => ((int)day - (int)today + 7) % 7)
@@ -84,17 +92,31 @@ public class WeeklyScheduleViewModel : BaseViewModel
                 ? schedule[day]
                 : new List<Workout>();
 
-            var isToday = day == today;
-            WeeklySchedule.Add(new WeeklyScheduleDayGroup(
+            if (_dayGroupsByDay.TryGetValue(day, out var existingGroup))
+            {
+                existingGroup.UpdateWorkouts(workouts);
+                continue;
+            }
+
+            _dayGroupsByDay[day] = new WeeklyScheduleDayGroup(
                 day,
                 workouts,
-                isToday: isToday,
-                isExpanded: isToday));
+                isToday: day == today,
+                isExpanded: day == today);
+        }
+
+        WeeklySchedule.Clear();
+
+        foreach (var day in orderedDays)
+        {
+            WeeklySchedule.Add(_dayGroupsByDay[day]);
         }
 
         OnPropertyChanged(nameof(ActivePlanName));
         OnPropertyChanged(nameof(ActivePlanTimelineSummary));
         OnPropertyChanged(nameof(HasActivePlan));
+        _lastLoadedScheduleVersion = _scheduleService.ScheduleVersion;
+        _lastLoadedDate = DateTime.Today;
     }
 
     private void ToggleDay(WeeklyScheduleDayGroup? dayGroup)

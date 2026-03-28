@@ -10,11 +10,20 @@ public class WorkoutScheduleService : IWorkoutScheduleService
     private readonly WorkoutTrackerDatabase _database;
     private readonly string _legacyScheduleStateFilePath;
     private int? _activePlanScheduleWeekNumber;
+    private int _scheduleVersion;
 
     public WorkoutPlan? ActivePlan { get; private set; }
     public DateTime? ActivePlanStartedOn { get; private set; }
     public DateTime? ActivePlanEndsOn { get; private set; }
     public bool HasCompletedActivePlan => ActivePlanEndsOn.HasValue && DateTime.Today > ActivePlanEndsOn.Value.Date;
+    public int ScheduleVersion
+    {
+        get
+        {
+            EnsureActivePlanScheduleIsCurrent();
+            return _scheduleVersion;
+        }
+    }
 
     public WorkoutScheduleService(IWorkoutPlanService workoutPlanService, string? databasePath = null)
     {
@@ -272,7 +281,10 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         if (!hasSavedWorkouts)
         {
             PopulateWeeklyScheduleForActivePlanWeek(GetPlanWeekNumberForDate(DateTime.Today));
+            return;
         }
+
+        _scheduleVersion++;
     }
 
     private void SaveState()
@@ -305,6 +317,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         }
 
         transaction.Commit();
+        _scheduleVersion++;
     }
 
     private void ClearSavedState()
@@ -314,6 +327,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         ExecuteNonQuery(connection, transaction, "DELETE FROM ActivePlanScheduledWorkouts;");
         ExecuteNonQuery(connection, transaction, "DELETE FROM ActivePlanState;");
         transaction.Commit();
+        _scheduleVersion++;
     }
 
     private void MigrateLegacyJsonIfNeeded()
@@ -419,6 +433,7 @@ public interface IWorkoutScheduleService
     DateTime? ActivePlanStartedOn { get; }
     DateTime? ActivePlanEndsOn { get; }
     bool HasCompletedActivePlan { get; }
+    int ScheduleVersion { get; }
     void AddPlanToWeeklySchedule(WorkoutPlan plan);
     void AddWorkoutToDay(DayOfWeek day, Workout workout);
     void RemoveWorkoutFromDay(DayOfWeek day, Workout workout);

@@ -71,6 +71,8 @@ public class WorkoutViewModel : BaseViewModel
     private bool _hasScheduledPlanWorkoutsToday;
     private WorkoutRecommendation? _selectedRecommendation;
     private bool _showRpeHelp;
+    private CancellationTokenSource? _exerciseSuggestionDebounceCts;
+    private int _exerciseSuggestionRequestVersion;
 
     #endregion
 
@@ -876,11 +878,31 @@ public class WorkoutViewModel : BaseViewModel
 
     public async Task UpdateExerciseSuggestionsAsync()
     {
+        _exerciseSuggestionDebounceCts?.Cancel();
+
         if (!string.IsNullOrWhiteSpace(SelectedMuscleGroup))
         {
+            var requestVersion = Interlocked.Increment(ref _exerciseSuggestionRequestVersion);
+            var debounceCts = new CancellationTokenSource();
+            _exerciseSuggestionDebounceCts = debounceCts;
+
+            try
+            {
+                await Task.Delay(175, debounceCts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+
             var exercises = await _workoutLibraryService.SearchExercisesByName(
                 SelectedMuscleGroup, ExerciseSearchQuery
             );
+
+            if (debounceCts.IsCancellationRequested || requestVersion != _exerciseSuggestionRequestVersion)
+            {
+                return;
+            }
 
             var sorted = exercises.OrderBy(e => e.Name);
             ExerciseSuggestions.Clear();

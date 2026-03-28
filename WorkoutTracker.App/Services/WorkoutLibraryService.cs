@@ -10,7 +10,10 @@ public class WorkoutLibraryService : IWorkoutLibraryService
 {
     #region Fields
 
-    private List<WeightliftingExercise>? _exercises;
+    private readonly SemaphoreSlim _syncLock = new(1, 1);
+    private IReadOnlyList<WeightliftingExercise>? _exercises;
+    private Dictionary<string, IReadOnlyList<WeightliftingExercise>>? _muscleGroupIndex;
+    private readonly Dictionary<string, IReadOnlyList<WeightliftingExercise>> _searchCache = new(StringComparer.Ordinal);
     private static readonly Dictionary<string, string[]> MuscleGroupAliases = new(StringComparer.OrdinalIgnoreCase)
     {
         ["Arms"] = ["Arms", "Biceps", "Triceps"],
@@ -32,15 +35,7 @@ public class WorkoutLibraryService : IWorkoutLibraryService
     /// <returns>A collection of all exercises.</returns>
     public async Task<IEnumerable<WeightliftingExercise>> GetExercises()
     {
-        if (_exercises == null)
-        {
-            using Stream stream = await FileSystem.OpenAppPackageFileAsync("exercises.json");
-
-            _exercises = await JsonSerializer.DeserializeAsync<List<WeightliftingExercise>>(stream)
-                         ?? new List<WeightliftingExercise>();
-        }
-
-        return _exercises;
+        return await EnsureExercisesLoadedAsync();
     }
 
     /// <summary>
@@ -51,22 +46,82 @@ public class WorkoutLibraryService : IWorkoutLibraryService
     /// <returns>A filtered list of matching exercises.</returns>
     public async Task<IEnumerable<WeightliftingExercise>> SearchExercisesByName(string muscleGroup, string query)
     {
-        var exercises = await GetExercises();
-        var matchingMuscleGroups = GetMatchingMuscleGroups(muscleGroup);
+        await EnsureExercisesLoadedAsync();
 
-        var filtered = exercises
-            .Where(e => matchingMuscleGroups.Contains(e.MuscleGroup, StringComparer.OrdinalIgnoreCase));
-
-        if (!string.IsNullOrWhiteSpace(query))
+        var normalizedMuscleGroup = muscleGroup?.Trim() ?? string.Empty;
+        var normalizedQuery = query?.Trim() ?? string.Empty;
+        var cacheKey = $"{normalizedMuscleGroup}|{normalizedQuery}";
+        if (_searchCache.TryGetValue(cacheKey, out var cachedResults))
         {
-            filtered = filtered
-                .Where(e => e.Name.StartsWith(query, StringComparison.OrdinalIgnoreCase));
+            return cachedResults;
         }
 
+        var filtered = GetExercisesForMuscleGroup(normalizedMuscleGroup);
+
+        if (!string.IsNullOrWhiteSpace(normalizedQuery))
+        {
+            filtered = filtered
+                .Where(exercise => exercise.Name.StartsWith(normalizedQuery, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
+
+        _searchCache[cacheKey] = filtered;
         return filtered;
     }
 
     #endregion
+
+    private async Task<IReadOnlyList<WeightliftingExercise>> EnsureExercisesLoadedAsync()
+    {
+        if (_exercises != null)
+        {
+            return _exercises;
+        }
+
+        await _syncLock.WaitAsync();
+        try
+        {
+            if (_exercises != null)
+            {
+                return _exercises;
+            }
+
+            using Stream stream = await FileSystem.OpenAppPackageFileAsync("exercises.json");
+
+            _exercises = await JsonSerializer.DeserializeAsync<List<WeightliftingExercise>>(stream)
+                ?? [];
+            _muscleGroupIndex = BuildMuscleGroupIndex(_exercises);
+            _searchCache.Clear();
+            return _exercises;
+        }
+        finally
+        {
+            _syncLock.Release();
+        }
+    }
+
+    private IReadOnlyList<WeightliftingExercise> GetExercisesForMuscleGroup(string muscleGroup)
+    {
+        if (_muscleGroupIndex == null || string.IsNullOrWhiteSpace(muscleGroup))
+        {
+            return [];
+        }
+
+        var matchingMuscleGroups = GetMatchingMuscleGroups(muscleGroup);
+        var results = new List<WeightliftingExercise>();
+
+        foreach (var group in matchingMuscleGroups)
+        {
+            if (_muscleGroupIndex.TryGetValue(group, out var exercises))
+            {
+                results.AddRange(exercises);
+            }
+        }
+
+        return results
+            .Distinct()
+            .ToArray();
+    }
 
     private static IReadOnlyList<string> GetMatchingMuscleGroups(string muscleGroup)
     {
@@ -81,5 +136,15 @@ public class WorkoutLibraryService : IWorkoutLibraryService
         }
 
         return [muscleGroup.Trim()];
+    }
+
+    private static Dictionary<string, IReadOnlyList<WeightliftingExercise>> BuildMuscleGroupIndex(IEnumerable<WeightliftingExercise> exercises)
+    {
+        return exercises
+            .GroupBy(exercise => exercise.MuscleGroup?.Trim() ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<WeightliftingExercise>)group.ToArray(),
+                StringComparer.OrdinalIgnoreCase);
     }
 }

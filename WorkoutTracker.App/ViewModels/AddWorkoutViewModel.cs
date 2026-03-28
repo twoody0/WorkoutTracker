@@ -26,6 +26,8 @@ public class AddWorkoutViewModel : BaseViewModel
     private string _recommendedWorkoutSummary = "Build a custom workout for this day.";
     private RecommendedWorkoutOption? _selectedRecommendedWorkout;
     private bool _isApplyingLibrarySelection;
+    private CancellationTokenSource? _exerciseSuggestionDebounceCts;
+    private int _exerciseSuggestionRequestVersion;
 
     public DayOfWeek Day { get; }
 
@@ -296,6 +298,8 @@ public class AddWorkoutViewModel : BaseViewModel
 
     public async Task UpdateExerciseSuggestionsAsync()
     {
+        _exerciseSuggestionDebounceCts?.Cancel();
+
         if (SelectedType != WorkoutType.WeightLifting || string.IsNullOrWhiteSpace(SelectedMuscleGroup))
         {
             ExerciseSuggestions.Clear();
@@ -303,7 +307,25 @@ public class AddWorkoutViewModel : BaseViewModel
             return;
         }
 
+        var requestVersion = Interlocked.Increment(ref _exerciseSuggestionRequestVersion);
+        var debounceCts = new CancellationTokenSource();
+        _exerciseSuggestionDebounceCts = debounceCts;
+
+        try
+        {
+            await Task.Delay(175, debounceCts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
         var results = await _workoutLibraryService.SearchExercisesByName(SelectedMuscleGroup, Name ?? string.Empty);
+
+        if (debounceCts.IsCancellationRequested || requestVersion != _exerciseSuggestionRequestVersion)
+        {
+            return;
+        }
 
         ExerciseSuggestions.Clear();
         foreach (var exercise in results.OrderBy(exercise => exercise.Name).Take(6))

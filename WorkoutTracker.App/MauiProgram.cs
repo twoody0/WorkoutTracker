@@ -52,7 +52,7 @@ public static class MauiProgram
         builder.Services.AddTransient<SignupViewModel>();
         builder.Services.AddTransient<DashboardViewModel>();
         builder.Services.AddTransient<LeaderboardViewModel>();
-        builder.Services.AddTransient<WorkoutViewModel>();
+        builder.Services.AddSingleton<WorkoutViewModel>();
         builder.Services.AddTransient<ViewWorkoutViewModel>();
         builder.Services.AddTransient<CardioWorkoutViewModel>();
         builder.Services.AddTransient<WeightliftingLibraryViewModel>();
@@ -68,12 +68,12 @@ public static class MauiProgram
         builder.Services.AddTransient<SignupPage>();
         builder.Services.AddTransient<DashboardPage>();
         builder.Services.AddTransient<LeaderboardPage>();
-        builder.Services.AddTransient<WorkoutPage>();
+        builder.Services.AddSingleton<WorkoutPage>();
         builder.Services.AddTransient<ViewWorkoutPage>();
         builder.Services.AddTransient<CardioSessionPage>();
         builder.Services.AddTransient<WeightliftingLibraryPage>();
         builder.Services.AddTransient<WorkoutPlanDetailsPage>();
-        builder.Services.AddTransient<WorkoutPlanPage>();
+        builder.Services.AddSingleton<WorkoutPlanPage>();
         builder.Services.AddTransient<WeeklySchedulePage>();
         builder.Services.AddTransient<EditDayPage>();
 
