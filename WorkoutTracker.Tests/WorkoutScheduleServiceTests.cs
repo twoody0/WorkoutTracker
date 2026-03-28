@@ -246,6 +246,30 @@ public class WorkoutScheduleServiceTests
         }
     }
 
+    [TestMethod]
+    public void WorkoutPlanService_StrengthPlansIncludeLowRepStrengthWeeks()
+    {
+        var tempFilePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}-plans.db");
+
+        try
+        {
+            var service = new WorkoutPlanService(tempFilePath);
+            var upperLowerPlan = service.GetWorkoutPlans().First(plan => plan.Name == "Upper/Lower Strength Builder");
+            var hypertrophyPlan = service.GetWorkoutPlans().First(plan => plan.Name == "Push/Pull/Legs Hypertrophy");
+
+            Assert.IsTrue(upperLowerPlan.Workouts.Any(workout => workout.Type == WorkoutType.WeightLifting && workout.Reps <= 3));
+            Assert.IsTrue(hypertrophyPlan.Workouts.Any(workout => workout.Type == WorkoutType.WeightLifting && workout.Reps <= 4));
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (File.Exists(tempFilePath))
+            {
+                File.Delete(tempFilePath);
+            }
+        }
+    }
+
     private static WorkoutScheduleService CreateServiceWithPlans(params WorkoutPlan[] plans)
     {
         var planService = new FakeWorkoutPlanService(plans);

@@ -22,6 +22,13 @@ public class DashboardViewModel : BaseViewModel
     private int _totalWorkoutSessions;
     private int _strengthWorkoutSessions;
     private int _cardioWorkoutSessions;
+    private double _topBenchPatternOneRepMax;
+    private double _topSquatPatternOneRepMax;
+    private double _topDeadliftPatternOneRepMax;
+    private double _topPullPatternOneRepMax;
+    private double _lifetimeStrengthVolume;
+    private string _biggestLiftSummary = "Biggest lift: log a few strength sessions first.";
+    private string _favoriteTrainingDaySummary = "Most active day: not enough history yet.";
 
     public DashboardViewModel(
         IWorkoutService workoutService,
@@ -112,6 +119,20 @@ public class DashboardViewModel : BaseViewModel
         set => SetProperty(ref _cardioWorkoutSessions, value);
     }
 
+    public bool ShowStrengthStats => StrengthWorkoutSessions > 0;
+    public bool ShowEmptyStrengthStats => !ShowStrengthStats;
+    public string StrengthStatsSubtitle => "Estimated 1RMs update from your logged weight and reps.";
+    public string EmptyStrengthStatsMessage => "Log a few strength workouts and your estimated 1RM stats will show up here.";
+    public string TopBenchPatternSummary => FormatWeightStat(_topBenchPatternOneRepMax);
+    public string TopSquatPatternSummary => FormatWeightStat(_topSquatPatternOneRepMax);
+    public string TopDeadliftPatternSummary => FormatWeightStat(_topDeadliftPatternOneRepMax);
+    public string TopPullPatternSummary => FormatWeightStat(_topPullPatternOneRepMax);
+    public string LifetimeStrengthVolumeSummary => _lifetimeStrengthVolume > 0
+        ? $"{_lifetimeStrengthVolume:N0} lb lifetime strength volume"
+        : "No lifetime strength volume yet.";
+    public string BiggestLiftSummary => _biggestLiftSummary;
+    public string FavoriteTrainingDaySummary => _favoriteTrainingDaySummary;
+
     public bool HasWorkoutsForSelectedDate => Workouts.Count > 0;
     public bool ShowEmptyWorkoutState => !HasWorkoutsForSelectedDate;
 
@@ -175,6 +196,18 @@ public class DashboardViewModel : BaseViewModel
         StrengthWorkoutSessions = allWorkouts.Count(workout => workout.Type == WorkoutType.WeightLifting);
         CardioWorkoutSessions = allWorkouts.Count(workout => workout.Type == WorkoutType.Cardio);
 
+        var strengthHistory = allWorkouts
+            .Where(workout => workout.Type == WorkoutType.WeightLifting)
+            .ToList();
+
+        _topBenchPatternOneRepMax = GetBestEstimatedOneRepMax(strengthHistory, "bench press", "close-grip bench press");
+        _topSquatPatternOneRepMax = GetBestEstimatedOneRepMax(strengthHistory, "squat");
+        _topDeadliftPatternOneRepMax = GetBestEstimatedOneRepMax(strengthHistory, "deadlift");
+        _topPullPatternOneRepMax = GetBestEstimatedOneRepMax(strengthHistory, "pull-up", "pull up", "weighted pull-up", "weighted pull up");
+        _lifetimeStrengthVolume = strengthHistory.Sum(workout => workout.TrainingVolume);
+        _biggestLiftSummary = GetBiggestLiftSummary(strengthHistory);
+        _favoriteTrainingDaySummary = GetFavoriteTrainingDaySummary(allWorkouts);
+
         HasWeightlifting = filtered.Any(workout =>
             workout.Type == WorkoutType.WeightLifting && workout.Reps > 0 && workout.Sets > 0);
         HasCardio = filtered.Any(workout =>
@@ -212,6 +245,16 @@ public class DashboardViewModel : BaseViewModel
         OnPropertyChanged(nameof(StrengthWorkoutSessionsSummary));
         OnPropertyChanged(nameof(CardioWorkoutSessionsSummary));
         OnPropertyChanged(nameof(ActivePlanSummary));
+        OnPropertyChanged(nameof(ShowStrengthStats));
+        OnPropertyChanged(nameof(ShowEmptyStrengthStats));
+        OnPropertyChanged(nameof(StrengthStatsSubtitle));
+        OnPropertyChanged(nameof(TopBenchPatternSummary));
+        OnPropertyChanged(nameof(TopSquatPatternSummary));
+        OnPropertyChanged(nameof(TopDeadliftPatternSummary));
+        OnPropertyChanged(nameof(TopPullPatternSummary));
+        OnPropertyChanged(nameof(LifetimeStrengthVolumeSummary));
+        OnPropertyChanged(nameof(BiggestLiftSummary));
+        OnPropertyChanged(nameof(FavoriteTrainingDaySummary));
     }
 
     private static int GetEstimatedCardioMinutes(Workout workout)
@@ -232,5 +275,45 @@ public class DashboardViewModel : BaseViewModel
         }
 
         return 0;
+    }
+
+    private static string FormatWeightStat(double value)
+    {
+        return value > 0 ? $"{value:N0} lb" : "--";
+    }
+
+    private static double GetBestEstimatedOneRepMax(IEnumerable<Workout> workouts, params string[] keywords)
+    {
+        return workouts
+            .Where(workout => workout.HasEstimatedOneRepMax &&
+                keywords.Any(keyword => workout.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
+            .Select(workout => workout.EstimatedOneRepMax)
+            .DefaultIfEmpty(0)
+            .Max();
+    }
+
+    private static string GetBiggestLiftSummary(IEnumerable<Workout> workouts)
+    {
+        var bestWorkout = workouts
+            .Where(workout => workout.HasEstimatedOneRepMax)
+            .OrderByDescending(workout => workout.EstimatedOneRepMax)
+            .FirstOrDefault();
+
+        return bestWorkout == null
+            ? "Biggest lift: log a few strength sessions first."
+            : $"Biggest lift: {bestWorkout.Name} at {bestWorkout.EstimatedOneRepMax:N0} lb est. 1RM";
+    }
+
+    private static string GetFavoriteTrainingDaySummary(IEnumerable<Workout> workouts)
+    {
+        var favoriteDay = workouts
+            .GroupBy(workout => workout.StartTime.DayOfWeek)
+            .OrderByDescending(group => group.Count())
+            .ThenBy(group => group.Key)
+            .FirstOrDefault();
+
+        return favoriteDay == null
+            ? "Most active day: not enough history yet."
+            : $"Most active day: {favoriteDay.Key} ({favoriteDay.Count()} session{(favoriteDay.Count() == 1 ? string.Empty : "s")})";
     }
 }

@@ -12,6 +12,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
     private readonly IWorkoutPlanService _workoutPlanService;
     private int _selectedPreviewWeek = 1;
     private bool _showWeekTemplateHelp;
+    private bool _showRpeHelp;
 
     public WorkoutPlan? SelectedPlan { get; private set; }
     public ObservableCollection<WorkoutPlanDayGroup> WorkoutGroups { get; } = new();
@@ -40,6 +41,13 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
         get => _showWeekTemplateHelp;
         set => SetProperty(ref _showWeekTemplateHelp, value);
     }
+    public bool ShowRpeHelp
+    {
+        get => _showRpeHelp;
+        set => SetProperty(ref _showRpeHelp, value);
+    }
+    public bool ShowRpeInfo => SelectedPlan?.GetWorkoutsForWeek(SelectedPreviewWeek).Any(workout => workout.HasTargetRpe) == true;
+    public string RpeHelpText => "RPE means rate of perceived exertion on a 1-10 scale. Around 6 feels fairly easy, 8 is hard with a couple reps left, and 9-10 is near-max effort.";
 
     public string WeekTemplateHelpText => SelectedPlan == null
         ? string.Empty
@@ -74,6 +82,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
     public ICommand ChangeWorkoutDayCommand { get; }
     public ICommand EditDayCommand { get; }
     public ICommand ToggleWeekTemplateHelpCommand { get; }
+    public ICommand ToggleRpeHelpCommand { get; }
 
     public WorkoutPlanDetailsViewModel(IWorkoutScheduleService scheduleService, IWorkoutPlanService workoutPlanService)
     {
@@ -84,6 +93,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
         ChangeWorkoutDayCommand = new Command<WorkoutDisplay>(ChangeWorkoutDay);
         EditDayCommand = new Command<WorkoutPlanDayGroup>(EditDay);
         ToggleWeekTemplateHelpCommand = new Command(() => ShowWeekTemplateHelp = !ShowWeekTemplateHelp);
+        ToggleRpeHelpCommand = new Command(() => ShowRpeHelp = !ShowRpeHelp);
     }
 
     private async void EditDay(WorkoutPlanDayGroup? workoutGroup)
@@ -157,6 +167,8 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
         OnPropertyChanged(nameof(IsSelectedPlanActive));
         OnPropertyChanged(nameof(PreviewWeekSummary));
         OnPropertyChanged(nameof(WeekTemplateHelpText));
+        OnPropertyChanged(nameof(ShowRpeInfo));
+        OnPropertyChanged(nameof(RpeHelpText));
     }
 
     private void RefreshWorkoutGroups()
@@ -190,6 +202,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
         }
 
         OnPropertyChanged(nameof(WorkoutGroups));
+        OnPropertyChanged(nameof(ShowRpeInfo));
     }
 
     private void ToggleExpand(WorkoutPlanDayGroup? workoutGroup)

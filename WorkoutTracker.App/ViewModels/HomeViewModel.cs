@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Windows.Input;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
@@ -7,6 +8,10 @@ namespace WorkoutTracker.ViewModels;
 public class HomeViewModel : BaseViewModel
 {
     private static readonly TimeSpan HeatFadeWindow = TimeSpan.FromHours(24);
+    private const double MinimumHeatOpacity = 0.05;
+    private const double MaximumHeatOpacity = 0.70;
+    private const double HighHeatVolumeThreshold = 60.0;
+    private static Dictionary<string, ExerciseHeatMapDefinition>? _exerciseHeatMapLookup;
 
     private readonly IAppModeService _appModeService;
     private readonly IAuthService _authService;
@@ -24,6 +29,7 @@ public class HomeViewModel : BaseViewModel
     private double _frontTricepsOpacity;
     private double _frontAbsOpacity;
     private double _frontQuadsOpacity;
+    private double _frontForearmsOpacity;
     private double _backShouldersOpacity;
     private double _backTricepsOpacity;
     private double _backLatsOpacity;
@@ -31,6 +37,8 @@ public class HomeViewModel : BaseViewModel
     private double _backGlutesOpacity;
     private double _backHamstringsOpacity;
     private double _backCalvesOpacity;
+    private double _backTrapsOpacity;
+    private double _backRhomboidsOpacity;
 
     public HomeViewModel(
         IAppModeService appModeService,
@@ -160,6 +168,12 @@ public class HomeViewModel : BaseViewModel
         set => SetProperty(ref _frontQuadsOpacity, value);
     }
 
+    public double FrontForearmsOpacity
+    {
+        get => _frontForearmsOpacity;
+        set => SetProperty(ref _frontForearmsOpacity, value);
+    }
+
     public double BackShouldersOpacity
     {
         get => _backShouldersOpacity;
@@ -200,6 +214,18 @@ public class HomeViewModel : BaseViewModel
     {
         get => _backCalvesOpacity;
         set => SetProperty(ref _backCalvesOpacity, value);
+    }
+
+    public double BackTrapsOpacity
+    {
+        get => _backTrapsOpacity;
+        set => SetProperty(ref _backTrapsOpacity, value);
+    }
+
+    public double BackRhomboidsOpacity
+    {
+        get => _backRhomboidsOpacity;
+        set => SetProperty(ref _backRhomboidsOpacity, value);
     }
 
     public ICommand NavigateToLoginCommand => new Command(async () =>
@@ -273,10 +299,12 @@ public class HomeViewModel : BaseViewModel
 
         var now = DateTime.Now;
         var effectiveBodyWeight = Math.Max(bodyWeight.Value, 1);
-        var workouts = (await _workoutService.GetWorkouts())
-            .Where(workout =>
-                workout.Type == WorkoutType.WeightLifting &&
-                now - workout.StartTime <= HeatFadeWindow)
+        var allWorkouts = (await _workoutService.GetWorkouts())
+            .Where(workout => workout.Type == WorkoutType.WeightLifting)
+            .OrderBy(workout => workout.StartTime)
+            .ToList();
+        var workouts = allWorkouts
+            .Where(workout => now - workout.StartTime <= HeatFadeWindow)
             .ToList();
 
         if (workouts.Count == 0)
@@ -285,7 +313,8 @@ public class HomeViewModel : BaseViewModel
             return;
         }
 
-        var volumeByRegion = BuildVolumeByRegion(workouts, effectiveBodyWeight, now);
+        await EnsureHeatMapLookupLoadedAsync();
+        var volumeByRegion = BuildVolumeByRegion(workouts, allWorkouts, effectiveBodyWeight, now);
 
         FrontShouldersOpacity = GetHeatOpacity(volumeByRegion, "FrontShoulders");
         FrontChestOpacity = GetHeatOpacity(volumeByRegion, "FrontChest");
@@ -293,6 +322,7 @@ public class HomeViewModel : BaseViewModel
         FrontTricepsOpacity = GetHeatOpacity(volumeByRegion, "FrontTriceps");
         FrontAbsOpacity = GetHeatOpacity(volumeByRegion, "FrontAbs");
         FrontQuadsOpacity = GetHeatOpacity(volumeByRegion, "FrontQuads");
+        FrontForearmsOpacity = GetHeatOpacity(volumeByRegion, "FrontForearms");
 
         BackShouldersOpacity = GetHeatOpacity(volumeByRegion, "BackShoulders");
         BackTricepsOpacity = GetHeatOpacity(volumeByRegion, "BackTriceps");
@@ -301,13 +331,19 @@ public class HomeViewModel : BaseViewModel
         BackGlutesOpacity = GetHeatOpacity(volumeByRegion, "BackGlutes");
         BackHamstringsOpacity = GetHeatOpacity(volumeByRegion, "BackHamstrings");
         BackCalvesOpacity = GetHeatOpacity(volumeByRegion, "BackCalves");
+        BackTrapsOpacity = GetHeatOpacity(volumeByRegion, "BackTraps");
+        BackRhomboidsOpacity = GetHeatOpacity(volumeByRegion, "BackRhomboids");
 
         var mostRecentWorkout = workouts.MaxBy(workout => workout.StartTime);
         var lastWorkoutAge = mostRecentWorkout == null
             ? string.Empty
             : GetRelativeAge(now - mostRecentWorkout.StartTime);
-        TodaySummary = $"{workouts.Count} recent lift{(workouts.Count == 1 ? string.Empty : "s")}{lastWorkoutAge}.";
-        HeatInfoText = $"Heat uses your recent lifts, body weight, and a 24-hour fade window. Current body weight: {effectiveBodyWeight:N0} lb.";
+        var progressionCount = workouts.Count(workout => GetProgressionHeatMultiplier(workout, FindPreviousWorkout(allWorkouts, workout)) > 1.05);
+        var progressionText = progressionCount > 0
+            ? $" {progressionCount} beat your previous mark."
+            : string.Empty;
+        TodaySummary = $"{workouts.Count} recent lift{(workouts.Count == 1 ? string.Empty : "s")}{lastWorkoutAge}.{progressionText}";
+        HeatInfoText = $"Heat uses your recent lifts, body weight, estimated 1RM, and a 24-hour fade window. Beating your last workout adds extra heat. Current body weight: {effectiveBodyWeight:N0} lb.";
     }
 
     public async Task<bool> UpdateBodyWeightAsync(string? weightText)
@@ -336,6 +372,7 @@ public class HomeViewModel : BaseViewModel
         FrontTricepsOpacity = 0;
         FrontAbsOpacity = 0;
         FrontQuadsOpacity = 0;
+        FrontForearmsOpacity = 0;
         BackShouldersOpacity = 0;
         BackTricepsOpacity = 0;
         BackLatsOpacity = 0;
@@ -343,16 +380,18 @@ public class HomeViewModel : BaseViewModel
         BackGlutesOpacity = 0;
         BackHamstringsOpacity = 0;
         BackCalvesOpacity = 0;
+        BackTrapsOpacity = 0;
+        BackRhomboidsOpacity = 0;
         TodaySummary = "No recent lifting heat right now.";
         HeatInfoText = "Heat uses your recent lifts, body weight, and a 24-hour fade window.";
         IsHeatInfoVisible = false;
     }
 
-    private static Dictionary<string, double> BuildVolumeByRegion(IEnumerable<Workout> workouts, double bodyWeight, DateTime now)
+    private static Dictionary<string, double> BuildVolumeByRegion(IEnumerable<Workout> recentWorkouts, IReadOnlyList<Workout> allWorkouts, double bodyWeight, DateTime now)
     {
         var volumeByRegion = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var workout in workouts)
+        foreach (var workout in recentWorkouts)
         {
             var weightRatio = Math.Max(1, workout.Weight) / bodyWeight;
             var age = now - workout.StartTime;
@@ -363,22 +402,97 @@ public class HomeViewModel : BaseViewModel
                 continue;
             }
 
-            var effortScore = weightRatio * Math.Max(1, workout.Reps) * Math.Max(1, workout.Sets) * fadeMultiplier;
+            var definition = FindHeatMapDefinition(workout);
+            var movementEffortMultiplier = definition?.EffortMultiplier ?? 1.0;
+            var progressionMultiplier = GetProgressionHeatMultiplier(workout, FindPreviousWorkout(allWorkouts, workout));
+            var repIntentMultiplier = GetRepIntentHeatMultiplier(workout);
+            var effortScore = weightRatio *
+                              Math.Max(1, workout.Reps) *
+                              Math.Max(1, workout.Sets) *
+                              fadeMultiplier *
+                              movementEffortMultiplier *
+                              progressionMultiplier *
+                              repIntentMultiplier;
 
-            foreach (var region in InferHeatRegions(workout))
+            foreach (var regionContribution in GetHeatRegions(workout, definition))
             {
-                if (volumeByRegion.TryGetValue(region, out var existing))
+                var weightedEffort = effortScore * regionContribution.Value;
+                if (weightedEffort <= 0)
                 {
-                    volumeByRegion[region] = existing + effortScore;
+                    continue;
+                }
+
+                if (volumeByRegion.TryGetValue(regionContribution.Key, out var existing))
+                {
+                    volumeByRegion[regionContribution.Key] = existing + weightedEffort;
                 }
                 else
                 {
-                    volumeByRegion[region] = effortScore;
+                    volumeByRegion[regionContribution.Key] = weightedEffort;
                 }
             }
         }
 
         return volumeByRegion;
+    }
+
+    private static Workout? FindPreviousWorkout(IReadOnlyList<Workout> allWorkouts, Workout currentWorkout)
+    {
+        return allWorkouts
+            .Where(workout =>
+                workout.StartTime < currentWorkout.StartTime &&
+                string.Equals(workout.Name, currentWorkout.Name, StringComparison.OrdinalIgnoreCase) &&
+                workout.Type == WorkoutType.WeightLifting)
+            .MaxBy(workout => workout.StartTime);
+    }
+
+    private static double GetProgressionHeatMultiplier(Workout workout, Workout? previousWorkout)
+    {
+        if (previousWorkout == null || workout.Type != WorkoutType.WeightLifting)
+        {
+            return 1.0;
+        }
+
+        var currentEstimatedMax = workout.EstimatedOneRepMax;
+        var previousEstimatedMax = previousWorkout.EstimatedOneRepMax;
+        var currentVolume = workout.TrainingVolume;
+        var previousVolume = previousWorkout.TrainingVolume;
+
+        var estimatedMaxGain = GetPositiveImprovement(currentEstimatedMax, previousEstimatedMax);
+        var volumeGain = GetPositiveImprovement(currentVolume, previousVolume);
+        var lowRepPushBonus = workout.Reps <= 3 && workout.Weight > previousWorkout.Weight ? 0.08 : 0.0;
+
+        var bonus = Math.Min(0.24, estimatedMaxGain * 0.45) +
+                    Math.Min(0.16, volumeGain * 0.20) +
+                    lowRepPushBonus;
+
+        return 1.0 + Math.Min(0.35, bonus);
+    }
+
+    private static double GetRepIntentHeatMultiplier(Workout workout)
+    {
+        if (workout.Type != WorkoutType.WeightLifting)
+        {
+            return 1.0;
+        }
+
+        return workout.Reps switch
+        {
+            <= 1 => 1.35,
+            <= 3 => 1.22,
+            <= 5 => 1.10,
+            _ => 1.0
+        };
+    }
+
+    private static double GetPositiveImprovement(double currentValue, double previousValue)
+    {
+        if (currentValue <= 0 || previousValue <= 0 || currentValue <= previousValue)
+        {
+            return 0;
+        }
+
+        return (currentValue - previousValue) / previousValue;
     }
 
     private static double GetFadeMultiplier(TimeSpan age)
@@ -397,101 +511,262 @@ public class HomeViewModel : BaseViewModel
         return 1 - progress;
     }
 
-    private static IReadOnlyList<string> InferHeatRegions(Workout workout)
+    private static ExerciseHeatMapDefinition? FindHeatMapDefinition(Workout workout)
     {
+        if (_exerciseHeatMapLookup == null)
+        {
+            return null;
+        }
+
+        var possibleNames = new[]
+        {
+            workout.Name?.Trim(),
+            workout.Name?.Replace("’", "'").Trim()
+        };
+
+        foreach (var possibleName in possibleNames)
+        {
+            if (!string.IsNullOrWhiteSpace(possibleName) &&
+                _exerciseHeatMapLookup.TryGetValue(possibleName, out var definition))
+            {
+                return definition;
+            }
+        }
+
+        return null;
+    }
+
+    private static IReadOnlyDictionary<string, double> GetHeatRegions(Workout workout, ExerciseHeatMapDefinition? definition)
+    {
+        if (definition?.Regions?.Count > 0)
+        {
+            return definition.Regions;
+        }
+
         var tokens = GetSearchTokens(workout);
         var muscleGroup = workout.MuscleGroup?.Trim().ToLowerInvariant() ?? string.Empty;
 
         if (MatchesAny(tokens, "calf", "calves", "seated calf", "standing calf"))
         {
-            return ["BackCalves"];
+            return WeightedRegions(("BackCalves", 1.0));
         }
 
-        if (MatchesAny(tokens, "hamstring", "romanian deadlift", "rdl", "leg curl", "stiff leg", "good morning"))
+        if (MatchesAny(tokens, "hamstring curl", "leg curl"))
         {
-            return ["BackHamstrings"];
+            return WeightedRegions(("BackHamstrings", 1.0), ("BackGlutes", 0.15));
+        }
+
+        if (MatchesAny(tokens, "romanian deadlift", "rdl", "stiff leg", "stiff-leg", "good morning"))
+        {
+            return WeightedRegions(
+                ("BackHamstrings", 1.0),
+                ("BackGlutes", 0.65),
+                ("BackLowerBack", 0.45),
+                ("BackLats", 0.15));
         }
 
         if (MatchesAny(tokens, "glute", "hip thrust", "glute bridge", "kickback"))
         {
-            return ["BackGlutes"];
+            return WeightedRegions(("BackGlutes", 1.0), ("BackHamstrings", 0.25));
         }
 
-        if (MatchesAny(tokens, "lat", "pull up", "pulldown", "row", "seated row", "cable row", "barbell row"))
+        if (MatchesAny(tokens, "deadlift", "trap bar deadlift"))
         {
-            return ["BackLats"];
+            return WeightedRegions(
+                ("BackGlutes", 0.9),
+                ("BackHamstrings", 0.8),
+                ("BackLowerBack", 0.65),
+                ("FrontQuads", 0.35),
+                ("BackLats", 0.2));
+        }
+
+        if (MatchesAny(tokens, "pull up", "pull-up", "chin up", "chin-up", "pulldown", "lat pulldown"))
+        {
+            return WeightedRegions(
+                ("BackLats", 1.0),
+                ("FrontBiceps", 0.45),
+                ("BackShoulders", 0.2));
+        }
+
+        if (MatchesAny(tokens, "row", "seated row", "cable row", "barbell row", "dumbbell row", "chest-supported row", "t-bar row"))
+        {
+            return WeightedRegions(
+                ("BackLats", 0.9),
+                ("BackShoulders", 0.45),
+                ("FrontBiceps", 0.35));
         }
 
         if (MatchesAny(tokens, "lower back", "erector", "superman", "back extension"))
         {
-            return ["BackLowerBack"];
+            return WeightedRegions(
+                ("BackLowerBack", 1.0),
+                ("BackGlutes", 0.25),
+                ("BackHamstrings", 0.2));
         }
 
         if (MatchesAny(tokens, "rear delt", "reverse fly", "face pull"))
         {
-            return ["BackShoulders"];
+            return WeightedRegions(
+                ("BackShoulders", 1.0),
+                ("BackLats", 0.2));
         }
 
-        if (MatchesAny(tokens, "tricep", "skull crusher", "pushdown", "overhead extension", "dip"))
+        if (MatchesAny(tokens, "tricep", "skull crusher", "pushdown", "overhead extension"))
         {
-            return ["FrontTriceps", "BackTriceps"];
+            return WeightedRegions(
+                ("FrontTriceps", 0.9),
+                ("BackTriceps", 1.0));
         }
 
-        if (MatchesAny(tokens, "bicep", "curl", "hammer curl", "preacher curl"))
+        if (MatchesAny(tokens, "triceps dip", "bodyweight dip", "dips", "dip"))
         {
-            return ["FrontBiceps"];
+            if (MatchesAny(tokens, "chest dip"))
+            {
+                return WeightedRegions(
+                    ("FrontChest", 0.75),
+                    ("FrontTriceps", 0.5),
+                    ("BackTriceps", 0.55),
+                    ("FrontShoulders", 0.35));
+            }
+
+            return WeightedRegions(
+                ("FrontTriceps", 0.65),
+                ("BackTriceps", 0.8),
+                ("FrontChest", 0.25),
+                ("FrontShoulders", 0.2));
         }
 
-        if (MatchesAny(tokens, "shoulder", "lateral raise", "front raise", "upright row", "overhead press", "shoulder press"))
+        if (MatchesAny(tokens, "hammer curl", "reverse curl"))
         {
-            return ["FrontShoulders", "BackShoulders"];
+            return WeightedRegions(("FrontBiceps", 0.85));
         }
 
-        if (MatchesAny(tokens, "chest", "bench", "press", "pec", "fly", "push up"))
+        if (MatchesAny(tokens, "bicep", "curl", "preacher curl", "concentration curl", "ez-bar curl"))
         {
-            return ["FrontChest"];
+            return WeightedRegions(("FrontBiceps", 1.0));
         }
 
-        if (MatchesAny(tokens, "ab", "core", "crunch", "sit up", "leg raise", "plank", "twist"))
+        if (MatchesAny(tokens, "landmine press"))
         {
-            return ["FrontAbs", "BackLowerBack"];
+            return WeightedRegions(
+                ("FrontShoulders", 0.8),
+                ("BackShoulders", 0.35),
+                ("FrontChest", 0.3),
+                ("FrontTriceps", 0.3));
         }
 
-        if (MatchesAny(tokens, "quad", "leg extension", "lunge", "split squat", "step up"))
+        if (MatchesAny(tokens, "overhead press", "shoulder press", "arnold press", "push press", "machine shoulder press"))
         {
-            return ["FrontQuads"];
+            return WeightedRegions(
+                ("FrontShoulders", 1.0),
+                ("BackShoulders", 0.4),
+                ("FrontTriceps", 0.45),
+                ("BackTriceps", 0.2));
         }
 
-        if (MatchesAny(tokens, "leg", "squat", "deadlift"))
+        if (MatchesAny(tokens, "lateral raise", "front raise", "upright row"))
         {
-            return ["FrontQuads", "BackGlutes", "BackHamstrings"];
+            return WeightedRegions(
+                ("FrontShoulders", 0.9),
+                ("BackShoulders", 0.45));
+        }
+
+        if (MatchesAny(tokens, "shoulder"))
+        {
+            return WeightedRegions(
+                ("FrontShoulders", 1.0),
+                ("BackShoulders", 0.45));
+        }
+
+        if (MatchesAny(tokens, "push up", "push-up", "incline push-up", "wall push-up", "elevated push-up"))
+        {
+            return WeightedRegions(
+                ("FrontChest", 0.85),
+                ("FrontTriceps", 0.4),
+                ("FrontShoulders", 0.3));
+        }
+
+        if (MatchesAny(tokens, "bench", "chest press", "pec", "fly", "crossover", "press"))
+        {
+            return WeightedRegions(
+                ("FrontChest", 1.0),
+                ("FrontTriceps", 0.4),
+                ("FrontShoulders", 0.35));
+        }
+
+        if (MatchesAny(tokens, "carry", "pallof", "dead bug", "bird dog"))
+        {
+            return WeightedRegions(
+                ("FrontAbs", 0.85),
+                ("BackLowerBack", 0.45),
+                ("FrontShoulders", 0.15));
+        }
+
+        if (MatchesAny(tokens, "ab", "core", "crunch", "sit up", "sit-up", "leg raise", "plank", "twist", "rollout", "woodchopper"))
+        {
+            return WeightedRegions(
+                ("FrontAbs", 1.0),
+                ("BackLowerBack", 0.3));
+        }
+
+        if (MatchesAny(tokens, "leg extension"))
+        {
+            return WeightedRegions(("FrontQuads", 1.0));
+        }
+
+        if (MatchesAny(tokens, "lunge", "split squat", "step up", "step-up", "walking lunge"))
+        {
+            return WeightedRegions(
+                ("FrontQuads", 0.9),
+                ("BackGlutes", 0.55),
+                ("BackHamstrings", 0.25));
+        }
+
+        if (MatchesAny(tokens, "squat", "leg press", "hack squat"))
+        {
+            return WeightedRegions(
+                ("FrontQuads", 1.0),
+                ("BackGlutes", 0.6),
+                ("BackHamstrings", 0.25),
+                ("BackLowerBack", 0.15));
         }
 
         return muscleGroup switch
         {
-            "biceps" => ["FrontBiceps"],
-            "triceps" => ["FrontTriceps", "BackTriceps"],
-            "arms" => ["FrontBiceps", "FrontTriceps", "BackTriceps"],
-            "shoulders" => ["FrontShoulders", "BackShoulders"],
-            "rear delts" => ["BackShoulders"],
-            "back" => ["BackLats", "BackLowerBack"],
-            "lats" => ["BackLats"],
-            "lower back" => ["BackLowerBack"],
-            "chest" => ["FrontChest"],
-            "abs" => ["FrontAbs"],
-            "core" => ["FrontAbs", "BackLowerBack"],
-            "legs" => ["FrontQuads", "BackGlutes", "BackHamstrings"],
-            "quads" => ["FrontQuads"],
-            "glutes" => ["BackGlutes"],
-            "hamstrings" => ["BackHamstrings"],
-            "calves" => ["BackCalves"],
-            _ => ["FrontChest"]
+            "biceps" => WeightedRegions(("FrontBiceps", 1.0)),
+            "triceps" => WeightedRegions(("FrontTriceps", 0.8), ("BackTriceps", 1.0)),
+            "arms" => WeightedRegions(("FrontBiceps", 0.65), ("FrontTriceps", 0.6), ("BackTriceps", 0.6)),
+            "shoulders" => WeightedRegions(("FrontShoulders", 1.0), ("BackShoulders", 0.45)),
+            "rear delts" => WeightedRegions(("BackShoulders", 1.0)),
+            "back" => WeightedRegions(("BackLats", 1.0), ("BackShoulders", 0.35), ("BackLowerBack", 0.3)),
+            "lats" => WeightedRegions(("BackLats", 1.0), ("FrontBiceps", 0.25)),
+            "lower back" => WeightedRegions(("BackLowerBack", 1.0), ("BackGlutes", 0.25)),
+            "chest" => WeightedRegions(("FrontChest", 1.0), ("FrontTriceps", 0.25)),
+            "abs" => WeightedRegions(("FrontAbs", 1.0), ("BackLowerBack", 0.25)),
+            "core" => WeightedRegions(("FrontAbs", 0.9), ("BackLowerBack", 0.45)),
+            "legs" => WeightedRegions(("FrontQuads", 0.85), ("BackGlutes", 0.6), ("BackHamstrings", 0.45)),
+            "quads" => WeightedRegions(("FrontQuads", 1.0)),
+            "glutes" => WeightedRegions(("BackGlutes", 1.0), ("BackHamstrings", 0.2)),
+            "hamstrings" => WeightedRegions(("BackHamstrings", 1.0), ("BackGlutes", 0.2)),
+            "calves" => WeightedRegions(("BackCalves", 1.0)),
+            _ => WeightedRegions(("FrontChest", 1.0))
         };
     }
 
     private static string GetSearchTokens(Workout workout)
     {
         return $"{workout.MuscleGroup} {workout.Name}".Trim().ToLowerInvariant();
+    }
+
+    private static IReadOnlyDictionary<string, double> WeightedRegions(params (string Region, double Weight)[] contributions)
+    {
+        return contributions
+            .Where(contribution => contribution.Weight > 0)
+            .GroupBy(contribution => contribution.Region, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Max(contribution => contribution.Weight),
+                StringComparer.OrdinalIgnoreCase);
     }
 
     private static bool MatchesAny(string tokens, params string[] keywords)
@@ -506,11 +781,11 @@ public class HomeViewModel : BaseViewModel
             return 0;
         }
 
-        // Around 30 means roughly a "very hard" region for the day, e.g. several
-        // challenging work sets at a substantial percentage of body weight.
-        var intensity = Math.Clamp(volume / 30.0, 0.0, 1.0);
+        // Around 60 means a region needs more than a single hard bodyweight lift
+        // session to hit the top of the heat scale.
+        var intensity = Math.Clamp(volume / HighHeatVolumeThreshold, 0.0, 1.0);
         var easedIntensity = Math.Pow(intensity, 1.35);
-        return 0.05 + (easedIntensity * 0.7);
+        return MinimumHeatOpacity + (easedIntensity * (MaximumHeatOpacity - MinimumHeatOpacity));
     }
 
     private static string GetRelativeAge(TimeSpan age)
@@ -523,5 +798,21 @@ public class HomeViewModel : BaseViewModel
 
         var hours = Math.Max(1, (int)Math.Round(age.TotalHours));
         return $", last logged about {hours} hour{(hours == 1 ? string.Empty : "s")} ago";
+    }
+
+    private static async Task EnsureHeatMapLookupLoadedAsync()
+    {
+        if (_exerciseHeatMapLookup != null)
+        {
+            return;
+        }
+
+        using Stream stream = await FileSystem.OpenAppPackageFileAsync("exercise_heat_map_weights.json");
+        var definitions = await JsonSerializer.DeserializeAsync<List<ExerciseHeatMapDefinition>>(stream)
+            ?? [];
+
+        _exerciseHeatMapLookup = definitions
+            .Where(definition => !string.IsNullOrWhiteSpace(definition.Name))
+            .ToDictionary(definition => definition.Name.Trim(), definition => definition, StringComparer.OrdinalIgnoreCase);
     }
 }

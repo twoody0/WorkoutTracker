@@ -15,6 +15,7 @@ public class RecommendedWorkoutOption : INotifyPropertyChanged
     public WorkoutType Type => Workout.Type;
     public int Sets => Workout.Sets;
     public int Reps => Workout.Reps;
+    public string RepDisplay => Workout.RepDisplay;
     public int Steps => Workout.Steps;
     public int DurationMinutes => Workout.DurationMinutes;
     public double DistanceMiles => Workout.DistanceMiles;

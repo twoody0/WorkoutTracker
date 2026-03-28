@@ -45,6 +45,30 @@
                 <Label Text="{Binding PreviewWeekSummary}"
                        FontSize="13"
                        TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}" />
+                <HorizontalStackLayout Spacing="8"
+                                       IsVisible="{Binding ShowRpeInfo}">
+                    <Label Text="Target RPE guidance"
+                           FontSize="13"
+                           FontAttributes="Bold"
+                           VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light=#244B58, Dark=#C3D7E7}" />
+                    <ImageButton Source="info.png"
+                                 HeightRequest="18"
+                                 WidthRequest="18"
+                                 Padding="0"
+                                 BackgroundColor="Transparent"
+                                 Command="{Binding ToggleRpeHelpCommand}" />
+                </HorizontalStackLayout>
+                <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 12"
+                        BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#101720}"
+                        Padding="12,10"
+                        IsVisible="{Binding ShowRpeHelp}">
+                    <Label Text="{Binding RpeHelpText}"
+                           FontSize="12"
+                           TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                </Border>
             </VerticalStackLayout>
 
             <Border IsVisible="{Binding SelectedPlan.IsCustom}"
@@ -139,7 +163,13 @@
 
                                                                         <StackLayout IsVisible="{Binding Workout.Type, Converter={StaticResource IsWeightLiftingConverter}}">
                                                                             <Label Text="{Binding Workout.Sets, StringFormat='Sets: {0}'}" FontSize="14" />
-                                                                            <Label Text="{Binding Workout.Reps, StringFormat='Reps: {0}'}" FontSize="14" />
+                                                                            <Label Text="{Binding Workout.RepDisplay, StringFormat='Reps: {0}'}" FontSize="14" />
+                                                                            <Label Text="{Binding Workout.TargetRpeDisplay, StringFormat='Target RPE: {0}'}"
+                                                                                   FontSize="14"
+                                                                                   IsVisible="{Binding Workout.HasTargetRpe}" />
+                                                                            <Label Text="{Binding Workout.TargetRestRange, StringFormat='Target rest: {0}'}"
+                                                                                   FontSize="14"
+                                                                                   IsVisible="{Binding Workout.HasTargetRestRange}" />
                                                                         </StackLayout>
 
                                                                         <StackLayout IsVisible="{Binding Workout.Type, Converter={StaticResource IsCardioConverter}}">
@@ -149,6 +179,9 @@
                                                                             <Label Text="{Binding Workout.DistanceMiles, StringFormat='Distance: {0:F1} mi'}"
                                                                                    FontSize="14"
                                                                                    IsVisible="{Binding Workout.HasDistance}" />
+                                                                            <Label Text="{Binding Workout.TargetRpeDisplay, StringFormat='Target RPE: {0}'}"
+                                                                                   FontSize="14"
+                                                                                   IsVisible="{Binding Workout.HasTargetRpe}" />
                                                                             <Label Text="{Binding Workout.Steps, StringFormat='Tracked steps: {0}'}"
                                                                                    FontSize="14"
                                                                                    IsVisible="{Binding Workout.HasSteps}" />

@@ -11,7 +11,19 @@ public class WorkoutRecommendation : INotifyPropertyChanged
 
     public required Workout Workout { get; init; }
     public double? LastUsedWeight { get; init; }
+    public string WeightDisplayPrefix { get; init; } = "Weight";
+    public string WeightDisplayValue { get; init; } = string.Empty;
+    public string WeightDisplayText => string.IsNullOrWhiteSpace(WeightDisplayValue)
+        ? WeightDisplayPrefix
+        : $"{WeightDisplayPrefix}: {WeightDisplayValue}";
+    public string WeightHelperText { get; init; } = string.Empty;
+    public string RepDisplayText { get; init; } = string.Empty;
+    public string TargetRpeText { get; init; } = string.Empty;
+    public string TargetRestText { get; init; } = string.Empty;
     public bool HasLastUsedWeight => LastUsedWeight.HasValue;
+    public bool HasWeightHelperText => !string.IsNullOrWhiteSpace(WeightHelperText);
+    public bool HasTargetRpe => !string.IsNullOrWhiteSpace(TargetRpeText);
+    public bool HasTargetRest => !string.IsNullOrWhiteSpace(TargetRestText);
     public bool ShowUseButton => !IsSelected;
     public bool ShowDetails => !IsSelected;
     public bool ShowSelectedState => IsSelected;

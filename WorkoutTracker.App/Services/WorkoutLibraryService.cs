@@ -11,6 +11,16 @@ public class WorkoutLibraryService : IWorkoutLibraryService
     #region Fields
 
     private List<WeightliftingExercise>? _exercises;
+    private static readonly Dictionary<string, string[]> MuscleGroupAliases = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Arms"] = ["Arms", "Biceps", "Triceps"],
+        ["Biceps"] = ["Biceps", "Arms"],
+        ["Triceps"] = ["Triceps", "Arms"],
+        ["Core"] = ["Core", "Abs"],
+        ["Abs"] = ["Abs", "Core"],
+        ["Back"] = ["Back", "Lats", "Lower Back"],
+        ["Legs"] = ["Legs", "Quads", "Hamstrings", "Glutes", "Calves"]
+    };
 
     #endregion
 
@@ -42,9 +52,10 @@ public class WorkoutLibraryService : IWorkoutLibraryService
     public async Task<IEnumerable<WeightliftingExercise>> SearchExercisesByName(string muscleGroup, string query)
     {
         var exercises = await GetExercises();
+        var matchingMuscleGroups = GetMatchingMuscleGroups(muscleGroup);
 
         var filtered = exercises
-            .Where(e => e.MuscleGroup.Equals(muscleGroup, StringComparison.OrdinalIgnoreCase));
+            .Where(e => matchingMuscleGroups.Contains(e.MuscleGroup, StringComparer.OrdinalIgnoreCase));
 
         if (!string.IsNullOrWhiteSpace(query))
         {
@@ -56,4 +67,19 @@ public class WorkoutLibraryService : IWorkoutLibraryService
     }
 
     #endregion
+
+    private static IReadOnlyList<string> GetMatchingMuscleGroups(string muscleGroup)
+    {
+        if (string.IsNullOrWhiteSpace(muscleGroup))
+        {
+            return [];
+        }
+
+        if (MuscleGroupAliases.TryGetValue(muscleGroup.Trim(), out var aliases))
+        {
+            return aliases;
+        }
+
+        return [muscleGroup.Trim()];
+    }
 }

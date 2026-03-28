@@ -105,7 +105,7 @@ public class AddWorkoutViewModel : BaseViewModel
     }
 
     public List<WorkoutType> WorkoutTypes { get; } = Enum.GetValues(typeof(WorkoutType)).Cast<WorkoutType>().ToList();
-    public List<string> MuscleGroups { get; } = ["Back", "Biceps", "Cardio", "Chest", "Core", "Legs", "Shoulders", "Triceps"];
+    public List<string> MuscleGroups { get; } = ["Back", "Arms", "Biceps", "Cardio", "Chest", "Core", "Abs", "Legs", "Shoulders", "Triceps"];
     public ObservableCollection<RecommendedWorkoutOption> RecommendedWorkouts { get; } = new();
     public ObservableCollection<WeightliftingExercise> ExerciseSuggestions { get; } = new();
 
@@ -194,7 +194,11 @@ public class AddWorkoutViewModel : BaseViewModel
             startTime: DateTime.Now,
             type: SelectedType,
             gymLocation: string.Empty // We don't care about GymLocation
-        );
+        )
+        {
+            MinReps = recommendedWorkout?.MinReps,
+            MaxReps = recommendedWorkout?.MaxReps
+        };
 
         if (SelectedType == WorkoutType.Cardio)
         {
@@ -264,7 +268,9 @@ public class AddWorkoutViewModel : BaseViewModel
         SelectedMuscleGroup = workout.MuscleGroup;
         SelectedType = workout.Type;
         Sets = workout.Sets;
-        Reps = workout.Reps;
+        Reps = workout.HasRepRange && workout.MaxReps.HasValue
+            ? (workout.MaxReps.Value <= 5 ? workout.MinReps ?? workout.Reps : workout.MaxReps.Value)
+            : workout.Reps;
         DurationMinutes = workout.DurationMinutes;
         DistanceMiles = workout.DistanceMiles;
         Steps = workout.Steps;

@@ -90,6 +90,9 @@
                                     <Image Source="body_front_biceps.webp"
                                            Aspect="AspectFit"
                                            Opacity="{Binding FrontBicepsOpacity}" />
+                                    <Image Source="body_front_forearms.webp"
+                                           Aspect="AspectFit"
+                                           Opacity="{Binding FrontForearmsOpacity}" />
                                     <Image Source="body_front_triceps.webp"
                                            Aspect="AspectFit"
                                            Opacity="{Binding FrontTricepsOpacity}" />
@@ -121,6 +124,12 @@
                                     <Image Source="body_back_shoulders.webp"
                                            Aspect="AspectFit"
                                            Opacity="{Binding BackShouldersOpacity}" />
+                                    <Image Source="body_back_traps.webp"
+                                           Aspect="AspectFit"
+                                           Opacity="{Binding BackTrapsOpacity}" />
+                                    <Image Source="body_back_rhomboids.webp"
+                                           Aspect="AspectFit"
+                                           Opacity="{Binding BackRhomboidsOpacity}" />
                                     <Image Source="body_back_triceps.webp"
                                            Aspect="AspectFit"
                                            Opacity="{Binding BackTricepsOpacity}" />
@@ -163,7 +172,7 @@
                             <HorizontalStackLayout Spacing="8">
                                 <Border WidthRequest="18"
                                         HeightRequest="18"
-                                        BackgroundColor="#E97878"
+                                        BackgroundColor="#D98686"
                                         StrokeThickness="0"
                                         StrokeShape="RoundRectangle 9" />
                                 <Label Text="Moderate"
@@ -173,7 +182,7 @@
                             <HorizontalStackLayout Spacing="8">
                                 <Border WidthRequest="18"
                                         HeightRequest="18"
-                                        BackgroundColor="#FF0000"
+                                        BackgroundColor="#C94A4A"
                                         StrokeThickness="0"
                                         StrokeShape="RoundRectangle 9" />
                                 <Label Text="High effort"

@@ -153,6 +153,10 @@ public class WorkoutScheduleService : IWorkoutScheduleService
             type: workout.Type,
             gymLocation: workout.GymLocation)
         {
+            MinReps = workout.MinReps,
+            MaxReps = workout.MaxReps,
+            TargetRpe = workout.TargetRpe,
+            TargetRestRange = workout.TargetRestRange,
             EndTime = workout.EndTime,
             Steps = workout.Steps,
             DurationMinutes = workout.DurationMinutes,
@@ -251,7 +255,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         using var workoutsCommand = connection.CreateCommand();
         workoutsCommand.CommandText =
             """
-            SELECT Name, MuscleGroup, GymLocation, Weight, Reps, Sets, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber
+            SELECT Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber
             FROM ActivePlanScheduledWorkouts
             ORDER BY Id;
             """;
@@ -392,8 +396,8 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         command.CommandText =
             """
             INSERT INTO ActivePlanScheduledWorkouts
-            (Name, MuscleGroup, GymLocation, Weight, Reps, Sets, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber)
-            VALUES ($name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $startTime, $endTime, $steps, $durationMinutes, $distanceMiles, $type, $day, $planWeekNumber);
+            (Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber)
+            VALUES ($name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $minReps, $maxReps, $targetRpe, $targetRestRange, $startTime, $endTime, $steps, $durationMinutes, $distanceMiles, $type, $day, $planWeekNumber);
             """;
         WorkoutPlanService.AddWorkoutParameters(command, workout);
         command.ExecuteNonQuery();

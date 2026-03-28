@@ -21,15 +21,49 @@
                      StrokeShape="RoundRectangle 12"
                      BackgroundColor="{AppThemeBinding Light=#F7FBF4, Dark={StaticResource Gray950}}"
                      Padding="14"
-                     Margin="0,8,0,12">
+                     Margin="0,8,0,12"
+                     IsVisible="{Binding ShowPlanSection}">
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="Active Plan Suggestions"
-                           FontAttributes="Bold"
-                           FontSize="18" />
+                    <HorizontalStackLayout Spacing="8"
+                                           IsVisible="{Binding ShowPlanSuggestionsSection}">
+                        <Label Text="Active Plan Suggestions"
+                               FontAttributes="Bold"
+                               FontSize="18"
+                               VerticalOptions="Center" />
+                        <ImageButton Source="info.png"
+                                     HeightRequest="18"
+                                     WidthRequest="18"
+                                     Padding="0"
+                                     BackgroundColor="Transparent"
+                                     VerticalOptions="Center"
+                                     Command="{Binding ToggleRpeHelpCommand}"
+                                     IsVisible="{Binding ShowPlanRpeInfo}" />
+                    </HorizontalStackLayout>
+
+                    <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 12"
+                            BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#101720}"
+                            Padding="12,10"
+                            IsVisible="{Binding ShowRpeHelp}">
+                        <Label Text="{Binding RpeHelpText}"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                    </Border>
+
+                    <Label Text="{Binding ActivePlanSummary}"
+                           FontSize="13"
+                           TextColor="{AppThemeBinding Light=#5E6B7B, Dark=#A4B2C5}"
+                           IsVisible="{Binding ShowPlanCompletedState}" />
+
+                    <Button Text="{Binding ManualWorkoutButtonText}"
+                            Command="{Binding ShowManualWorkoutEntryCommand}"
+                            HorizontalOptions="Start"
+                            IsVisible="{Binding ShowManualWorkoutPrompt}" />
 
                     <CollectionView ItemsSource="{Binding RecommendedPlanWorkouts}"
                                     x:Name="RecommendationsList"
-                                    IsVisible="{Binding HasRecommendedPlanWorkouts}"
+                                    IsVisible="{Binding ShowPlanSuggestionsSection}"
                                     SelectionMode="None"
                                     HeightRequest="220">
                         <CollectionView.ItemTemplate>
@@ -68,31 +102,44 @@
                                                     CornerRadius="8"
                                                     IsVisible="{Binding ShowUseButton}" />
                                         </Grid>
-                                        <Grid ColumnDefinitions="Auto,Auto"
-                                              ColumnSpacing="12"
+                                        <Grid ColumnDefinitions="Auto,Auto,Auto"
+                                              ColumnSpacing="16"
                                               HorizontalOptions="Start"
                                               IsVisible="{Binding ShowDetails}">
                                             <VerticalStackLayout Grid.Column="0"
                                                                  Spacing="1">
                                                 <Label Text="{Binding Workout.Sets, StringFormat='Sets: {0}'}"
                                                        FontSize="12"
-                                                       TextColor="Gray"
+                                                       TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
                                                        LineBreakMode="TailTruncation" />
-                                                <Label Text="{Binding Workout.Reps, StringFormat='Reps: {0}'}"
+                                                <Label Text="{Binding RepDisplayText}"
                                                        FontSize="12"
-                                                       TextColor="Gray"
+                                                       TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
                                                        LineBreakMode="TailTruncation" />
                                             </VerticalStackLayout>
                                             <VerticalStackLayout Grid.Column="1"
                                                                  Spacing="1">
-                                                <Label Text="{Binding LastUsedWeight, StringFormat='Weight: {0}'}"
+                                                <Label Text="{Binding WeightDisplayText}"
                                                        FontSize="12"
-                                                       TextColor="Gray"
+                                                       TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
                                                        LineBreakMode="TailTruncation" />
                                                 <Label Text="{Binding Workout.MuscleGroup, StringFormat='Focus: {0}'}"
                                                        FontSize="12"
-                                                       TextColor="Gray"
+                                                       TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
                                                        LineBreakMode="TailTruncation" />
+                                            </VerticalStackLayout>
+                                            <VerticalStackLayout Grid.Column="2"
+                                                                 Spacing="1">
+                                                <Label Text="{Binding TargetRpeText}"
+                                                       FontSize="12"
+                                                       TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
+                                                       LineBreakMode="TailTruncation"
+                                                       IsVisible="{Binding HasTargetRpe}" />
+                                                <Label Text="{Binding TargetRestText}"
+                                                       FontSize="12"
+                                                       TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
+                                                       LineBreakMode="TailTruncation"
+                                                       IsVisible="{Binding HasTargetRest}" />
                                             </VerticalStackLayout>
                                         </Grid>
                                         <Label Text="{Binding SelectedText}"
@@ -108,7 +155,7 @@
                 </VerticalStackLayout>
             </Border>
 
-            <Border IsVisible="{Binding IsQuickAddMode}"
+            <Border IsVisible="{Binding ShowQuickAddCard}"
                     Stroke="#D5DAE1"
                     StrokeThickness="1"
                     StrokeShape="RoundRectangle 10"
@@ -126,7 +173,7 @@
                            FontSize="16"
                            IsVisible="{Binding ShowQuickAddInlineEditors}" />
                     <Grid Grid.Row="1"
-                          ColumnDefinitions="Auto,Auto"
+                          ColumnDefinitions="Auto,Auto,Auto"
                           ColumnSpacing="12"
                           HorizontalOptions="Start"
                           IsVisible="{Binding ShowQuickAddReadOnlySummary}">
@@ -134,23 +181,38 @@
                                              Spacing="1">
                             <Label Text="{Binding Sets, StringFormat='Sets: {0}'}"
                                    FontSize="12"
-                                   TextColor="Gray" />
-                            <Label Text="{Binding Reps, StringFormat='Reps: {0}'}"
+                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}" />
+                            <Label Text="{Binding CurrentRepsSummary}"
                                    FontSize="12"
-                                   TextColor="Gray" />
+                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}" />
                         </VerticalStackLayout>
                         <VerticalStackLayout Grid.Column="1"
                                              Spacing="1">
-                            <Label Text="{Binding Weight, StringFormat='Weight: {0}'}"
+                            <Label Text="{Binding WeightSummaryText}"
                                    FontSize="12"
-                                   TextColor="Gray" />
+                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}" />
+                            <Label Text="{Binding WeightTotalPreviewText}"
+                                   FontSize="11"
+                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
+                                   IsVisible="{Binding ShowWeightTotalPreview}" />
                             <Label Text="{Binding SelectedMuscleGroup, StringFormat='Focus: {0}'}"
                                    FontSize="12"
-                                   TextColor="Gray" />
+                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}" />
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="2"
+                                             Spacing="1">
+                            <Label Text="{Binding PlannedTargetRpeSummary}"
+                                   FontSize="11"
+                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
+                                   IsVisible="{Binding HasPlannedTargetRpe}" />
+                            <Label Text="{Binding PlannedTargetRestSummary}"
+                                   FontSize="11"
+                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
+                                   IsVisible="{Binding HasPlannedTargetRest}" />
                         </VerticalStackLayout>
                     </Grid>
                     <Grid Grid.Row="1"
-                          ColumnDefinitions="Auto,Auto"
+                          ColumnDefinitions="Auto,Auto,Auto"
                           ColumnSpacing="12"
                           HorizontalOptions="Start"
                           IsVisible="{Binding ShowQuickAddInlineEditors}">
@@ -162,7 +224,7 @@
                                   ColumnSpacing="4">
                                 <Label Text="Sets:"
                                        FontSize="12"
-                                       TextColor="Gray"
+                                       TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
                                        VerticalOptions="Center" />
                                 <Entry Grid.Column="1"
                                        Text="{Binding Sets}"
@@ -173,39 +235,55 @@
                                 <Label Grid.Column="2"
                                        Text="Reps:"
                                        FontSize="12"
-                                       TextColor="Gray"
+                                       TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
                                        VerticalOptions="Center"
                                        IsVisible="False" />
                             </Grid>
                             <Grid Grid.Row="1"
                                   ColumnDefinitions="Auto,*"
                                   ColumnSpacing="4">
-                                <Label Text="Reps:"
+                                <Label Text="{Binding RepsLabel}"
                                        FontSize="12"
-                                       TextColor="Gray"
+                                       TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
                                        VerticalOptions="Center" />
-                                <Entry Grid.Column="1"
-                                       Text="{Binding Reps}"
-                                       Placeholder="0"
-                                       Keyboard="Numeric"
-                                       FontSize="12"
-                                       WidthRequest="44" />
+                                <Grid Grid.Column="1"
+                                      ColumnDefinitions="28,44,28"
+                                      ColumnSpacing="4">
+                                    <Button Text="-"
+                                            Padding="0"
+                                            HeightRequest="28"
+                                            WidthRequest="28"
+                                            Command="{Binding DecreaseRepsCommand}" />
+                                    <Entry Grid.Column="1"
+                                           Text="{Binding Reps}"
+                                           Placeholder="0"
+                                           Keyboard="Numeric"
+                                           FontSize="12"
+                                           HorizontalTextAlignment="Center"
+                                           WidthRequest="44" />
+                                    <Button Grid.Column="2"
+                                            Text="+"
+                                            Padding="0"
+                                            HeightRequest="28"
+                                            WidthRequest="28"
+                                            Command="{Binding IncreaseRepsCommand}" />
+                                </Grid>
                             </Grid>
                         </Grid>
                         <Grid Grid.Column="1"
-                              RowDefinitions="Auto,Auto"
+                              RowDefinitions="Auto,Auto,Auto"
                               RowSpacing="4">
                             <Grid Grid.Row="0"
                                   ColumnDefinitions="Auto,*"
                                   ColumnSpacing="4">
-                                <Label Text="Weight:"
+                                <Label Text="{Binding WeightLabel}"
                                        FontSize="12"
-                                       TextColor="Gray"
+                                       TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
                                        VerticalOptions="Center"
                                        IsVisible="{Binding ShowStandardWeightInput}" />
                                 <Entry Grid.Column="1"
                                        Text="{Binding Weight}"
-                                       Placeholder="0"
+                                       Placeholder="{Binding WeightPlaceholder}"
                                        Keyboard="Numeric"
                                        FontSize="12"
                                        WidthRequest="70"
@@ -250,9 +328,18 @@
                             <Grid Grid.Row="1"
                                   ColumnDefinitions="Auto,*"
                                   ColumnSpacing="4">
+                                <Label Text="{Binding WeightTotalPreviewText}"
+                                       FontSize="11"
+                                       TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
+                                       Grid.ColumnSpan="2"
+                                       IsVisible="{Binding ShowWeightTotalPreview}" />
+                            </Grid>
+                            <Grid Grid.Row="2"
+                                  ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="4">
                                 <Label Text="Focus:"
                                        FontSize="12"
-                                       TextColor="Gray"
+                                       TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
                                        VerticalOptions="Center" />
                                 <Picker Grid.Column="1"
                                         Title="Select Muscle Group"
@@ -262,6 +349,17 @@
                                         SelectedItem="{Binding SelectedMuscleGroup}" />
                             </Grid>
                         </Grid>
+                        <VerticalStackLayout Grid.Column="2"
+                                             Spacing="4">
+                            <Label Text="{Binding PlannedTargetRpeSummary}"
+                                   FontSize="12"
+                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
+                                   IsVisible="{Binding HasPlannedTargetRpe}" />
+                            <Label Text="{Binding PlannedTargetRestSummary}"
+                                   FontSize="12"
+                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
+                                   IsVisible="{Binding HasPlannedTargetRest}" />
+                        </VerticalStackLayout>
                     </Grid>
                     <ImageButton Grid.RowSpan="2"
                                  Source="edit_icon.png"
@@ -278,15 +376,23 @@
             </Border>
 
             <VerticalStackLayout Spacing="2"
-                                 IsVisible="{Binding ShowStandaloneWeightField}">
-                <Label Text="Weight"
+                                 IsVisible="{Binding ShowStandaloneWeightEditor}">
+                <Label Text="{Binding WeightLabel}"
                        FontAttributes="Bold"
                        IsVisible="{Binding ShowStandardWeightInput}" />
                 <Entry x:Name="WeightEntry"
-                       Placeholder="Enter weight (lbs or kg)" 
+                       Placeholder="{Binding WeightPlaceholder}" 
                        Keyboard="Numeric" 
                        Text="{Binding Weight}"
                        IsVisible="{Binding ShowStandardWeightInput}" />
+                <Label Text="{Binding WeightHelperText}"
+                       FontSize="11"
+                       TextColor="Gray"
+                       IsVisible="{Binding HasWeightHelperText}" />
+                <Label Text="{Binding WeightTotalPreviewText}"
+                       FontSize="11"
+                       TextColor="Gray"
+                       IsVisible="{Binding ShowWeightTotalPreview}" />
                 <Label Text="{Binding BaseBodyWeightSummary}"
                        FontSize="12"
                        TextColor="Gray"
@@ -346,7 +452,7 @@
                        IsVisible="{Binding ShowResistanceAdjustment}" />
             </VerticalStackLayout>
 
-            <VerticalStackLayout IsVisible="{Binding ShowAdvancedEditorSection}"
+            <VerticalStackLayout IsVisible="{Binding ShowAdvancedEditorContent}"
                                    Spacing="5">
                 <VerticalStackLayout Spacing="2">
                     <Label Text="Focus" FontAttributes="Bold" />
@@ -383,11 +489,27 @@
                 </CollectionView>
 
                 <VerticalStackLayout Spacing="2">
-                    <Label Text="Reps" FontAttributes="Bold" />
-                    <Entry x:Name="RepsEntry"
-                           Placeholder="Enter reps" 
-                           Keyboard="Numeric" 
-                           Text="{Binding Reps}" />
+                    <Label Text="{Binding RepsLabel}" FontAttributes="Bold" />
+                    <Grid ColumnDefinitions="36,92,36"
+                          ColumnSpacing="8">
+                        <Button Text="-"
+                                Padding="0"
+                                Command="{Binding DecreaseRepsCommand}" />
+                        <Entry x:Name="RepsEntry"
+                               Grid.Column="1"
+                               Placeholder="Enter reps" 
+                               Keyboard="Numeric" 
+                               HorizontalTextAlignment="Center"
+                               Text="{Binding Reps}" />
+                        <Button Grid.Column="2"
+                                Text="+"
+                                Padding="0"
+                                Command="{Binding IncreaseRepsCommand}" />
+                    </Grid>
+                    <Label Text="{Binding PlannedRepRangeSummary}"
+                           FontSize="11"
+                           TextColor="Gray"
+                           IsVisible="{Binding HasPlannedRepRange}" />
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Spacing="2">
@@ -401,6 +523,8 @@
 
             <Button Text="Add Workout" 
                     Clicked="OnAddWorkoutClicked"
+                    IsEnabled="{Binding CanAddWorkout}"
+                    IsVisible="{Binding ShowWorkoutEditor}"
                     HorizontalOptions="Center" />
             <Button
                     Text="View Workouts"

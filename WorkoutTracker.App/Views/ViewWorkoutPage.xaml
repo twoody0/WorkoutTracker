@@ -25,8 +25,10 @@
                                 </DataTrigger>
                             </StackLayout.Triggers>
                             <Label Text="{Binding Weight, StringFormat='Weight: {0}'}" />
-                            <Label Text="{Binding Reps, StringFormat='Reps: {0}'}" />
+                            <Label Text="{Binding RepDisplay, StringFormat='Reps: {0}'}" />
                             <Label Text="{Binding Sets, StringFormat='Sets: {0}'}" />
+                            <Label Text="{Binding EstimatedOneRepMax, StringFormat='Estimated 1RM: {0:N0}'}"
+                                   IsVisible="{Binding HasEstimatedOneRepMax}" />
                         </StackLayout>
 
                         <!-- Cardio Section -->

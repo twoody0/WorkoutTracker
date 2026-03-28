@@ -54,7 +54,7 @@
                                                FontSize="12"
                                                TextColor="Gray"
                                                IsVisible="{Binding ShowWeightLiftingDetails}" />
-                                        <Label Text="{Binding Reps, StringFormat='Reps: {0}'}"
+                                        <Label Text="{Binding RepDisplay, StringFormat='Reps: {0}'}"
                                                FontSize="12"
                                                TextColor="Gray"
                                                IsVisible="{Binding ShowWeightLiftingDetails}" />

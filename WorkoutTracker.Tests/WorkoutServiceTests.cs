@@ -9,6 +9,16 @@ namespace WorkoutTracker.Tests;
 public class WorkoutServiceTests
 {
     [TestMethod]
+    public void Workout_CalculatesEstimatedOneRepMaxAndVolume()
+    {
+        var workout = new Workout("Bench Press", 225, 5, 3, "Chest", DayOfWeek.Monday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym");
+
+        Assert.AreEqual(3375, workout.TrainingVolume, 0.001);
+        Assert.AreEqual(255, workout.EstimatedOneRepMax, 0.001);
+        Assert.IsTrue(workout.HasEstimatedOneRepMax);
+    }
+
+    [TestMethod]
     public async Task AddWorkout_StoresWorkoutInSQLite()
     {
         var tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));

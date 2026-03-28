@@ -115,17 +115,45 @@
                                                     BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#1A2230}"
                                                     StrokeShape="RoundRectangle 18"
                                                     Padding="12">
-                                                <VerticalStackLayout Spacing="4">
+                                                <VerticalStackLayout Spacing="6">
                                                     <Label Text="{Binding Name}"
                                                            FontSize="16"
                                                            FontAttributes="Bold" />
 
-                                                    <Label Text="{Binding Sets, StringFormat='Strength: {0} sets'}"
-                                                           FontSize="13"
-                                                           IsVisible="{Binding Type, Converter={StaticResource IsWeightLiftingConverter}}" />
-                                                    <Label Text="{Binding Reps, StringFormat='Target reps: {0}'}"
-                                                           FontSize="13"
-                                                           IsVisible="{Binding Type, Converter={StaticResource IsWeightLiftingConverter}}" />
+                                                    <Grid ColumnDefinitions="Auto,Auto,Auto"
+                                                          ColumnSpacing="16"
+                                                          HorizontalOptions="Start"
+                                                          IsVisible="{Binding Type, Converter={StaticResource IsWeightLiftingConverter}}">
+                                                        <VerticalStackLayout Grid.Column="0"
+                                                                             Spacing="1">
+                                                            <Label Text="{Binding Sets, StringFormat='Sets: {0}'}"
+                                                                   FontSize="13"
+                                                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}" />
+                                                            <Label Text="{Binding RepDisplay, StringFormat='Reps: {0}'}"
+                                                                   FontSize="13"
+                                                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}" />
+                                                        </VerticalStackLayout>
+                                                        <VerticalStackLayout Grid.Column="1"
+                                                                             Spacing="1">
+                                                            <Label Text="{Binding Weight, StringFormat='Weight: {0}'}"
+                                                                   FontSize="13"
+                                                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}" />
+                                                            <Label Text="{Binding MuscleGroup, StringFormat='Focus: {0}'}"
+                                                                   FontSize="13"
+                                                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}" />
+                                                        </VerticalStackLayout>
+                                                        <VerticalStackLayout Grid.Column="2"
+                                                                             Spacing="1">
+                                                            <Label Text="{Binding TargetRpeDisplay, StringFormat='RPE: {0}'}"
+                                                                   FontSize="13"
+                                                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
+                                                                   IsVisible="{Binding HasTargetRpe}" />
+                                                            <Label Text="{Binding TargetRestRange, StringFormat='Rest: {0}'}"
+                                                                   FontSize="13"
+                                                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
+                                                                   IsVisible="{Binding HasTargetRestRange}" />
+                                                        </VerticalStackLayout>
+                                                    </Grid>
 
                                                     <Label Text="{Binding DurationMinutes, StringFormat='Time goal: {0} min'}"
                                                            FontSize="13"
@@ -137,9 +165,6 @@
                                                             FontSize="13"
                                                             IsVisible="{Binding HasSteps}" />
 
-                                                    <Label Text="{Binding MuscleGroup, StringFormat='Focus: {0}'}"
-                                                           FontSize="12"
-                                                           TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}" />
                                                 </VerticalStackLayout>
                                             </Border>
                                         </DataTemplate>

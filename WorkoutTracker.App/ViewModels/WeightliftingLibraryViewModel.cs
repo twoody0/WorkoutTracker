@@ -23,7 +23,7 @@ public class WeightliftingLibraryViewModel : BaseViewModel
         Exercises = new ObservableCollection<WeightliftingExercise>();
         MuscleGroups = new List<string>
         {
-            "Chest", "Back", "Legs", "Shoulders", "Biceps", "Triceps", "Abs"
+            "Chest", "Back", "Legs", "Shoulders", "Arms", "Biceps", "Triceps", "Core", "Abs"
         };
     }
 
