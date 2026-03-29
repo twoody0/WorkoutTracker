@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
@@ -11,6 +12,19 @@ namespace WorkoutTracker.ViewModels;
 
 public class CardioWorkoutViewModel : BaseViewModel
 {
+    private static readonly string[] CommonCardioNames =
+    [
+        "Run",
+        "Walk",
+        "Bike Ride",
+        "Row",
+        "Elliptical",
+        "Stair Climber",
+        "Hike",
+        "Swim",
+        "Jump Rope"
+    ];
+
     private const string IsTrackingPreferenceKey = "cardio_session.is_tracking";
     private const string StartedAtUtcPreferenceKey = "cardio_session.started_at_utc";
     private const string NamePreferenceKey = "cardio_session.name";
@@ -24,9 +38,10 @@ public class CardioWorkoutViewModel : BaseViewModel
     private int _sessionSteps;
     private TimeSpan _elapsedTime = TimeSpan.Zero;
     private string _distanceMilesText = string.Empty;
-    private string _sessionName = "Cardio Session";
+    private string _sessionName = string.Empty;
     private bool _isTracking;
     private bool _useStepTracking;
+    private bool _isSessionNameFocused;
     private int _plannedDurationMinutes;
     private double _plannedDistanceMiles;
     private double? _plannedTargetRpe;
@@ -36,6 +51,8 @@ public class CardioWorkoutViewModel : BaseViewModel
         _workoutService = workoutService;
         _stepCounterService = stepCounterService;
         _stepCounterService.StepsUpdated += OnStepsUpdated;
+        _useStepTracking = true;
+        CardioNameSuggestions = new ObservableCollection<string>(CommonCardioNames);
 
         ApplyWorkoutTemplateIfAvailable();
         RestoreTrackingState();
@@ -44,7 +61,14 @@ public class CardioWorkoutViewModel : BaseViewModel
     public int SessionSteps
     {
         get => _sessionSteps;
-        set => SetProperty(ref _sessionSteps, value);
+        set
+        {
+            if (SetProperty(ref _sessionSteps, value))
+            {
+                OnPropertyChanged(nameof(HasEstimatedDistanceFromSteps));
+                OnPropertyChanged(nameof(EstimatedDistanceFromStepsText));
+            }
+        }
     }
 
     public TimeSpan ElapsedTime
@@ -81,11 +105,28 @@ public class CardioWorkoutViewModel : BaseViewModel
         get => _sessionName;
         set
         {
-            if (SetProperty(ref _sessionName, value) && IsTracking)
+            if (SetProperty(ref _sessionName, value))
             {
-                Preferences.Set(NamePreferenceKey, value ?? string.Empty);
+                UpdateCardioNameSuggestions();
+                OnPropertyChanged(nameof(SupportsStepTrackingForSelectedActivity));
+                OnPropertyChanged(nameof(StepTrackingStatusText));
+                OnPropertyChanged(nameof(HasEstimatedDistanceFromSteps));
+                OnPropertyChanged(nameof(EstimatedDistanceFromStepsText));
+
+                if (IsTracking)
+                {
+                    Preferences.Set(NamePreferenceKey, value ?? string.Empty);
+                }
             }
         }
+    }
+
+    public ObservableCollection<string> CardioNameSuggestions { get; }
+
+    public bool IsSessionNameFocused
+    {
+        get => _isSessionNameFocused;
+        set => SetProperty(ref _isSessionNameFocused, value);
     }
 
     public bool IsTracking
@@ -103,6 +144,8 @@ public class CardioWorkoutViewModel : BaseViewModel
             {
                 Preferences.Set(UseStepTrackingPreferenceKey, value);
             }
+
+            OnPropertyChanged(nameof(StepTrackingStatusText));
         }
     }
 
@@ -155,6 +198,18 @@ public class CardioWorkoutViewModel : BaseViewModel
     public string PlannedDurationText => $"Time: {PlannedDurationMinutes} min";
     public string PlannedDistanceText => $"Distance: {PlannedDistanceMiles:0.#} mi";
     public string PlannedTargetRpeText => $"RPE: {PlannedTargetRpe.GetValueOrDefault():0.#}";
+    public bool SupportsStepTrackingForSelectedActivity => SupportsStepTracking(SessionName);
+    public string StepTrackingStatusText => !SupportsStepTrackingForSelectedActivity
+        ? "This activity does not use step tracking."
+        : UseStepTracking
+            ? "Step tracking will be captured automatically when supported."
+            : "Step tracking is off for this session.";
+    public bool HasEstimatedDistanceFromSteps => SupportsStepTrackingForSelectedActivity && GetEstimatedDistanceMiles() > 0;
+    public string EstimatedDistanceFromStepsText => HasEstimatedDistanceFromSteps
+        ? $"Estimated distance from steps: {GetEstimatedDistanceMiles():0.##} mi"
+        : SupportsStepTrackingForSelectedActivity
+            ? "Estimated distance will appear here when enough steps are tracked."
+            : "Distance will need to be entered or confirmed for this activity.";
 
     public ICommand StartSessionCommand => new Command(async () => await StartSessionAsync());
     public ICommand StopSessionCommand => new Command(async () => await StopSessionAsync());
@@ -166,12 +221,12 @@ public class CardioWorkoutViewModel : BaseViewModel
             return;
         }
 
-        SessionName = string.IsNullOrWhiteSpace(template.Name) ? "Cardio Session" : template.Name;
+        SessionName = string.IsNullOrWhiteSpace(template.Name) ? string.Empty : template.Name;
         DistanceMilesText = template.DistanceMiles > 0 ? template.DistanceMiles.ToString("0.#") : string.Empty;
         PlannedDurationMinutes = template.DurationMinutes;
         PlannedDistanceMiles = template.DistanceMiles;
         PlannedTargetRpe = template.TargetRpe;
-        UseStepTracking = template.Steps > 0;
+        UseStepTracking = true;
         WorkoutTemplateCache.Template = null;
     }
 
@@ -191,12 +246,12 @@ public class CardioWorkoutViewModel : BaseViewModel
 
         SessionName = Preferences.Get(NamePreferenceKey, SessionName);
         DistanceMilesText = Preferences.Get(DistancePreferenceKey, DistanceMilesText);
-        UseStepTracking = Preferences.Get(UseStepTrackingPreferenceKey, false);
+        UseStepTracking = Preferences.Get(UseStepTrackingPreferenceKey, true);
         _sessionStartedAtUtc = startedAtUtc;
         IsTracking = true;
         RefreshElapsedTime();
 
-        if (UseStepTracking)
+        if (UseStepTracking && SupportsStepTrackingForSelectedActivity)
         {
             _stepCounterService.StartTracking();
         }
@@ -211,9 +266,14 @@ public class CardioWorkoutViewModel : BaseViewModel
             return;
         }
 
-        if (UseStepTracking && !await EnsureActivityRecognitionPermissionAsync())
+        if (!SupportsStepTrackingForSelectedActivity)
         {
-            return;
+            UseStepTracking = false;
+        }
+        else if (UseStepTracking && !await EnsureActivityRecognitionPermissionAsync())
+        {
+            UseStepTracking = false;
+            OnPropertyChanged(nameof(StepTrackingStatusText));
         }
 
         SessionSteps = 0;
@@ -222,7 +282,7 @@ public class CardioWorkoutViewModel : BaseViewModel
         IsTracking = true;
         SaveTrackingState();
 
-        if (UseStepTracking)
+        if (UseStepTracking && SupportsStepTrackingForSelectedActivity)
         {
             _stepCounterService.StartTracking();
         }
@@ -239,7 +299,7 @@ public class CardioWorkoutViewModel : BaseViewModel
 
         _sessionLoopCancellation?.Cancel();
 
-        if (UseStepTracking)
+        if (UseStepTracking && SupportsStepTrackingForSelectedActivity)
         {
             _stepCounterService.StopTracking();
         }
@@ -248,7 +308,7 @@ public class CardioWorkoutViewModel : BaseViewModel
         IsTracking = false;
         ClearTrackingState();
 
-        double.TryParse(DistanceMilesText, out var parsedDistanceMiles);
+        var parsedDistanceMiles = await ResolveDistanceMilesAsync();
         var sessionEndedAt = DateTimeOffset.UtcNow;
         var sessionStartedAt = _sessionStartedAtUtc.Value;
 
@@ -262,7 +322,7 @@ public class CardioWorkoutViewModel : BaseViewModel
             type: WorkoutType.Cardio,
             gymLocation: "Outdoor")
         {
-            Steps = UseStepTracking ? SessionSteps : 0,
+            Steps = UseStepTracking && SupportsStepTrackingForSelectedActivity ? SessionSteps : 0,
             DurationMinutes = Math.Max(1, (int)Math.Ceiling((sessionEndedAt - sessionStartedAt).TotalMinutes)),
             DistanceMiles = parsedDistanceMiles,
             EndTime = sessionEndedAt.LocalDateTime,
@@ -275,6 +335,9 @@ public class CardioWorkoutViewModel : BaseViewModel
         SessionSteps = 0;
         ElapsedTime = TimeSpan.Zero;
         DistanceMilesText = HasPlannedDistance ? PlannedDistanceMiles.ToString("0.#") : string.Empty;
+        SessionName = string.Empty;
+        UseStepTracking = true;
+        OnPropertyChanged(nameof(StepTrackingStatusText));
     }
 
     private void StartSessionLoop()
@@ -331,9 +394,122 @@ public class CardioWorkoutViewModel : BaseViewModel
 
     private void OnStepsUpdated(object? sender, int steps)
     {
-        if (UseStepTracking)
+        if (UseStepTracking && SupportsStepTrackingForSelectedActivity)
         {
             SessionSteps = steps;
+        }
+    }
+
+    private async Task<double> ResolveDistanceMilesAsync()
+    {
+        if (double.TryParse(DistanceMilesText, out var parsedDistanceMiles) && parsedDistanceMiles > 0)
+        {
+            return parsedDistanceMiles;
+        }
+
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page == null)
+        {
+            return 0;
+        }
+
+        var promptResult = await page.DisplayPromptAsync(
+            "Distance",
+            GetDistancePromptMessage(),
+            accept: "Save",
+            cancel: "Skip",
+            placeholder: "Miles",
+            initialValue: GetInitialDistanceValue(),
+            keyboard: Keyboard.Numeric);
+
+        if (double.TryParse(promptResult, out parsedDistanceMiles) && parsedDistanceMiles > 0)
+        {
+            DistanceMilesText = parsedDistanceMiles.ToString("0.#");
+            return parsedDistanceMiles;
+        }
+
+        return 0;
+    }
+
+    private double GetEstimatedDistanceMiles()
+    {
+        if (SessionSteps <= 0)
+        {
+            return 0;
+        }
+
+        return Math.Round(SessionSteps / 2000d, 2);
+    }
+
+    private string GetInitialDistanceValue()
+    {
+        if (HasPlannedDistance)
+        {
+            return PlannedDistanceMiles.ToString("0.#");
+        }
+
+        var estimatedDistance = GetEstimatedDistanceMiles();
+        return estimatedDistance > 0 ? estimatedDistance.ToString("0.##") : string.Empty;
+    }
+
+    private string GetDistancePromptMessage()
+    {
+        var estimatedDistance = GetEstimatedDistanceMiles();
+        if (SupportsStepTrackingForSelectedActivity && estimatedDistance > 0)
+        {
+            return $"We estimated {estimatedDistance:0.##} miles from {SessionSteps:N0} steps. Edit it if needed.";
+        }
+
+        return "Enter the distance for this cardio workout.";
+    }
+
+    private static bool SupportsStepTracking(string? sessionName)
+    {
+        if (string.IsNullOrWhiteSpace(sessionName))
+        {
+            return true;
+        }
+
+        var normalized = sessionName.Trim().ToLowerInvariant();
+        return normalized.Contains("run") ||
+               normalized.Contains("walk") ||
+               normalized.Contains("hike") ||
+               normalized.Contains("stair");
+    }
+
+    public void SelectCardioName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return;
+        }
+
+        SessionName = name;
+        IsSessionNameFocused = false;
+    }
+
+    public void ShowAllCardioNameSuggestions()
+    {
+        CardioNameSuggestions.Clear();
+        foreach (var suggestion in CommonCardioNames)
+        {
+            CardioNameSuggestions.Add(suggestion);
+        }
+    }
+
+    private void UpdateCardioNameSuggestions()
+    {
+        var query = SessionName?.Trim() ?? string.Empty;
+        var suggestions = string.IsNullOrWhiteSpace(query)
+            ? CommonCardioNames
+            : CommonCardioNames
+                .Where(name => name.Contains(query, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+
+        CardioNameSuggestions.Clear();
+        foreach (var suggestion in suggestions)
+        {
+            CardioNameSuggestions.Add(suggestion);
         }
     }
 

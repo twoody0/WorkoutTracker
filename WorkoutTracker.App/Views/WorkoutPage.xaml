@@ -6,7 +6,7 @@
     x:Class="WorkoutTracker.Views.WorkoutPage"
     Title="Add Workout">
 
-    <ScrollView>
+    <ScrollView x:Name="PageScrollView">
         <VerticalStackLayout Padding="20" Spacing="5">
             <Label Text="Add a Workout" 
                    FontSize="20" 
@@ -15,6 +15,14 @@
                    FontSize="14"
                    HorizontalOptions="Center"
                    TextColor="Gray" />
+
+            <Button Text="Track Cardio Session"
+                    Command="{Binding StartManualCardioSessionCommand}"
+                    HorizontalOptions="Fill"
+                    BackgroundColor="{AppThemeBinding Light=#E7F6F4, Dark=#143936}"
+                    TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}"
+                    Margin="0,8,0,8"
+                    IsVisible="{Binding ShowTrackCardioSessionButton}" />
 
             <Border Stroke="{AppThemeBinding Light=#D9E5D2, Dark={StaticResource Gray500}}"
                      StrokeThickness="1"
@@ -56,11 +64,11 @@
                     <Label Text="{Binding ActivePlanSummary}"
                            FontSize="13"
                            TextColor="{AppThemeBinding Light=#5E6B7B, Dark=#A4B2C5}"
-                           IsVisible="{Binding ShowPlanCompletedState}" />
+                           IsVisible="{Binding ShowPlanCompletedSummary}" />
 
                     <Button Text="{Binding ManualWorkoutButtonText}"
                             Command="{Binding ShowManualWorkoutEntryCommand}"
-                            HorizontalOptions="Start"
+                            HorizontalOptions="Center"
                             IsVisible="{Binding ShowManualWorkoutPrompt}" />
 
                     <CollectionView ItemsSource="{Binding RecommendedPlanWorkouts}"
@@ -476,95 +484,10 @@
                 </Grid>
             </Border>
 
-            <VerticalStackLayout Spacing="2"
-                                 IsVisible="{Binding ShowStandaloneWeightEditor}">
-                <Label Text="{Binding WeightLabel}"
-                       FontAttributes="Bold"
-                       IsVisible="{Binding ShowStandardWeightInput}" />
-                <Entry x:Name="WeightEntry"
-                       Placeholder="{Binding WeightPlaceholder}" 
-                       Keyboard="Numeric" 
-                       Text="{Binding Weight}"
-                       Unfocused="WeightEntry_Unfocused"
-                       IsVisible="{Binding ShowStandardWeightInput}" />
-                <Label Text="{Binding WeightHelperText}"
-                       FontSize="11"
-                       TextColor="Gray"
-                       IsVisible="{Binding HasWeightHelperText}" />
-                <Label Text="{Binding WeightTotalPreviewText}"
-                       FontSize="11"
-                       TextColor="Gray"
-                       IsVisible="{Binding ShowWeightTotalPreview}" />
-                <Label Text="{Binding BaseBodyWeightSummary}"
-                       FontSize="12"
-                       TextColor="Gray"
-                       HorizontalOptions="Fill"
-                       HorizontalTextAlignment="Start"
-                       Margin="58,0,0,0"
-                       IsVisible="{Binding ShowResistanceAdjustment}" />
-                <Label Text="Adjustment (+ resistance / - assistance)"
-                       FontAttributes="Bold"
-                       FontSize="12"
-                       HorizontalOptions="Fill"
-                       HorizontalTextAlignment="Start"
-                       Margin="58,0,0,0"
-                       IsVisible="{Binding ShowResistanceAdjustment}" />
-                <Grid ColumnDefinitions="24,60,24"
-                      ColumnSpacing="2"
-                      HorizontalOptions="Center"
-                      IsVisible="{Binding ShowResistanceAdjustment}">
-                    <Button Text="-"
-                            WidthRequest="24"
-                            HeightRequest="24"
-                            MinimumHeightRequest="24"
-                            MinimumWidthRequest="24"
-                            Padding="0"
-                            FontSize="11"
-                            CommandParameter="-5"
-                            Clicked="ResistanceAdjust_Clicked"
-                            Pressed="ResistanceAdjust_Pressed"
-                            Released="ResistanceAdjust_Released" />
-                    <Border Grid.Column="1"
-                            Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
-                            StrokeShape="RoundRectangle 12"
-                            Padding="0"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center">
-                        <Entry Text="{Binding ResistanceAdjustment}"
-                               Keyboard="Numeric"
-                               BackgroundColor="Transparent"
-                               ClearButtonVisibility="Never"
-                               HorizontalTextAlignment="Center"
-                               HorizontalOptions="Center"
-                               VerticalTextAlignment="Center"
-                               Margin="0"
-                               MaxLength="6" />
-                    </Border>
-                    <Button Grid.Column="2"
-                            Text="+"
-                            WidthRequest="24"
-                            HeightRequest="24"
-                            MinimumHeightRequest="24"
-                            MinimumWidthRequest="24"
-                            Padding="0"
-                            FontSize="11"
-                            CommandParameter="5"
-                            Clicked="ResistanceAdjust_Clicked"
-                            Pressed="ResistanceAdjust_Pressed"
-                            Released="ResistanceAdjust_Released" />
-                </Grid>
-                <Label Text="{Binding EffectiveLoadSummary}"
-                       FontSize="12"
-                       TextColor="Gray"
-                       HorizontalOptions="Fill"
-                       HorizontalTextAlignment="Start"
-                       Margin="58,0,0,0"
-                       IsVisible="{Binding ShowResistanceAdjustment}" />
-            </VerticalStackLayout>
-
             <VerticalStackLayout IsVisible="{Binding ShowAdvancedEditorContent}"
                                    Spacing="5">
-                <VerticalStackLayout Spacing="2">
+                <VerticalStackLayout Spacing="2"
+                                     IsVisible="{Binding ShowStrengthFields}">
                     <Label Text="Focus" FontAttributes="Bold" />
                     <Picker Title="Select Muscle Group"
                             ItemsSource="{Binding MuscleGroups}"
@@ -575,71 +498,204 @@
                     <Label Text="Exercise" FontAttributes="Bold" />
                     <Entry x:Name="ExerciseEntry"
                            Placeholder="Type exercise name..."
-                           Text="{Binding ExerciseSearchQuery}" 
+                           Text="{Binding ExerciseSearchQuery}"
+                           IsVisible="{Binding ShowStrengthFields}"
                            Focused="ExerciseEntry_Focused"
                            Unfocused="ExerciseEntry_Unfocused" />
                 </VerticalStackLayout>
 
-                <!-- CollectionView for suggestions -->
-                <CollectionView ItemsSource="{Binding ExerciseSuggestions}"
-                                IsVisible="{Binding IsNameFieldFocused}"
-                                SelectionMode="None">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <Border Padding="10" Margin="5" Stroke="LightGray" StrokeShape="RoundRectangle 5">
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer 
-                                        Command="{Binding Source={x:Reference Page}, Path=BindingContext.SelectExerciseCommand}"
-                                        CommandParameter="{Binding .}" />
-                                </Border.GestureRecognizers>
-                                <Label Text="{Binding Name}" />
-                            </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
+                <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
+                        StrokeShape="RoundRectangle 14"
+                        Padding="6"
+                        MaximumHeightRequest="220"
+                        IsVisible="{Binding IsNameFieldFocused}">
+                    <CollectionView ItemsSource="{Binding ExerciseSuggestions}"
+                                    SelectionMode="Single"
+                                    SelectionChanged="OnExerciseSelected">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="10,8"
+                                        Margin="0,0,0,6"
+                                        Stroke="{AppThemeBinding Light=#E5EAF1, Dark=#334155}"
+                                        StrokeShape="RoundRectangle 10">
+                                    <Label Text="{Binding Name}" />
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </Border>
 
-                <VerticalStackLayout Spacing="2">
-                    <Label Text="{Binding RepsLabel}" FontAttributes="Bold" />
-                    <Grid ColumnDefinitions="24,92,24"
-                          ColumnSpacing="10"
-                          Margin="4,0,0,0">
+                <VerticalStackLayout Spacing="2"
+                                     IsVisible="{Binding ShowStandaloneWeightEditor}">
+                    <Label Text="{Binding WeightLabel}"
+                           FontAttributes="Bold"
+                           IsVisible="{Binding ShowStandardWeightInput}" />
+                    <Entry x:Name="WeightEntry"
+                           Placeholder="{Binding WeightPlaceholder}"
+                           Keyboard="Numeric"
+                           Text="{Binding Weight}"
+                           Unfocused="WeightEntry_Unfocused"
+                           IsVisible="{Binding ShowStandardWeightInput}" />
+                    <Label Text="{Binding WeightHelperText}"
+                           FontSize="11"
+                           TextColor="Gray"
+                           IsVisible="{Binding HasWeightHelperText}" />
+                    <Label Text="{Binding WeightTotalPreviewText}"
+                           FontSize="11"
+                           TextColor="Gray"
+                           IsVisible="{Binding ShowWeightTotalPreview}" />
+                    <Label Text="{Binding BaseBodyWeightSummary}"
+                           FontSize="12"
+                           TextColor="Gray"
+                           HorizontalOptions="Fill"
+                           HorizontalTextAlignment="Start"
+                           Margin="58,0,0,0"
+                           IsVisible="{Binding ShowResistanceAdjustment}" />
+                    <Label Text="Adjustment (+ resistance / - assistance)"
+                           FontAttributes="Bold"
+                           FontSize="12"
+                           HorizontalOptions="Fill"
+                           HorizontalTextAlignment="Start"
+                           Margin="58,0,0,0"
+                           IsVisible="{Binding ShowResistanceAdjustment}" />
+                    <Grid ColumnDefinitions="24,60,24"
+                          ColumnSpacing="2"
+                          HorizontalOptions="Center"
+                          IsVisible="{Binding ShowResistanceAdjustment}">
                         <Button Text="-"
-                                Padding="0"
-                                HeightRequest="24"
                                 WidthRequest="24"
+                                HeightRequest="24"
                                 MinimumHeightRequest="24"
                                 MinimumWidthRequest="24"
+                                Padding="0"
                                 FontSize="11"
-                                Command="{Binding DecreaseRepsCommand}" />
-                        <Entry x:Name="RepsEntry"
-                               Grid.Column="1"
-                               Placeholder="Enter reps" 
-                               Keyboard="Numeric" 
-                               HorizontalTextAlignment="Center"
-                               Text="{Binding Reps}" />
+                                CommandParameter="-5"
+                                Clicked="ResistanceAdjust_Clicked"
+                                Pressed="ResistanceAdjust_Pressed"
+                                Released="ResistanceAdjust_Released" />
+                        <Border Grid.Column="1"
+                                Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
+                                StrokeShape="RoundRectangle 12"
+                                Padding="0"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center">
+                            <Entry Text="{Binding ResistanceAdjustment}"
+                                   Keyboard="Numeric"
+                                   BackgroundColor="Transparent"
+                                   ClearButtonVisibility="Never"
+                                   HorizontalTextAlignment="Center"
+                                   HorizontalOptions="Center"
+                                   VerticalTextAlignment="Center"
+                                   Margin="0"
+                                   MaxLength="6" />
+                        </Border>
                         <Button Grid.Column="2"
                                 Text="+"
-                                Padding="0"
-                                HeightRequest="24"
                                 WidthRequest="24"
+                                HeightRequest="24"
                                 MinimumHeightRequest="24"
                                 MinimumWidthRequest="24"
+                                Padding="0"
                                 FontSize="11"
-                                Command="{Binding IncreaseRepsCommand}" />
+                                CommandParameter="5"
+                                Clicked="ResistanceAdjust_Clicked"
+                                Pressed="ResistanceAdjust_Pressed"
+                                Released="ResistanceAdjust_Released" />
                     </Grid>
-                    <Label Text="{Binding PlannedRepRangeSummary}"
+                    <Label Text="{Binding EffectiveLoadSummary}"
+                           FontSize="12"
+                           TextColor="Gray"
+                           HorizontalOptions="Fill"
+                           HorizontalTextAlignment="Start"
+                           Margin="58,0,0,0"
+                           IsVisible="{Binding ShowResistanceAdjustment}" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="2"
+                                     IsVisible="{Binding ShowCardioFields}">
+                    <Label Text="{Binding ExercisePickerTitle}" FontAttributes="Bold" />
+                    <Picker Title="{Binding ExercisePickerTitle}"
+                            ItemsSource="{Binding ExerciseOptions}"
+                            SelectedItem="{Binding Name}" />
+                </VerticalStackLayout>
+
+                <Grid IsVisible="{Binding ShowStrengthFields}"
+                      ColumnDefinitions="*,*"
+                      ColumnSpacing="18"
+                      RowDefinitions="Auto,Auto">
+                    <VerticalStackLayout Grid.Row="0"
+                                         Grid.Column="0"
+                                         Spacing="2">
+                        <Label Text="{Binding RepsLabel}" FontAttributes="Bold" />
+                        <Grid ColumnDefinitions="22,64,22"
+                              ColumnSpacing="4"
+                              Margin="4,0,0,0">
+                            <Button Text="-"
+                                    Padding="0"
+                                    HeightRequest="24"
+                                    WidthRequest="22"
+                                    MinimumHeightRequest="24"
+                                    MinimumWidthRequest="22"
+                                    FontSize="11"
+                                    Command="{Binding DecreaseRepsCommand}" />
+                            <Entry x:Name="RepsEntry"
+                                   Grid.Column="1"
+                                   Placeholder="1"
+                                   Keyboard="Numeric"
+                                   HorizontalTextAlignment="Center"
+                                   Text="{Binding Reps}" />
+                            <Button Grid.Column="2"
+                                    Text="+"
+                                    Padding="0"
+                                    HeightRequest="24"
+                                    WidthRequest="22"
+                                    MinimumHeightRequest="24"
+                                    MinimumWidthRequest="22"
+                                    FontSize="11"
+                                    Command="{Binding IncreaseRepsCommand}" />
+                        </Grid>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Grid.Row="0"
+                                         Grid.Column="1"
+                                         Spacing="2">
+                        <Label Text="Sets" FontAttributes="Bold" />
+                        <Grid ColumnDefinitions="22,64,22"
+                              ColumnSpacing="4"
+                              Margin="4,0,0,0">
+                            <Button Text="-"
+                                    Padding="0"
+                                    HeightRequest="24"
+                                    WidthRequest="22"
+                                    MinimumHeightRequest="24"
+                                    MinimumWidthRequest="22"
+                                    FontSize="11"
+                                    Command="{Binding DecreaseSetsCommand}" />
+                            <Entry x:Name="SetsEntry"
+                                   Grid.Column="1"
+                                   Placeholder="1"
+                                   Keyboard="Numeric"
+                                   HorizontalTextAlignment="Center"
+                                   Text="{Binding Sets}" />
+                            <Button Grid.Column="2"
+                                    Text="+"
+                                    Padding="0"
+                                    HeightRequest="24"
+                                    WidthRequest="22"
+                                    MinimumHeightRequest="24"
+                                    MinimumWidthRequest="22"
+                                    FontSize="11"
+                                    Command="{Binding IncreaseSetsCommand}" />
+                        </Grid>
+                    </VerticalStackLayout>
+
+                    <Label Grid.Row="1"
+                           Grid.ColumnSpan="2"
+                           Text="{Binding PlannedRepRangeSummary}"
                            FontSize="11"
                            TextColor="Gray"
                            IsVisible="{Binding HasPlannedRepRange}" />
-                </VerticalStackLayout>
-
-                <VerticalStackLayout Spacing="2">
-                    <Label Text="Sets" FontAttributes="Bold" />
-                    <Entry x:Name="SetsEntry"
-                           Placeholder="Enter sets" 
-                           Keyboard="Numeric" 
-                           Text="{Binding Sets}" />
-                </VerticalStackLayout>
+                </Grid>
             </VerticalStackLayout>
 
             <Button Text="Add Workout" 

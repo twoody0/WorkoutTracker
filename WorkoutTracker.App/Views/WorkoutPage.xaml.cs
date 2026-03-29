@@ -52,7 +52,7 @@ public partial class WorkoutPage : ContentPage
         if (BindingContext is WorkoutViewModel vm)
         {
             vm.IsNameFieldFocused = true;
-            await vm.UpdateExerciseSuggestionsAsync();
+            await vm.UpdateExerciseSuggestionsAsync(showAllForCurrentGroup: true);
         }
     }
 
@@ -74,21 +74,18 @@ public partial class WorkoutPage : ContentPage
 
     private void OnExerciseSelected(object sender, SelectionChangedEventArgs e)
     {
-        if (e.CurrentSelection?.FirstOrDefault() is WeightliftingExercise exercise)
+        if (e.CurrentSelection?.FirstOrDefault() is WeightliftingExercise exercise &&
+            BindingContext is WorkoutViewModel vm)
         {
-            if (BindingContext is WorkoutViewModel vm)
-            {
-                vm.SelectExerciseCommand.Execute(exercise);
-            }
+            vm.SelectExerciseCommand.Execute(exercise);
         }
-        // Clear the selection so that the same item can be selected again if needed.
+
         ((CollectionView)sender).SelectedItem = null;
     }
     private async void OnAddWorkoutClicked(object sender, EventArgs e)
     {
         if (BindingContext is WorkoutViewModel vm)
         {
-            vm.Name = vm.ExerciseSearchQuery;
             vm.CommitBodyweightWeightInput();
 
             if (vm.AddWorkoutCommand.CanExecute(null))
@@ -98,13 +95,22 @@ public partial class WorkoutPage : ContentPage
         // Hide keyboard
         if (!OperatingSystem.IsMacCatalyst())
         {
-            await ExerciseEntry.HideKeyboardAsync();
+            if (ExerciseEntry.IsVisible)
+            {
+                await ExerciseEntry.HideKeyboardAsync();
+            }
             if (WeightEntry.IsVisible)
             {
                 await WeightEntry.HideKeyboardAsync();
             }
-            await RepsEntry.HideKeyboardAsync();
-            await SetsEntry.HideKeyboardAsync();
+            if (RepsEntry.IsVisible)
+            {
+                await RepsEntry.HideKeyboardAsync();
+            }
+            if (SetsEntry.IsVisible)
+            {
+                await SetsEntry.HideKeyboardAsync();
+            }
         }
     }
 
@@ -182,17 +188,32 @@ public partial class WorkoutPage : ContentPage
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName != nameof(WorkoutViewModel.SelectedRecommendationItem) ||
-            sender is not WorkoutViewModel vm ||
-            vm.SelectedRecommendationItem == null)
+        if (sender is not WorkoutViewModel vm)
         {
             return;
         }
 
-        MainThread.BeginInvokeOnMainThread(() =>
+        if (e.PropertyName == nameof(WorkoutViewModel.SelectedRecommendationItem) &&
+            vm.SelectedRecommendationItem != null)
         {
-            RecommendationsList?.ScrollTo(vm.SelectedRecommendationItem, position: ScrollToPosition.Center, animate: true);
-        });
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                RecommendationsList?.ScrollTo(vm.SelectedRecommendationItem, position: ScrollToPosition.Center, animate: true);
+            });
+            return;
+        }
+
+        if (e.PropertyName == nameof(WorkoutViewModel.ShowTrackCardioSessionButton) &&
+            vm.ShowTrackCardioSessionButton)
+        {
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                if (PageScrollView != null)
+                {
+                    await PageScrollView.ScrollToAsync(0, 0, true);
+                }
+            });
+        }
     }
 
     private void StartResistanceAdjustment(double delta)

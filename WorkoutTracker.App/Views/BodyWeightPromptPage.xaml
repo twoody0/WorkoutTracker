@@ -14,13 +14,29 @@
                 StrokeShape="RoundRectangle 24"
                 Padding="20">
             <VerticalStackLayout Spacing="16">
-                <VerticalStackLayout Spacing="6">
+                <Grid ColumnDefinitions="*,Auto"
+                      RowDefinitions="Auto,Auto"
+                      RowSpacing="6">
                     <Label x:Name="TitleLabel"
+                           Grid.Row="0"
+                           Grid.Column="0"
                            FontSize="22"
                            FontAttributes="Bold" />
+                    <Button Grid.Row="0"
+                            Grid.Column="1"
+                            Text="X"
+                            Clicked="OnCancelClicked"
+                            Padding="10,2"
+                            MinimumWidthRequest="36"
+                            MinimumHeightRequest="36"
+                            CornerRadius="18"
+                            BackgroundColor="{AppThemeBinding Light=#E5EAF1, Dark=#334155}"
+                            TextColor="{AppThemeBinding Light=#1F2937, Dark=#FFFFFF}" />
                     <Label x:Name="MessageLabel"
+                           Grid.Row="1"
+                           Grid.ColumnSpan="2"
                            TextColor="{AppThemeBinding Light=#5A6472, Dark=#A4B2C5}" />
-                </VerticalStackLayout>
+                </Grid>
 
                 <VerticalStackLayout Spacing="6">
                     <Label Text="Weight"
@@ -37,19 +53,14 @@
                            IsVisible="False" />
                 </VerticalStackLayout>
 
-                <Grid ColumnDefinitions="*,*"
-                      ColumnSpacing="12">
-                    <Button Grid.Column="0"
-                            Text="Cancel"
-                            Clicked="OnCancelClicked"
-                            BackgroundColor="{AppThemeBinding Light=#E5EAF1, Dark=#334155}"
-                            TextColor="{AppThemeBinding Light=#1F2937, Dark=#FFFFFF}" />
-                    <Button Grid.Column="1"
-                            Text="Save"
-                            Clicked="OnSaveClicked"
+                <VerticalStackLayout Spacing="12">
+                    <Button x:Name="WorkoutPlansButton"
+                            Text="Go To Workout Plans"
+                            Clicked="OnWorkoutPlansClicked"
+                            IsVisible="False"
                             BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}"
                             TextColor="White" />
-                </Grid>
+                </VerticalStackLayout>
             </VerticalStackLayout>
         </Border>
     </Grid>

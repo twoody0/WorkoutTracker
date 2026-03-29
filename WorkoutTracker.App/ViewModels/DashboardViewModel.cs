@@ -5,6 +5,26 @@ using WorkoutTracker.Services;
 
 namespace WorkoutTracker.ViewModels;
 
+public sealed class DashboardWorkoutHistoryItem
+{
+    public required Workout Workout { get; init; }
+    public required string CaloriesSummary { get; init; }
+    public bool HasCalories => !string.IsNullOrWhiteSpace(CaloriesSummary);
+    public string Name => Workout.Name;
+    public DateTime StartTime => Workout.StartTime;
+    public string MuscleGroup => Workout.MuscleGroup;
+    public int Sets => Workout.Sets;
+    public string RepDisplay => Workout.RepDisplay;
+    public double Weight => Workout.Weight;
+    public int DurationMinutes => Workout.DurationMinutes;
+    public double DistanceMiles => Workout.DistanceMiles;
+    public int Steps => Workout.Steps;
+    public WorkoutType Type => Workout.Type;
+    public bool HasDuration => Workout.HasDuration;
+    public bool HasDistance => Workout.HasDistance;
+    public bool HasSteps => Workout.HasSteps;
+}
+
 public class DashboardViewModel : BaseViewModel
 {
     private enum PlanStatsMode
@@ -20,7 +40,7 @@ public class DashboardViewModel : BaseViewModel
     private readonly IThemeService _themeService;
     private readonly IWorkoutScheduleService _scheduleService;
 
-    private ObservableCollection<Workout> _workouts = new();
+    private ObservableCollection<DashboardWorkoutHistoryItem> _workouts = new();
     private DateTime _selectedDate;
     private double _totalWeightLifted;
     private double _caloriesBurned;
@@ -57,6 +77,8 @@ public class DashboardViewModel : BaseViewModel
         _scheduleService = scheduleService;
 
         LoadWorkoutsCommand = new Command(async () => await LoadWorkoutsAsync());
+        ShowStrengthStatsCommand = new Command(() => SetActiveStatsMode(PlanStatsMode.Strength));
+        ShowCardioStatsCommand = new Command(() => SetActiveStatsMode(PlanStatsMode.Cardio));
         ToggleThemeCommand = new Command(() =>
         {
             _themeService.ToggleTheme();
@@ -69,9 +91,11 @@ public class DashboardViewModel : BaseViewModel
     }
 
     public ICommand LoadWorkoutsCommand { get; }
+    public ICommand ShowStrengthStatsCommand { get; }
+    public ICommand ShowCardioStatsCommand { get; }
     public ICommand ToggleThemeCommand { get; }
 
-    public ObservableCollection<Workout> Workouts
+    public ObservableCollection<DashboardWorkoutHistoryItem> Workouts
     {
         get => _workouts;
         set => SetProperty(ref _workouts, value);
@@ -132,9 +156,12 @@ public class DashboardViewModel : BaseViewModel
         set => SetProperty(ref _cardioWorkoutSessions, value);
     }
 
-    public bool ShowPlanStats => _activePlanStatsMode != PlanStatsMode.None;
+    public bool ShowPlanStats => TotalWorkoutSessions > 0 && _activePlanStatsMode != PlanStatsMode.None;
+    public bool ShowStatsToggle => TotalWorkoutSessions > 0 && (StrengthWorkoutSessions > 0 || CardioWorkoutSessions > 0);
     public bool ShowStrengthStatsSection => _activePlanStatsMode == PlanStatsMode.Strength;
     public bool ShowCardioStatsSection => _activePlanStatsMode == PlanStatsMode.Cardio;
+    public bool IsStrengthStatsSelected => _activePlanStatsMode == PlanStatsMode.Strength;
+    public bool IsCardioStatsSelected => _activePlanStatsMode == PlanStatsMode.Cardio;
     public bool ShowStrengthStats => ShowStrengthStatsSection && StrengthWorkoutSessions > 0;
     public bool ShowEmptyStrengthStats => ShowStrengthStatsSection && !ShowStrengthStats;
     public bool ShowCardioStats => ShowCardioStatsSection && CardioWorkoutSessions > 0;
@@ -251,7 +278,10 @@ public class DashboardViewModel : BaseViewModel
         _biggestLiftSummary = GetBiggestLiftSummary(strengthHistory);
         _favoriteTrainingDaySummary = GetFavoriteTrainingDaySummary(allWorkouts);
         _favoriteCardioWorkoutSummary = GetFavoriteCardioWorkoutSummary(cardioHistory);
-        _activePlanStatsMode = GetActivePlanStatsMode();
+        if (_activePlanStatsMode == PlanStatsMode.None)
+        {
+            _activePlanStatsMode = GetDefaultStatsMode();
+        }
 
         HasWeightlifting = filtered.Any(workout =>
             workout.Type == WorkoutType.WeightLifting && workout.Reps > 0 && workout.Sets > 0);
@@ -260,10 +290,15 @@ public class DashboardViewModel : BaseViewModel
 
         Workouts.Clear();
         double total = 0;
+        var weightLbs = _bodyWeightService.GetBodyWeight() ?? _authService.CurrentUser?.Weight ?? 154;
 
         foreach (var workout in filtered)
         {
-            Workouts.Add(workout);
+            Workouts.Add(new DashboardWorkoutHistoryItem
+            {
+                Workout = workout,
+                CaloriesSummary = GetWorkoutCaloriesSummary(workout, weightLbs)
+            });
             if (workout.Type == WorkoutType.WeightLifting && workout.Reps > 0 && workout.Sets > 0)
             {
                 total += workout.Weight * workout.Reps * workout.Sets;
@@ -276,7 +311,6 @@ public class DashboardViewModel : BaseViewModel
             .Where(workout => workout.Type == WorkoutType.Cardio)
             .Sum(GetEstimatedCardioMinutes);
 
-        var weightLbs = _bodyWeightService.GetBodyWeight() ?? _authService.CurrentUser?.Weight ?? 154;
         var weightKg = weightLbs * 0.453592;
         const double moderateCardioMet = 6.0;
         CaloriesBurned = totalCardioMinutes * 0.0175 * moderateCardioMet * weightKg;
@@ -291,9 +325,12 @@ public class DashboardViewModel : BaseViewModel
         OnPropertyChanged(nameof(CardioWorkoutSessionsSummary));
         OnPropertyChanged(nameof(ActivePlanSummary));
         OnPropertyChanged(nameof(ShowPlanStats));
+        OnPropertyChanged(nameof(ShowStatsToggle));
         OnPropertyChanged(nameof(ShowTrainingSnapshot));
         OnPropertyChanged(nameof(ShowStrengthStatsSection));
         OnPropertyChanged(nameof(ShowCardioStatsSection));
+        OnPropertyChanged(nameof(IsStrengthStatsSelected));
+        OnPropertyChanged(nameof(IsCardioStatsSelected));
         OnPropertyChanged(nameof(ShowStrengthStats));
         OnPropertyChanged(nameof(ShowEmptyStrengthStats));
         OnPropertyChanged(nameof(ShowCardioStats));
@@ -316,6 +353,27 @@ public class DashboardViewModel : BaseViewModel
         OnPropertyChanged(nameof(LongestCardioSessionSummary));
         OnPropertyChanged(nameof(LongestCardioDistanceSummary));
         OnPropertyChanged(nameof(FavoriteCardioWorkoutSummary));
+    }
+
+    private PlanStatsMode GetDefaultStatsMode()
+    {
+        var planMode = GetActivePlanStatsMode();
+        if (planMode != PlanStatsMode.None)
+        {
+            return planMode;
+        }
+
+        if (StrengthWorkoutSessions > 0)
+        {
+            return PlanStatsMode.Strength;
+        }
+
+        if (CardioWorkoutSessions > 0)
+        {
+            return PlanStatsMode.Cardio;
+        }
+
+        return PlanStatsMode.Strength;
     }
 
     private PlanStatsMode GetActivePlanStatsMode()
@@ -346,6 +404,27 @@ public class DashboardViewModel : BaseViewModel
         return cardioCount > strengthCount ? PlanStatsMode.Cardio : PlanStatsMode.Strength;
     }
 
+    private void SetActiveStatsMode(PlanStatsMode mode)
+    {
+        if (_activePlanStatsMode == mode)
+        {
+            return;
+        }
+
+        _activePlanStatsMode = mode;
+        OnPropertyChanged(nameof(ShowPlanStats));
+        OnPropertyChanged(nameof(ShowStrengthStatsSection));
+        OnPropertyChanged(nameof(ShowCardioStatsSection));
+        OnPropertyChanged(nameof(IsStrengthStatsSelected));
+        OnPropertyChanged(nameof(IsCardioStatsSelected));
+        OnPropertyChanged(nameof(ShowStrengthStats));
+        OnPropertyChanged(nameof(ShowEmptyStrengthStats));
+        OnPropertyChanged(nameof(ShowCardioStats));
+        OnPropertyChanged(nameof(ShowEmptyCardioStats));
+        OnPropertyChanged(nameof(ShowStrengthDaySummaryCard));
+        OnPropertyChanged(nameof(ShowCardioDaySummaryCard));
+    }
+
     private static int GetEstimatedCardioMinutes(Workout workout)
     {
         if (workout.DurationMinutes > 0)
@@ -364,6 +443,33 @@ public class DashboardViewModel : BaseViewModel
         }
 
         return 0;
+    }
+
+    private static string GetWorkoutCaloriesSummary(Workout workout, double bodyWeightLbs)
+    {
+        var bodyWeightKg = bodyWeightLbs * 0.453592;
+        var estimatedMinutes = workout.Type == WorkoutType.Cardio
+            ? GetEstimatedCardioMinutes(workout)
+            : GetEstimatedStrengthMinutes(workout);
+
+        if (estimatedMinutes <= 0)
+        {
+            return string.Empty;
+        }
+
+        var met = workout.Type == WorkoutType.Cardio ? 6.0 : 3.5;
+        var calories = estimatedMinutes * 0.0175 * met * bodyWeightKg;
+        return calories > 0 ? $"{Math.Round(calories):N0} kcal" : string.Empty;
+    }
+
+    private static int GetEstimatedStrengthMinutes(Workout workout)
+    {
+        if (workout.Type != WorkoutType.WeightLifting || workout.Sets <= 0)
+        {
+            return 0;
+        }
+
+        return Math.Max(5, workout.Sets * 3);
     }
 
     private static string FormatWeightStat(double value)

@@ -325,6 +325,46 @@
                 </VerticalStackLayout>
             </Border>
 
+            <HorizontalStackLayout Spacing="10"
+                                   HorizontalOptions="Center"
+                                   IsVisible="{Binding ShowStatsToggle}">
+                <Border StrokeThickness="0"
+                        BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}"
+                        StrokeShape="RoundRectangle 6"
+                        WidthRequest="12"
+                        HeightRequest="12"
+                        Opacity="0.35">
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border"
+                                     Binding="{Binding IsStrengthStatsSelected}"
+                                     Value="True">
+                            <Setter Property="Opacity" Value="1" />
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ShowStrengthStatsCommand}" />
+                    </Border.GestureRecognizers>
+                </Border>
+
+                <Border StrokeThickness="0"
+                        BackgroundColor="{AppThemeBinding Light=#1F2937, Dark=#CBD5E1}"
+                        StrokeShape="RoundRectangle 6"
+                        WidthRequest="12"
+                        HeightRequest="12"
+                        Opacity="0.35">
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border"
+                                     Binding="{Binding IsCardioStatsSelected}"
+                                     Value="True">
+                            <Setter Property="Opacity" Value="1" />
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ShowCardioStatsCommand}" />
+                    </Border.GestureRecognizers>
+                </Border>
+            </HorizontalStackLayout>
+
             <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
                     BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
                     StrokeShape="RoundRectangle 24"
@@ -402,9 +442,13 @@
                                         <Label Text="{Binding Name}"
                                                FontAttributes="Bold"
                                                FontSize="16" />
-                                        <Label Text="{Binding StartTime, StringFormat='Logged at {0:HH:mm}'}"
+                                        <Label Text="{Binding StartTime, StringFormat='Logged at {0:h:mm tt}'}"
                                                FontSize="12"
                                                TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                                        <Label Text="{Binding CaloriesSummary}"
+                                               FontSize="12"
+                                               TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}"
+                                               IsVisible="{Binding HasCalories}" />
                                         <Label Text="{Binding MuscleGroup, StringFormat='Focus: {0}'}"
                                                FontSize="13"
                                                TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}" />

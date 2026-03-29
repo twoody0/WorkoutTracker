@@ -1,20 +1,34 @@
 namespace WorkoutTracker.Views;
 
+public sealed class BodyWeightPromptResult
+{
+    public string? WeightText { get; init; }
+
+    public bool NavigateToWorkoutPlans { get; init; }
+}
+
 public partial class BodyWeightPromptPage : ContentPage
 {
-    private readonly TaskCompletionSource<string?> _resultSource = new();
+    private readonly TaskCompletionSource<BodyWeightPromptResult?> _resultSource = new();
 
-    public BodyWeightPromptPage(string title, string message, string initialValue)
+    public BodyWeightPromptPage(string title, string message, string initialValue, string? workoutPlansButtonText)
     {
         InitializeComponent();
         TitleLabel.Text = title;
         MessageLabel.Text = message;
         WeightEntry.Text = initialValue;
+        WorkoutPlansButton.IsVisible = !string.IsNullOrWhiteSpace(workoutPlansButtonText);
+        WorkoutPlansButton.Text = workoutPlansButtonText ?? WorkoutPlansButton.Text;
     }
 
-    public static async Task<string?> ShowAsync(Page parent, string title, string message, string initialValue)
+    public static async Task<BodyWeightPromptResult?> ShowAsync(
+        Page parent,
+        string title,
+        string message,
+        string initialValue,
+        string? workoutPlansButtonText = null)
     {
-        var promptPage = new BodyWeightPromptPage(title, message, initialValue);
+        var promptPage = new BodyWeightPromptPage(title, message, initialValue, workoutPlansButtonText);
         await parent.Navigation.PushModalAsync(promptPage);
         return await promptPage._resultSource.Task;
     }
@@ -31,21 +45,39 @@ public partial class BodyWeightPromptPage : ContentPage
 
     private async void OnCancelClicked(object? sender, EventArgs e)
     {
-        _resultSource.TrySetResult(null);
-        await Navigation.PopModalAsync();
+        await CloseAsync(CreateResult());
     }
 
-    private async void OnSaveClicked(object? sender, EventArgs e)
+    private async void OnWorkoutPlansClicked(object? sender, EventArgs e)
     {
-        var value = WeightEntry.Text?.Trim();
-        if (!double.TryParse(value, out var weight) || weight <= 0)
+        await CloseAsync(CreateResult(navigateToWorkoutPlans: true));
+    }
+
+    private async Task CloseAsync(BodyWeightPromptResult? result)
+    {
+        if (Navigation.ModalStack.LastOrDefault() == this)
         {
-            ErrorLabel.IsVisible = true;
-            return;
+            await Navigation.PopModalAsync();
         }
 
+        _resultSource.TrySetResult(result);
+    }
+
+    private BodyWeightPromptResult? CreateResult(bool navigateToWorkoutPlans = false)
+    {
+        var value = WeightEntry.Text?.Trim();
+        var hasValidWeight = double.TryParse(value, out var weight) && weight > 0;
         ErrorLabel.IsVisible = false;
-        _resultSource.TrySetResult(value);
-        await Navigation.PopModalAsync();
+
+        if (!hasValidWeight && !navigateToWorkoutPlans && string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        return new BodyWeightPromptResult
+        {
+            WeightText = hasValidWeight ? value : null,
+            NavigateToWorkoutPlans = navigateToWorkoutPlans
+        };
     }
 }

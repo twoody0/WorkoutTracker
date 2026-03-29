@@ -35,7 +35,7 @@ public partial class HomePage : ContentPage
                 _hasCheckedForInitialBodyWeight = true;
                 await PromptForBodyWeightAsync(
                     vm,
-                    "Enter your body weight in pounds so workout calculations can stay accurate.",
+                    "Welcome to Megnor. This is where you can log workouts, follow a plan, and keep your progress moving. If you enter your body weight here, it will still save even if you go straight to Workout Plans.",
                     useCurrentWeightAsInitialValue: false);
             }
 
@@ -50,7 +50,7 @@ public partial class HomePage : ContentPage
         {
             await PromptForBodyWeightAsync(
                 vm,
-                "Update your current body weight in pounds.",
+                "Enter your current body weight here and it will save when you close this or go to Workout Plans.",
                 useCurrentWeightAsInitialValue: true);
         }
     }
@@ -64,17 +64,28 @@ public partial class HomePage : ContentPage
             this,
             "Body Weight",
             message,
-            useCurrentWeightAsInitialValue ? vm.BodyWeightInputValue : string.Empty);
+            useCurrentWeightAsInitialValue ? vm.BodyWeightInputValue : string.Empty,
+            workoutPlansButtonText: "Go To Workout Plans");
 
         if (result == null)
         {
             return;
         }
 
-        var success = await vm.UpdateBodyWeightAsync(result);
-        if (!success)
+        if (!string.IsNullOrWhiteSpace(result.WeightText))
         {
-            await DisplayAlert("Invalid Weight", "Enter a valid body weight greater than 0.", "OK");
+            var success = await vm.UpdateBodyWeightAsync(result.WeightText);
+            if (!success)
+            {
+                await DisplayAlert("Invalid Weight", "Enter a valid body weight greater than 0.", "OK");
+                return;
+            }
+        }
+
+        if (result.NavigateToWorkoutPlans)
+        {
+            await Shell.Current.GoToAsync("//workout-plans");
+            return;
         }
     }
 }

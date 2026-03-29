@@ -40,18 +40,29 @@ public partial class DashboardPage : ContentPage
         var result = await BodyWeightPromptPage.ShowAsync(
             this,
             "Body Weight",
-            "Update your current body weight in pounds.",
-            vm.BodyWeightInputValue);
+            "Enter your current body weight here and it will save when you close this or go to Workout Plans.",
+            vm.BodyWeightInputValue,
+            workoutPlansButtonText: "Go To Workout Plans");
 
         if (result == null)
         {
             return;
         }
 
-        var success = await vm.UpdateBodyWeightAsync(result);
-        if (!success)
+        if (!string.IsNullOrWhiteSpace(result.WeightText))
         {
-            await DisplayAlert("Invalid Weight", "Enter a valid body weight greater than 0.", "OK");
+            var success = await vm.UpdateBodyWeightAsync(result.WeightText);
+            if (!success)
+            {
+                await DisplayAlert("Invalid Weight", "Enter a valid body weight greater than 0.", "OK");
+                return;
+            }
+        }
+
+        if (result.NavigateToWorkoutPlans)
+        {
+            await Shell.Current.GoToAsync("//workout-plans");
+            return;
         }
     }
 }

@@ -40,6 +40,19 @@ public class WorkoutViewModel : BaseViewModel
         "Dumbbell Kickback"
     };
 
+    private static readonly string[] ManualCardioExerciseOptions =
+    [
+        "Run",
+        "Walk",
+        "Bike",
+        "Row",
+        "Elliptical",
+        "Stair Climber",
+        "Hike",
+        "Swim",
+        "Jump Rope"
+    ];
+
     #region Fields
 
     private readonly IWorkoutService _workoutService;
@@ -61,6 +74,10 @@ public class WorkoutViewModel : BaseViewModel
     private string _plannedTargetRestRange = string.Empty;
     private string _activePlanSummary = "No active workout plan. Add any workout you want.";
     private string _resistanceAdjustment = string.Empty;
+    private bool _isManualCardio;
+    private string _durationMinutesText = string.Empty;
+    private string _distanceMilesText = string.Empty;
+    private string _stepsText = string.Empty;
     private bool _hasLoadedTemplate;
     private bool _isQuickAddMode;
     private bool _isAdvancedFieldsVisible = true;
@@ -90,12 +107,13 @@ public class WorkoutViewModel : BaseViewModel
         _bodyWeightService = bodyWeightService;
 
         MuscleGroups = new List<string> { "Back", "Arms", "Biceps", "Chest", "Core", "Abs", "Legs", "Shoulders", "Triceps" };
+        ExerciseOptions = new ObservableCollection<string>();
         ExerciseSuggestions = new ObservableCollection<WeightliftingExercise>();
         RecommendedPlanWorkouts = new ObservableCollection<WorkoutRecommendation>();
 
         Weight = string.Empty;
-        Reps = string.Empty;
-        Sets = string.Empty;
+        Reps = "1";
+        Sets = "1";
 
         _ = CheckForExistingWorkouts();
 
@@ -116,22 +134,28 @@ public class WorkoutViewModel : BaseViewModel
 
     public List<string> MuscleGroups { get; }
 
+    public ObservableCollection<string> ExerciseOptions { get; }
     public ObservableCollection<WeightliftingExercise> ExerciseSuggestions { get; }
     public ObservableCollection<WorkoutRecommendation> RecommendedPlanWorkouts { get; }
     public string TodayLabel => DateTime.Today.DayOfWeek.ToString();
     public bool HasActivePlan => _workoutScheduleService.ActivePlan != null;
     public bool CanEditSelectedMuscleGroup => !(_selectedRecommendation != null && _workoutScheduleService.ActivePlan is { IsCustom: false });
     public bool HasRecommendedPlanWorkouts => RecommendedPlanWorkouts.Count > 0;
-    public bool ShowPlanSection => HasActivePlan;
+    public bool ShowPlanSection => HasActivePlan && (ShowPlanSuggestionsSection || ShowPlanCompletedSummary || ShowManualWorkoutPrompt || ShowRpeHelp);
     public bool ShowPlanSuggestionsSection => HasRecommendedPlanWorkouts;
     public bool ShowPlanCompletedState => HasActivePlan && !HasRecommendedPlanWorkouts;
+    public bool ShowPlanCompletedSummary => ShowPlanCompletedState && !ShowManualWorkoutEntry;
     public bool ShowManualWorkoutPrompt => ShowPlanCompletedState && !ShowManualWorkoutEntry;
+    public bool ShowTrackCardioSessionButton => !HasActivePlan || _hasScheduledPlanWorkoutsToday || ShowManualWorkoutEntry;
     public bool HasRecommendedStrengthWorkouts => RecommendedPlanWorkouts.Any(workout => workout.IsWeightLifting);
     public bool HasRecommendedCardioWorkouts => RecommendedPlanWorkouts.Any(workout => workout.IsCardio);
     public bool ShowWorkoutEditor => !HasActivePlan || HasRecommendedStrengthWorkouts || ShowManualWorkoutEntry;
-    public bool ShowQuickAddCard => ShowWorkoutEditor && IsQuickAddMode;
+    public bool ShowQuickAddCard => ShowWorkoutEditor && IsQuickAddMode && !IsManualCardio;
     public bool ShowStandaloneWeightEditor => ShowWorkoutEditor && ShowStandaloneWeightField;
     public bool ShowAdvancedEditorContent => ShowWorkoutEditor && ShowAdvancedEditorSection;
+    public bool ShowStrengthFields => !IsManualCardio;
+    public bool ShowCardioFields => IsManualCardio;
+    public string ExercisePickerTitle => IsManualCardio ? "Select cardio workout" : "Select exercise";
     public string ManualWorkoutButtonText => _hasScheduledPlanWorkoutsToday
         ? "Add Extra Workout"
         : "Add Workout Anyway";
@@ -180,7 +204,7 @@ public class WorkoutViewModel : BaseViewModel
         }
     }
 
-    public bool ShowStandaloneWeightField => !IsQuickAddMode || !IsAdvancedFieldsVisible;
+    public bool ShowStandaloneWeightField => !IsManualCardio && (!IsQuickAddMode || !IsAdvancedFieldsVisible);
     public bool ShowAdvancedEditorSection => !IsQuickAddMode && IsAdvancedFieldsVisible;
     public bool ShowQuickAddReadOnlySummary => IsQuickAddMode && !IsAdvancedFieldsVisible;
     public bool ShowQuickAddInlineEditors => IsQuickAddMode && IsAdvancedFieldsVisible;
@@ -247,8 +271,20 @@ public class WorkoutViewModel : BaseViewModel
     {
         get
         {
+            if (string.IsNullOrWhiteSpace(Name))
+            {
+                return false;
+            }
+
+            if (IsManualCardio)
+            {
+                var hasDuration = int.TryParse(DurationMinutesText, out var durationMinutes) && durationMinutes > 0;
+                var hasDistance = double.TryParse(DistanceMilesText, out var distanceMiles) && distanceMiles > 0;
+                var hasSteps = int.TryParse(StepsText, out var steps) && steps > 0;
+                return hasDuration || hasDistance || hasSteps;
+            }
+
             if (string.IsNullOrWhiteSpace(SelectedMuscleGroup) ||
-                string.IsNullOrWhiteSpace(Name) ||
                 string.IsNullOrWhiteSpace(Reps) ||
                 string.IsNullOrWhiteSpace(Sets))
             {
@@ -312,6 +348,41 @@ public class WorkoutViewModel : BaseViewModel
         set => SetProperty(ref _isNameFieldFocused, value);
     }
 
+    public bool IsManualCardio
+    {
+        get => _isManualCardio;
+        set
+        {
+            if (!SetProperty(ref _isManualCardio, value))
+            {
+                return;
+            }
+
+            if (value)
+            {
+                SelectedMuscleGroup = "Cardio";
+                Weight = string.Empty;
+                Reps = "1";
+                Sets = "1";
+                ResistanceAdjustment = string.Empty;
+                ClearPlannedRepRange();
+                ClearPlannedTargetRpe();
+                ClearPlannedTargetRest();
+            }
+            else if (string.Equals(SelectedMuscleGroup, "Cardio", StringComparison.OrdinalIgnoreCase))
+            {
+                SelectedMuscleGroup = string.Empty;
+            }
+
+            Name = string.Empty;
+            DurationMinutesText = string.Empty;
+            DistanceMilesText = string.Empty;
+            StepsText = string.Empty;
+            _ = RefreshExerciseOptionsAsync();
+            NotifyManualWorkoutModeChanged();
+        }
+    }
+
     public string SelectedMuscleGroup
     {
         get => _selectedMuscleGroup;
@@ -319,11 +390,15 @@ public class WorkoutViewModel : BaseViewModel
         {
             if (SetProperty(ref _selectedMuscleGroup, value))
             {
+                Name = string.Empty;
                 ExerciseSearchQuery = string.Empty;
                 ExerciseSuggestions.Clear();
+                IsNameFieldFocused = !IsManualCardio && !string.IsNullOrWhiteSpace(value);
                 ApplyBodyweightDefaultsIfNeeded();
                 NotifyBodyweightStateChanged();
                 SyncSelectedRecommendationState();
+                _ = RefreshExerciseOptionsAsync();
+                _ = UpdateExerciseSuggestionsAsync(showAllForCurrentGroup: IsNameFieldFocused);
                 OnPropertyChanged(nameof(CanAddWorkout));
             }
         }
@@ -354,9 +429,51 @@ public class WorkoutViewModel : BaseViewModel
         {
             if (SetProperty(ref _name, value))
             {
+                if (!string.Equals(_exerciseSearchQuery, value, StringComparison.Ordinal))
+                {
+                    _exerciseSearchQuery = value;
+                    OnPropertyChanged(nameof(ExerciseSearchQuery));
+                }
+
                 ApplyBodyweightDefaultsIfNeeded();
                 NotifyBodyweightStateChanged();
                 SyncSelectedRecommendationState();
+                OnPropertyChanged(nameof(CanAddWorkout));
+            }
+        }
+    }
+
+    public string DurationMinutesText
+    {
+        get => _durationMinutesText;
+        set
+        {
+            if (SetProperty(ref _durationMinutesText, value))
+            {
+                OnPropertyChanged(nameof(CanAddWorkout));
+            }
+        }
+    }
+
+    public string DistanceMilesText
+    {
+        get => _distanceMilesText;
+        set
+        {
+            if (SetProperty(ref _distanceMilesText, value))
+            {
+                OnPropertyChanged(nameof(CanAddWorkout));
+            }
+        }
+    }
+
+    public string StepsText
+    {
+        get => _stepsText;
+        set
+        {
+            if (SetProperty(ref _stepsText, value))
+            {
                 OnPropertyChanged(nameof(CanAddWorkout));
             }
         }
@@ -426,6 +543,7 @@ public class WorkoutViewModel : BaseViewModel
     #region Commands
 
     public ICommand AddWorkoutCommand => new Command(async () => await AddWorkoutAsync());
+    public ICommand StartManualCardioSessionCommand => new Command(async () => await StartManualCardioSessionAsync());
     public ICommand UseRecommendedWorkoutCommand => new Command<WorkoutRecommendation>(async recommendation =>
     {
         if (recommendation == null)
@@ -481,17 +599,56 @@ public class WorkoutViewModel : BaseViewModel
         RefreshPlanRecommendations();
     }
 
+    private async Task StartManualCardioSessionAsync()
+    {
+        WorkoutTemplateCache.Template = null;
+        await Shell.Current.Navigation.PushAsync(App.Services.GetRequiredService<CardioSessionPage>());
+    }
+
     private async Task AddWorkoutAsync()
     {
-        if (string.IsNullOrWhiteSpace(SelectedMuscleGroup))
+        if (string.IsNullOrWhiteSpace(Name))
         {
-            await ShowError("Please select a muscle group.");
+            await ShowError(IsManualCardio ? "Please select a cardio workout." : "Please select an exercise.");
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(Name))
+        if (IsManualCardio)
         {
-            await ShowError("Please enter an exercise name.");
+            int.TryParse(DurationMinutesText, out var parsedDurationMinutes);
+            double.TryParse(DistanceMilesText, out var parsedDistanceMiles);
+            int.TryParse(StepsText, out var parsedSteps);
+
+            if (parsedDurationMinutes <= 0 && parsedDistanceMiles <= 0 && parsedSteps <= 0)
+            {
+                await ShowError("Please enter time, distance, or steps for this cardio workout.");
+                return;
+            }
+
+            var cardioWorkout = new Workout(
+                name: Name,
+                weight: 0,
+                reps: 0,
+                sets: 0,
+                muscleGroup: "Cardio",
+                day: DateTime.Today.DayOfWeek,
+                startTime: DateTime.Now,
+                type: WorkoutType.Cardio,
+                gymLocation: "Default Gym")
+            {
+                DurationMinutes = parsedDurationMinutes,
+                DistanceMiles = parsedDistanceMiles,
+                Steps = parsedSteps,
+                EndTime = parsedDurationMinutes > 0 ? DateTime.Now.AddMinutes(parsedDurationMinutes) : DateTime.Now
+            };
+
+            await SaveWorkoutAsync(cardioWorkout);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(SelectedMuscleGroup))
+        {
+            await ShowError("Please select a muscle group.");
             return;
         }
 
@@ -508,7 +665,9 @@ public class WorkoutViewModel : BaseViewModel
         }
 
         if (string.IsNullOrWhiteSpace(Weight))
+        {
             Weight = "0";
+        }
 
         double.TryParse(Weight, out double parsedWeight);
         int.TryParse(Reps, out int parsedReps);
@@ -529,7 +688,7 @@ public class WorkoutViewModel : BaseViewModel
             parsedWeight *= GetDumbbellSideMultiplier(Name, ExerciseSearchQuery);
         }
 
-        var workout = new Workout(
+        var strengthWorkout = new Workout(
             name: Name,
             weight: parsedWeight,
             reps: parsedReps,
@@ -547,39 +706,59 @@ public class WorkoutViewModel : BaseViewModel
             TargetRestRange = _plannedTargetRestRange
         };
 
+        await SaveWorkoutAsync(strengthWorkout);
+    }
+
+    private async Task SaveWorkoutAsync(Workout workout)
+    {
         await _workoutService.AddWorkout(workout);
         _workoutHistory.Add(workout);
         HasWorkouts = true;
 
         RefreshPlanRecommendations();
 
+        if (workout.Type == WorkoutType.Cardio)
+        {
+            Name = string.Empty;
+            ExerciseSearchQuery = string.Empty;
+            DurationMinutesText = string.Empty;
+            DistanceMilesText = string.Empty;
+            StepsText = string.Empty;
+            return;
+        }
+
         var nextStrengthRecommendation = RecommendedPlanWorkouts.FirstOrDefault(recommendation => recommendation.IsWeightLifting);
         if (nextStrengthRecommendation != null)
         {
             ApplyWorkoutTemplate(nextStrengthRecommendation, collapseForQuickAdd: true);
+            return;
         }
-        else
-        {
-            if (HasActivePlan && !ShowManualWorkoutEntry)
-            {
-                Name = ExerciseSearchQuery = Weight = Reps = Sets = ResistanceAdjustment = string.Empty;
-                ClearPlannedRepRange();
-                ClearPlannedTargetRpe();
-                ClearPlannedTargetRest();
-                ExerciseSuggestions.Clear();
-                IsQuickAddMode = false;
-                IsAdvancedFieldsVisible = true;
-                return;
-            }
 
-            Name = ExerciseSearchQuery = Weight = Reps = Sets = ResistanceAdjustment = string.Empty;
+        if (HasActivePlan && !ShowManualWorkoutEntry)
+        {
+            Name = ExerciseSearchQuery = Weight = ResistanceAdjustment = string.Empty;
+            Reps = "1";
+            Sets = "1";
+            DurationMinutesText = DistanceMilesText = StepsText = string.Empty;
             ClearPlannedRepRange();
             ClearPlannedTargetRpe();
             ClearPlannedTargetRest();
             ExerciseSuggestions.Clear();
             IsQuickAddMode = false;
             IsAdvancedFieldsVisible = true;
+            return;
         }
+
+        Name = ExerciseSearchQuery = Weight = ResistanceAdjustment = string.Empty;
+        Reps = "1";
+        Sets = "1";
+        DurationMinutesText = DistanceMilesText = StepsText = string.Empty;
+        ClearPlannedRepRange();
+        ClearPlannedTargetRpe();
+        ClearPlannedTargetRest();
+        ExerciseSuggestions.Clear();
+        IsQuickAddMode = false;
+        IsAdvancedFieldsVisible = true;
     }
 
     private static Workout CloneWorkoutTemplate(Workout workout)
@@ -636,6 +815,7 @@ public class WorkoutViewModel : BaseViewModel
     private void ApplyWorkoutTemplate(Workout workout, double? historicalWeight, bool collapseForQuickAdd)
     {
         _isApplyingRecommendation = true;
+        IsManualCardio = workout.Type == WorkoutType.Cardio;
         SelectedMuscleGroup = workout.MuscleGroup;
         Name = workout.Name;
         _suppressSuggestionRefresh = true;
@@ -650,6 +830,9 @@ public class WorkoutViewModel : BaseViewModel
         ApplyPlannedTargetRest(workout.TargetRestRange);
         Reps = GetDefaultRepsForWorkout(workout).ToString();
         Sets = workout.Sets.ToString();
+        DurationMinutesText = workout.DurationMinutes > 0 ? workout.DurationMinutes.ToString() : string.Empty;
+        DistanceMilesText = workout.DistanceMiles > 0 ? workout.DistanceMiles.ToString("0.#") : string.Empty;
+        StepsText = workout.Steps > 0 ? workout.Steps.ToString() : string.Empty;
         ApplyBodyweightDefaultsIfNeeded();
         NotifyBodyweightStateChanged();
         IsQuickAddMode = collapseForQuickAdd;
@@ -707,12 +890,14 @@ public class WorkoutViewModel : BaseViewModel
         OnPropertyChanged(nameof(CanEditSelectedMuscleGroup));
         OnPropertyChanged(nameof(ShowPlanSection));
         OnPropertyChanged(nameof(ShowPlanSuggestionsSection));
-        OnPropertyChanged(nameof(ShowPlanCompletedState));
-        OnPropertyChanged(nameof(ShowManualWorkoutPrompt));
-        OnPropertyChanged(nameof(ShowWorkoutEditor));
-        OnPropertyChanged(nameof(ShowQuickAddCard));
-        OnPropertyChanged(nameof(ShowStandaloneWeightEditor));
-        OnPropertyChanged(nameof(ShowAdvancedEditorContent));
+                OnPropertyChanged(nameof(ShowPlanCompletedState));
+                OnPropertyChanged(nameof(ShowPlanCompletedSummary));
+                OnPropertyChanged(nameof(ShowManualWorkoutPrompt));
+                OnPropertyChanged(nameof(ShowTrackCardioSessionButton));
+                OnPropertyChanged(nameof(ShowWorkoutEditor));
+                OnPropertyChanged(nameof(ShowQuickAddCard));
+                OnPropertyChanged(nameof(ShowStandaloneWeightEditor));
+                OnPropertyChanged(nameof(ShowAdvancedEditorContent));
         OnPropertyChanged(nameof(ShowPlanRpeInfo));
         OnPropertyChanged(nameof(ManualWorkoutButtonText));
         OnPropertyChanged(nameof(TodayLabel));
@@ -822,7 +1007,10 @@ public class WorkoutViewModel : BaseViewModel
         {
             if (SetProperty(ref _showManualWorkoutEntry, value))
             {
+                OnPropertyChanged(nameof(ShowPlanSection));
+                OnPropertyChanged(nameof(ShowPlanCompletedSummary));
                 OnPropertyChanged(nameof(ShowManualWorkoutPrompt));
+                OnPropertyChanged(nameof(ShowTrackCardioSessionButton));
                 OnPropertyChanged(nameof(ShowWorkoutEditor));
                 OnPropertyChanged(nameof(ShowQuickAddCard));
                 OnPropertyChanged(nameof(ShowStandaloneWeightEditor));
@@ -876,8 +1064,14 @@ public class WorkoutViewModel : BaseViewModel
 
     #region Public Methods
 
-    public async Task UpdateExerciseSuggestionsAsync()
+    public async Task UpdateExerciseSuggestionsAsync(bool showAllForCurrentGroup = false)
     {
+        if (IsManualCardio)
+        {
+            ExerciseSuggestions.Clear();
+            return;
+        }
+
         _exerciseSuggestionDebounceCts?.Cancel();
 
         if (!string.IsNullOrWhiteSpace(SelectedMuscleGroup))
@@ -895,8 +1089,9 @@ public class WorkoutViewModel : BaseViewModel
                 return;
             }
 
+            var searchQuery = showAllForCurrentGroup ? string.Empty : ExerciseSearchQuery;
             var exercises = await _workoutLibraryService.SearchExercisesByName(
-                SelectedMuscleGroup, ExerciseSearchQuery
+                SelectedMuscleGroup, searchQuery
             );
 
             if (debounceCts.IsCancellationRequested || requestVersion != _exerciseSuggestionRequestVersion)
@@ -964,6 +1159,36 @@ public class WorkoutViewModel : BaseViewModel
         OnPropertyChanged(nameof(EffectiveLoadSummary));
         OnPropertyChanged(nameof(ResistanceAdjustmentDisplay));
         OnPropertyChanged(nameof(CanAddWorkout));
+    }
+
+    private void NotifyManualWorkoutModeChanged()
+    {
+        OnPropertyChanged(nameof(ShowQuickAddCard));
+        OnPropertyChanged(nameof(ShowStandaloneWeightField));
+        OnPropertyChanged(nameof(ShowStandaloneWeightEditor));
+        OnPropertyChanged(nameof(ShowStrengthFields));
+        OnPropertyChanged(nameof(ShowCardioFields));
+        OnPropertyChanged(nameof(ExercisePickerTitle));
+        OnPropertyChanged(nameof(CanAddWorkout));
+    }
+
+    private async Task RefreshExerciseOptionsAsync()
+    {
+        var options = IsManualCardio || string.Equals(SelectedMuscleGroup, "Cardio", StringComparison.OrdinalIgnoreCase)
+            ? ManualCardioExerciseOptions
+            : string.IsNullOrWhiteSpace(SelectedMuscleGroup)
+                ? []
+                : (await _workoutLibraryService.SearchExercisesByName(SelectedMuscleGroup, string.Empty))
+                    .Select(exercise => exercise.Name)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(name => name)
+                    .ToArray();
+
+        ExerciseOptions.Clear();
+        foreach (var option in options)
+        {
+            ExerciseOptions.Add(option);
+        }
     }
 
     public void AdjustResistanceAdjustment(double delta)
