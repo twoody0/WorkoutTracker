@@ -249,6 +249,9 @@ public class WorkoutViewModel : BaseViewModel
     public string WeightSummaryText => string.IsNullOrWhiteSpace(Weight)
         ? WeightSummaryPrefix
         : $"{WeightSummaryPrefix}: {Weight}";
+    public string QuickEditExerciseName => !string.IsNullOrWhiteSpace(Name)
+        ? Name
+        : _selectedRecommendation?.Workout.Name ?? string.Empty;
     public string QuickAddWeightSummaryText
     {
         get
@@ -459,6 +462,7 @@ public class WorkoutViewModel : BaseViewModel
                     OnPropertyChanged(nameof(ExerciseSearchQuery));
                 }
 
+                OnPropertyChanged(nameof(QuickEditExerciseName));
                 ApplyBodyweightDefaultsIfNeeded();
                 NotifyBodyweightStateChanged();
                 SyncSelectedRecommendationState();
@@ -626,13 +630,13 @@ public class WorkoutViewModel : BaseViewModel
 
     public void SelectFirstRecommendedWorkout()
     {
-        var firstRecommendation = RecommendedPlanWorkouts.FirstOrDefault();
-        if (firstRecommendation == null)
+        var defaultRecommendation = RecommendedPlanWorkouts.FirstOrDefault(recommendation => recommendation.IsWeightLifting);
+        if (defaultRecommendation == null)
         {
             return;
         }
 
-        ApplyWorkoutTemplate(firstRecommendation, collapseForQuickAdd: true);
+        ApplyWorkoutTemplate(defaultRecommendation, collapseForQuickAdd: true);
     }
 
     private async Task CheckForExistingWorkouts()
@@ -843,15 +847,7 @@ public class WorkoutViewModel : BaseViewModel
 
     private void ApplyWorkoutTemplate(WorkoutRecommendation recommendation, bool collapseForQuickAdd)
     {
-        if (_selectedRecommendation != null)
-        {
-            _selectedRecommendation.IsSelected = false;
-        }
-
-        _selectedRecommendation = recommendation;
-        _selectedRecommendation.IsSelected = true;
-        OnPropertyChanged(nameof(SelectedRecommendationItem));
-        OnPropertyChanged(nameof(QuickAddWeightSummaryText));
+        SetSelectedRecommendation(recommendation);
         ApplyWorkoutTemplate(recommendation.Workout, recommendation.LastUsedWeight, collapseForQuickAdd);
     }
 
@@ -876,6 +872,7 @@ public class WorkoutViewModel : BaseViewModel
         StepsText = workout.Steps > 0 ? workout.Steps.ToString() : string.Empty;
         ApplyBodyweightDefaultsIfNeeded();
         NotifyBodyweightStateChanged();
+        OnPropertyChanged(nameof(QuickEditExerciseName));
         IsQuickAddMode = collapseForQuickAdd;
         IsAdvancedFieldsVisible = !collapseForQuickAdd;
         IsNameFieldFocused = false;
@@ -885,10 +882,6 @@ public class WorkoutViewModel : BaseViewModel
 
     public void RefreshPlanRecommendations()
     {
-        var selectedWorkoutKey = _selectedRecommendation != null
-            ? GetWorkoutKey(_selectedRecommendation.Workout)
-            : null;
-
         RecommendedPlanWorkouts.Clear();
         _selectedRecommendation = null;
 
@@ -947,11 +940,7 @@ public class WorkoutViewModel : BaseViewModel
 
         if (HasRecommendedPlanWorkouts)
         {
-            var firstRecommendation = RecommendedPlanWorkouts.FirstOrDefault();
-            if (firstRecommendation != null)
-            {
-                ApplyWorkoutTemplate(firstRecommendation, collapseForQuickAdd: true);
-            }
+            SelectFirstRecommendedWorkout();
         }
     }
 
@@ -984,13 +973,24 @@ public class WorkoutViewModel : BaseViewModel
             return;
         }
 
-        _selectedRecommendation.IsSelected = false;
-        _selectedRecommendation = null;
+        SetSelectedRecommendation(null);
         ClearPlannedRepRange();
         ClearPlannedTargetRpe();
         ClearPlannedTargetRest();
+        OnPropertyChanged(nameof(QuickEditExerciseName));
+    }
+
+    private void SetSelectedRecommendation(WorkoutRecommendation? recommendation)
+    {
+        foreach (var item in RecommendedPlanWorkouts)
+        {
+            item.IsSelected = ReferenceEquals(item, recommendation);
+        }
+
+        _selectedRecommendation = recommendation;
         OnPropertyChanged(nameof(SelectedRecommendationItem));
         OnPropertyChanged(nameof(QuickAddWeightSummaryText));
+        OnPropertyChanged(nameof(QuickEditExerciseName));
         OnPropertyChanged(nameof(CanEditSelectedMuscleGroup));
     }
 

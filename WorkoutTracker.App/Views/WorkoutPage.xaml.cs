@@ -38,7 +38,7 @@ public partial class WorkoutPage : ContentPage
         if (BindingContext is WorkoutViewModel vm)
         {
             await vm.ReloadWorkoutHistoryAsync();
-            vm.SelectFirstRecommendedWorkout();
+            EnsureDefaultRecommendationSelected();
         }
 
         UpdateRecommendationsHeight();
@@ -197,6 +197,13 @@ public partial class WorkoutPage : ContentPage
         }
 
         if (e.PropertyName == nameof(WorkoutViewModel.SelectedRecommendationItem) &&
+            vm.SelectedRecommendationItem == null)
+        {
+            EnsureDefaultRecommendationSelected();
+            return;
+        }
+
+        if (e.PropertyName == nameof(WorkoutViewModel.SelectedRecommendationItem) &&
             vm.SelectedRecommendationItem != null)
         {
             MainThread.BeginInvokeOnMainThread(() =>
@@ -217,6 +224,17 @@ public partial class WorkoutPage : ContentPage
                 }
             });
         }
+    }
+
+    private void EnsureDefaultRecommendationSelected()
+    {
+        if (BindingContext is not WorkoutViewModel vm)
+        {
+            return;
+        }
+
+        Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(50), () => vm.SelectFirstRecommendedWorkout());
+        Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(200), () => vm.SelectFirstRecommendedWorkout());
     }
 
     private void StartResistanceAdjustment(double delta)

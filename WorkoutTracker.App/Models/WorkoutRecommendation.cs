@@ -31,11 +31,11 @@ public class WorkoutRecommendation : INotifyPropertyChanged
     public bool HasTargetRpe => !string.IsNullOrWhiteSpace(TargetRpeText);
     public bool HasTargetRest => !string.IsNullOrWhiteSpace(TargetRestText);
     public string ActionButtonText => IsCardio ? "Track Workout" : "Use This Workout";
-    public bool ShowUseButton => !IsSelected;
+    public bool ShowUseButton => IsCardio || !IsSelected;
     public bool ShowDetails => true;
     public bool ShowStrengthDetails => ShowDetails && IsWeightLifting;
     public bool ShowCardioDetails => ShowDetails && IsCardio;
-    public bool ShowSelectedState => IsSelected;
+    public bool ShowSelectedState => IsSelected && IsWeightLifting;
     public string SelectedText => "Currently selected";
 
     public bool IsSelected
