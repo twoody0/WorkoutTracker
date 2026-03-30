@@ -1336,7 +1336,7 @@ public class WorkoutViewModel : BaseViewModel
     {
         if (workout.MinReps.HasValue && workout.MaxReps.HasValue && workout.MaxReps.Value >= workout.MinReps.Value)
         {
-            return workout.MaxReps.Value <= 5 ? workout.MinReps.Value : workout.MaxReps.Value;
+            return workout.MaxReps.Value;
         }
 
         return Math.Max(1, workout.Reps);
@@ -1492,7 +1492,7 @@ public class WorkoutViewModel : BaseViewModel
 
         return workout.Weight > 0
             ? GetDisplayWeightForExercise(workout.Weight, workout.Name)
-            : string.Empty;
+            : "0";
     }
 
     private static string GetRecommendationWeightPrefix() => "Weight";

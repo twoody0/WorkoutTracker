@@ -515,15 +515,88 @@
 
             <VerticalStackLayout Spacing="2"
                                  IsVisible="{Binding ShowStandaloneWeightEditor}">
-                <Label Text="{Binding WeightLabel}"
-                       FontAttributes="Bold"
-                       IsVisible="{Binding ShowStandardWeightInput}" />
-                <Entry x:Name="WeightEntry"
-                       Placeholder="{Binding WeightPlaceholder}"
-                       Keyboard="Numeric"
-                       Text="{Binding Weight}"
-                       Unfocused="WeightEntry_Unfocused"
-                       IsVisible="{Binding ShowStandardWeightInput}" />
+                <Grid ColumnDefinitions="*,*"
+                      ColumnSpacing="12"
+                      IsVisible="{Binding ShowStandardWeightInput}">
+                    <VerticalStackLayout Grid.Column="0"
+                                         Spacing="2">
+                        <Grid ColumnDefinitions="24,64,24"
+                              ColumnSpacing="4">
+                            <Label Grid.Column="1"
+                                   Text="{Binding WeightLabel}"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="Center" />
+                        </Grid>
+                        <Grid ColumnDefinitions="24,64,24"
+                              ColumnSpacing="4">
+                            <Button Text="-"
+                                    WidthRequest="24"
+                                    HeightRequest="24"
+                                    MinimumHeightRequest="24"
+                                    MinimumWidthRequest="24"
+                                    Padding="0"
+                                    FontSize="11"
+                                    CommandParameter="-5"
+                                    Clicked="StandardWeightAdjust_Clicked"
+                                    Pressed="StandardWeightAdjust_Pressed"
+                                    Released="StandardWeightAdjust_Released" />
+                            <Entry x:Name="WeightEntry"
+                                   Grid.Column="1"
+                                   Placeholder="{Binding WeightPlaceholder}"
+                                   Keyboard="Numeric"
+                                   Text="{Binding Weight}"
+                                   Unfocused="WeightEntry_Unfocused"
+                                   HorizontalTextAlignment="Center" />
+                            <Button Grid.Column="2"
+                                    Text="+"
+                                    WidthRequest="24"
+                                    HeightRequest="24"
+                                    MinimumHeightRequest="24"
+                                    MinimumWidthRequest="24"
+                                    Padding="0"
+                                    FontSize="11"
+                                    CommandParameter="5"
+                                    Clicked="StandardWeightAdjust_Clicked"
+                                    Pressed="StandardWeightAdjust_Pressed"
+                                    Released="StandardWeightAdjust_Released" />
+                        </Grid>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Grid.Column="1"
+                                         Spacing="2">
+                        <Grid ColumnDefinitions="24,64,24"
+                              ColumnSpacing="4">
+                            <Label Grid.Column="1"
+                                   Text="{Binding RepsLabel}"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="Center" />
+                        </Grid>
+                        <Grid ColumnDefinitions="24,64,24"
+                              ColumnSpacing="4">
+                            <Button Text="-"
+                                    WidthRequest="24"
+                                    HeightRequest="24"
+                                    MinimumHeightRequest="24"
+                                    MinimumWidthRequest="24"
+                                    Padding="0"
+                                    FontSize="11"
+                                    Command="{Binding DecreaseRepsCommand}" />
+                            <Entry Grid.Column="1"
+                                   Text="{Binding Reps}"
+                                   Keyboard="Numeric"
+                                   HorizontalTextAlignment="Center" />
+                            <Button Grid.Column="2"
+                                    Text="+"
+                                    WidthRequest="24"
+                                    HeightRequest="24"
+                                    MinimumHeightRequest="24"
+                                    MinimumWidthRequest="24"
+                                    Padding="0"
+                                    FontSize="11"
+                                    Command="{Binding IncreaseRepsCommand}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Grid>
                 <Label Text="{Binding WeightHelperText}"
                        FontSize="11"
                        TextColor="Gray"
