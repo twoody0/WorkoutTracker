@@ -146,7 +146,7 @@ public class WorkoutViewModel : BaseViewModel
     public bool ShowPlanCompletedState => HasActivePlan && !HasRecommendedPlanWorkouts;
     public bool ShowPlanCompletedSummary => ShowPlanCompletedState && !ShowManualWorkoutEntry;
     public bool ShowManualWorkoutPrompt => ShowPlanCompletedState && !ShowManualWorkoutEntry;
-    public bool ShowTrackCardioSessionButton => !HasActivePlan || _hasScheduledPlanWorkoutsToday || ShowManualWorkoutEntry;
+    public bool ShowTrackCardioSessionButton => !HasActivePlan || HasRecommendedPlanWorkouts || ShowManualWorkoutEntry;
     public bool HasRecommendedStrengthWorkouts => RecommendedPlanWorkouts.Any(workout => workout.IsWeightLifting);
     public bool HasRecommendedCardioWorkouts => RecommendedPlanWorkouts.Any(workout => workout.IsCardio);
     public bool ShowWorkoutEditor => !HasActivePlan || HasRecommendedStrengthWorkouts || ShowManualWorkoutEntry;
@@ -592,11 +592,16 @@ public class WorkoutViewModel : BaseViewModel
 
     #region Private Methods
 
-    private async Task CheckForExistingWorkouts()
+    public async Task ReloadWorkoutHistoryAsync()
     {
         _workoutHistory = (await _workoutService.GetWorkouts()).ToList();
         HasWorkouts = _workoutHistory.Any();
         RefreshPlanRecommendations();
+    }
+
+    private async Task CheckForExistingWorkouts()
+    {
+        await ReloadWorkoutHistoryAsync();
     }
 
     private async Task StartManualCardioSessionAsync()
@@ -703,7 +708,8 @@ public class WorkoutViewModel : BaseViewModel
             MinReps = _plannedMinReps,
             MaxReps = _plannedMaxReps,
             TargetRpe = _plannedTargetRpe,
-            TargetRestRange = _plannedTargetRestRange
+            TargetRestRange = _plannedTargetRestRange,
+            PlanWeekNumber = _selectedRecommendation?.Workout.PlanWeekNumber
         };
 
         await SaveWorkoutAsync(strengthWorkout);
@@ -1026,11 +1032,6 @@ public class WorkoutViewModel : BaseViewModel
             workout.Name,
             workout.MuscleGroup,
             workout.Type,
-            workout.Sets,
-            workout.Reps,
-            workout.Steps,
-            workout.DurationMinutes,
-            workout.DistanceMiles.ToString("0.###"),
             workout.PlanWeekNumber);
     }
 

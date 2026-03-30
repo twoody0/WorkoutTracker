@@ -43,6 +43,7 @@ public class CardioWorkoutViewModel : BaseViewModel
     private int _plannedDurationMinutes;
     private double _plannedDistanceMiles;
     private double? _plannedTargetRpe;
+    private int _plannedPlanWeekNumber;
 
     public CardioWorkoutViewModel(IWorkoutService workoutService, IStepCounterService stepCounterService)
     {
@@ -223,10 +224,11 @@ public class CardioWorkoutViewModel : BaseViewModel
         }
 
         SessionName = string.IsNullOrWhiteSpace(template.Name) ? string.Empty : template.Name;
-        DistanceMilesText = template.DistanceMiles > 0 ? template.DistanceMiles.ToString("0.#") : string.Empty;
+        DistanceMilesText = string.Empty;
         PlannedDurationMinutes = template.DurationMinutes;
         PlannedDistanceMiles = template.DistanceMiles;
         PlannedTargetRpe = template.TargetRpe;
+        _plannedPlanWeekNumber = template.PlanWeekNumber.GetValueOrDefault();
         UseStepTracking = true;
         WorkoutTemplateCache.Template = null;
     }
@@ -312,6 +314,7 @@ public class CardioWorkoutViewModel : BaseViewModel
         var parsedDistanceMiles = await ResolveDistanceMilesAsync();
         var sessionEndedAt = DateTimeOffset.UtcNow;
         var sessionStartedAt = _sessionStartedAtUtc.Value;
+        var completedPlannedWorkout = _plannedPlanWeekNumber > 0;
 
         var workout = new Workout(
             name: string.IsNullOrWhiteSpace(SessionName) ? "Cardio Session" : SessionName.Trim(),
@@ -319,6 +322,7 @@ public class CardioWorkoutViewModel : BaseViewModel
             reps: 0,
             sets: 0,
             muscleGroup: "Cardio",
+            day: DateTime.Today.DayOfWeek,
             startTime: sessionStartedAt.LocalDateTime,
             type: WorkoutType.Cardio,
             gymLocation: "Outdoor")
@@ -327,7 +331,8 @@ public class CardioWorkoutViewModel : BaseViewModel
             DurationMinutes = Math.Max(1, (int)Math.Ceiling((sessionEndedAt - sessionStartedAt).TotalMinutes)),
             DistanceMiles = parsedDistanceMiles,
             EndTime = sessionEndedAt.LocalDateTime,
-            TargetRpe = PlannedTargetRpe
+            TargetRpe = PlannedTargetRpe,
+            PlanWeekNumber = _plannedPlanWeekNumber
         };
 
         await _workoutService.AddWorkout(workout);
@@ -335,10 +340,25 @@ public class CardioWorkoutViewModel : BaseViewModel
         _sessionStartedAtUtc = null;
         SessionSteps = 0;
         ElapsedTime = TimeSpan.Zero;
-        DistanceMilesText = HasPlannedDistance ? PlannedDistanceMiles.ToString("0.#") : string.Empty;
+        DistanceMilesText = string.Empty;
         SessionName = string.Empty;
         UseStepTracking = true;
+        _plannedPlanWeekNumber = 0;
         OnPropertyChanged(nameof(StepTrackingStatusText));
+
+        var currentPage = Shell.Current?.CurrentPage ?? Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (currentPage != null)
+        {
+            var completionMessage = completedPlannedWorkout
+                ? "Your planned cardio workout has been logged."
+                : "Your cardio workout has been logged.";
+            await currentPage.DisplayAlert("Workout Complete", completionMessage, "OK");
+        }
+
+        if (Shell.Current?.Navigation.NavigationStack.Count > 1)
+        {
+            await Shell.Current.Navigation.PopAsync();
+        }
     }
 
     private void StartSessionLoop()
@@ -444,13 +464,13 @@ public class CardioWorkoutViewModel : BaseViewModel
 
     private string GetInitialDistanceValue()
     {
-        if (HasPlannedDistance)
+        var estimatedDistance = GetEstimatedDistanceMiles();
+        if (estimatedDistance > 0)
         {
-            return PlannedDistanceMiles.ToString("0.#");
+            return estimatedDistance.ToString("0.##");
         }
 
-        var estimatedDistance = GetEstimatedDistanceMiles();
-        return estimatedDistance > 0 ? estimatedDistance.ToString("0.##") : string.Empty;
+        return string.IsNullOrWhiteSpace(DistanceMilesText) ? string.Empty : DistanceMilesText;
     }
 
     private string GetDistancePromptMessage()

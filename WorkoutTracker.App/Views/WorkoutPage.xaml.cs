@@ -29,13 +29,13 @@ public partial class WorkoutPage : ContentPage
 #endif
     }
 
-    protected override void OnAppearing()
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
 
         if (BindingContext is WorkoutViewModel vm)
         {
-            vm.RefreshPlanRecommendations();
+            await vm.ReloadWorkoutHistoryAsync();
         }
 
         UpdateRecommendationsHeight();
