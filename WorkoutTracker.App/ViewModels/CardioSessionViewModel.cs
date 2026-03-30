@@ -2,10 +2,8 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
-using MauiPermissions = Microsoft.Maui.ApplicationModel.Permissions;
 using WorkoutTracker.Helpers;
 using WorkoutTracker.Models;
-using WorkoutTracker.PlatformPermissions;
 using WorkoutTracker.Services;
 
 namespace WorkoutTracker.ViewModels;
@@ -199,10 +197,13 @@ public class CardioWorkoutViewModel : BaseViewModel
     public string PlannedDistanceText => $"Distance: {PlannedDistanceMiles:0.#} mi";
     public string PlannedTargetRpeText => $"RPE: {PlannedTargetRpe.GetValueOrDefault():0.#}";
     public bool SupportsStepTrackingForSelectedActivity => SupportsStepTracking(SessionName);
+    public string StepTrackingSourceDescription => _stepCounterService.SourceDescription;
     public string StepTrackingStatusText => !SupportsStepTrackingForSelectedActivity
         ? "This activity does not use step tracking."
+        : !_stepCounterService.IsAvailable
+            ? "Health-based step tracking is unavailable on this device."
         : UseStepTracking
-            ? "Step tracking will be captured automatically when supported."
+            ? $"Steps will be pulled automatically from {StepTrackingSourceDescription}."
             : "Step tracking is off for this session.";
     public bool HasEstimatedDistanceFromSteps => SupportsStepTrackingForSelectedActivity && GetEstimatedDistanceMiles() > 0;
     public string EstimatedDistanceFromStepsText => HasEstimatedDistanceFromSteps
@@ -253,7 +254,7 @@ public class CardioWorkoutViewModel : BaseViewModel
 
         if (UseStepTracking && SupportsStepTrackingForSelectedActivity)
         {
-            _stepCounterService.StartTracking();
+            _stepCounterService.StartTracking(_sessionStartedAtUtc.Value);
         }
 
         StartSessionLoop();
@@ -270,7 +271,7 @@ public class CardioWorkoutViewModel : BaseViewModel
         {
             UseStepTracking = false;
         }
-        else if (UseStepTracking && !await EnsureActivityRecognitionPermissionAsync())
+        else if (UseStepTracking && !await _stepCounterService.EnsureAccessAsync())
         {
             UseStepTracking = false;
             OnPropertyChanged(nameof(StepTrackingStatusText));
@@ -284,7 +285,7 @@ public class CardioWorkoutViewModel : BaseViewModel
 
         if (UseStepTracking && SupportsStepTrackingForSelectedActivity)
         {
-            _stepCounterService.StartTracking();
+            _stepCounterService.StartTracking(_sessionStartedAtUtc.Value);
         }
 
         StartSessionLoop();
@@ -513,39 +514,4 @@ public class CardioWorkoutViewModel : BaseViewModel
         }
     }
 
-    private static async Task<bool> EnsureActivityRecognitionPermissionAsync()
-    {
-#if ANDROID
-        if (!OperatingSystem.IsAndroidVersionAtLeast(29))
-        {
-            return true;
-        }
-
-        var status = await MauiPermissions.CheckStatusAsync<ActivityRecognitionPermission>();
-        if (status == PermissionStatus.Granted)
-        {
-            return true;
-        }
-
-        status = await MauiPermissions.RequestAsync<ActivityRecognitionPermission>();
-        if (status == PermissionStatus.Granted)
-        {
-            return true;
-        }
-
-        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
-        if (page != null)
-        {
-            await page.DisplayAlert(
-                "Permission Needed",
-                "Allow activity recognition if you want the session to capture steps from your phone or watch.",
-                "OK");
-        }
-
-        return false;
-#else
-        await Task.CompletedTask;
-        return true;
-#endif
-    }
 }

@@ -14,12 +14,31 @@ public interface IStepCounterService
 
     #endregion
 
+    #region Properties
+
+    /// <summary>
+    /// Human-readable description of the source currently used for steps.
+    /// </summary>
+    string SourceDescription { get; }
+
+    /// <summary>
+    /// Indicates whether step tracking is available on this device.
+    /// </summary>
+    bool IsAvailable { get; }
+
+    #endregion
+
     #region Methods
 
     /// <summary>
-    /// Starts tracking steps.
+    /// Requests any platform permissions or authorizations required for step tracking.
     /// </summary>
-    void StartTracking();
+    Task<bool> EnsureAccessAsync();
+
+    /// <summary>
+    /// Starts tracking steps for a session beginning at the supplied time.
+    /// </summary>
+    void StartTracking(DateTimeOffset sessionStartedAtUtc);
 
     /// <summary>
     /// Stops tracking steps.

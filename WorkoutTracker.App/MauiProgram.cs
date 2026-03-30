@@ -8,6 +8,9 @@ using CommunityToolkit.Maui;
 #if ANDROID
 using WorkoutTracker.Platforms.Android;
 #endif
+#if IOS
+using WorkoutTracker.Platforms.iOS;
+#endif
 
 public static class MauiProgram
 {
@@ -30,9 +33,13 @@ public static class MauiProgram
         // Existing services
         builder.Services.AddSingleton<IWorkoutService, WorkoutService>();
 
-        // Register platform-specific service for step counting on Android:
+        // Register platform-specific step source.
         #if ANDROID
         builder.Services.AddSingleton<IStepCounterService, StepCounterServiceAndroid>();
+        #elif IOS
+        builder.Services.AddSingleton<IStepCounterService, StepCounterServiceiOS>();
+        #else
+        builder.Services.AddSingleton<IStepCounterService, StepCounterServiceNull>();
         #endif
 
         // Register the Workout Library service

@@ -28,5 +28,7 @@
 	</array>
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Megnor reads your step count from Apple Health so cardio sessions can use steps from your iPhone or Apple Watch.</string>
 </dict>
 </plist>
