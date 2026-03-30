@@ -26,7 +26,7 @@ public partial class DashboardPage : ContentPage
 
     private void RefreshSwipeTargets()
     {
-        TabSwipeNavigationHelper.Attach(this, "dashboard", DashboardRootLayout, DashboardDatePicker, WorkoutHistoryList);
+        TabSwipeNavigationHelper.Attach(this, "dashboard", DashboardRootLayout, DashboardDatePicker);
         TabSwipeNavigationHelper.Refresh(this);
     }
 
@@ -40,9 +40,8 @@ public partial class DashboardPage : ContentPage
         var result = await BodyWeightPromptPage.ShowAsync(
             this,
             "Body Weight",
-            "Enter your current body weight here and it will save when you close this or go to Workout Plans.",
-            vm.BodyWeightInputValue,
-            workoutPlansButtonText: "Go To Workout Plans");
+            "Enter your current body weight here and it will save when you close this.",
+            vm.BodyWeightInputValue);
 
         if (result == null)
         {

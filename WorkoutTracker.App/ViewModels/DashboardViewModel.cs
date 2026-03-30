@@ -46,6 +46,8 @@ public class DashboardViewModel : BaseViewModel
     private double _caloriesBurned;
     private bool _hasWeightlifting;
     private bool _hasCardio;
+    private int _currentWorkoutIndex;
+    private int _totalWorkoutsForSelectedDate;
     private int _totalWorkoutSessions;
     private int _strengthWorkoutSessions;
     private int _cardioWorkoutSessions;
@@ -77,6 +79,8 @@ public class DashboardViewModel : BaseViewModel
         _scheduleService = scheduleService;
 
         LoadWorkoutsCommand = new Command(async () => await LoadWorkoutsAsync());
+        ShowPreviousWorkoutCommand = new Command(ShowPreviousWorkout);
+        ShowNextWorkoutCommand = new Command(ShowNextWorkout);
         ShowStrengthStatsCommand = new Command(() => SetActiveStatsMode(PlanStatsMode.Strength));
         ShowCardioStatsCommand = new Command(() => SetActiveStatsMode(PlanStatsMode.Cardio));
         ToggleThemeCommand = new Command(() =>
@@ -91,6 +95,8 @@ public class DashboardViewModel : BaseViewModel
     }
 
     public ICommand LoadWorkoutsCommand { get; }
+    public ICommand ShowPreviousWorkoutCommand { get; }
+    public ICommand ShowNextWorkoutCommand { get; }
     public ICommand ShowStrengthStatsCommand { get; }
     public ICommand ShowCardioStatsCommand { get; }
     public ICommand ToggleThemeCommand { get; }
@@ -142,6 +148,12 @@ public class DashboardViewModel : BaseViewModel
     {
         get => _totalWorkoutSessions;
         set => SetProperty(ref _totalWorkoutSessions, value);
+    }
+
+    public int TotalWorkoutsForSelectedDate
+    {
+        get => _totalWorkoutsForSelectedDate;
+        set => SetProperty(ref _totalWorkoutsForSelectedDate, value);
     }
 
     public int StrengthWorkoutSessions
@@ -198,6 +210,11 @@ public class DashboardViewModel : BaseViewModel
 
     public bool HasWorkoutsForSelectedDate => Workouts.Count > 0;
     public bool ShowEmptyWorkoutState => !HasWorkoutsForSelectedDate;
+    public DashboardWorkoutHistoryItem? CurrentWorkout => HasWorkoutsForSelectedDate && _currentWorkoutIndex >= 0 && _currentWorkoutIndex < Workouts.Count
+        ? Workouts[_currentWorkoutIndex]
+        : null;
+    public bool CanShowPreviousWorkout => _currentWorkoutIndex > 0;
+    public bool CanShowNextWorkout => _currentWorkoutIndex >= 0 && _currentWorkoutIndex < Workouts.Count - 1;
 
     public bool HasBodyWeight => _bodyWeightService.HasBodyWeight();
 
@@ -220,6 +237,16 @@ public class DashboardViewModel : BaseViewModel
         : $"Showing workouts from {SelectedDate:dddd, MMM d}.";
 
     public string EmptyWorkoutMessage => "No workouts were logged for this date yet. Use this page to review past training as your history grows.";
+
+    public string WorkoutHistorySummary => TotalWorkoutsForSelectedDate switch
+    {
+        <= 0 => "No workouts logged for this date yet.",
+        _ => $"Showing {TotalWorkoutsForSelectedDate} workout{(TotalWorkoutsForSelectedDate == 1 ? string.Empty : "s")} for this date."
+    };
+
+    public string CurrentWorkoutPositionSummary => CurrentWorkout == null
+        ? string.Empty
+        : $"Workout {_currentWorkoutIndex + 1} of {Workouts.Count}";
 
     public string TotalWorkoutSessionsSummary => $"{TotalWorkoutSessions} total logged session{(TotalWorkoutSessions == 1 ? string.Empty : "s")}";
 
@@ -252,10 +279,11 @@ public class DashboardViewModel : BaseViewModel
         var allWorkouts = (await _workoutService.GetWorkouts()).ToList();
         var filtered = allWorkouts
             .Where(workout => workout.StartTime.Date == SelectedDate.Date)
-            .OrderBy(workout => workout.StartTime)
+            .OrderByDescending(workout => workout.StartTime)
             .ToList();
 
         TotalWorkoutSessions = allWorkouts.Count;
+        TotalWorkoutsForSelectedDate = filtered.Count;
         StrengthWorkoutSessions = allWorkouts.Count(workout => workout.Type == WorkoutType.WeightLifting);
         CardioWorkoutSessions = allWorkouts.Count(workout => workout.Type == WorkoutType.Cardio);
 
@@ -289,6 +317,7 @@ public class DashboardViewModel : BaseViewModel
             workout.Type == WorkoutType.Cardio && (workout.DurationMinutes > 0 || workout.DistanceMiles > 0 || workout.Steps > 0));
 
         Workouts.Clear();
+        _currentWorkoutIndex = 0;
         double total = 0;
         var weightLbs = _bodyWeightService.GetBodyWeight() ?? _authService.CurrentUser?.Weight ?? 154;
 
@@ -317,6 +346,11 @@ public class DashboardViewModel : BaseViewModel
 
         OnPropertyChanged(nameof(HasWorkoutsForSelectedDate));
         OnPropertyChanged(nameof(ShowEmptyWorkoutState));
+        OnPropertyChanged(nameof(WorkoutHistorySummary));
+        OnPropertyChanged(nameof(CurrentWorkout));
+        OnPropertyChanged(nameof(CurrentWorkoutPositionSummary));
+        OnPropertyChanged(nameof(CanShowPreviousWorkout));
+        OnPropertyChanged(nameof(CanShowNextWorkout));
         OnPropertyChanged(nameof(BodyWeightSummary));
         OnPropertyChanged(nameof(BodyWeightInputValue));
         OnPropertyChanged(nameof(BodyWeightButtonText));
@@ -353,6 +387,34 @@ public class DashboardViewModel : BaseViewModel
         OnPropertyChanged(nameof(LongestCardioSessionSummary));
         OnPropertyChanged(nameof(LongestCardioDistanceSummary));
         OnPropertyChanged(nameof(FavoriteCardioWorkoutSummary));
+    }
+
+    private void ShowPreviousWorkout()
+    {
+        if (!CanShowPreviousWorkout)
+        {
+            return;
+        }
+
+        _currentWorkoutIndex--;
+        OnPropertyChanged(nameof(CurrentWorkout));
+        OnPropertyChanged(nameof(CurrentWorkoutPositionSummary));
+        OnPropertyChanged(nameof(CanShowPreviousWorkout));
+        OnPropertyChanged(nameof(CanShowNextWorkout));
+    }
+
+    private void ShowNextWorkout()
+    {
+        if (!CanShowNextWorkout)
+        {
+            return;
+        }
+
+        _currentWorkoutIndex++;
+        OnPropertyChanged(nameof(CurrentWorkout));
+        OnPropertyChanged(nameof(CurrentWorkoutPositionSummary));
+        OnPropertyChanged(nameof(CanShowPreviousWorkout));
+        OnPropertyChanged(nameof(CanShowNextWorkout));
     }
 
     private PlanStatsMode GetDefaultStatsMode()

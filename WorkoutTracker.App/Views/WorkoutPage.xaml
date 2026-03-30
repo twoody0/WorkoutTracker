@@ -228,7 +228,7 @@
                         </VerticalStackLayout>
                         <VerticalStackLayout Grid.Column="1"
                                              Spacing="1">
-                            <Label Text="{Binding WeightSummaryText}"
+                            <Label Text="{Binding QuickAddWeightSummaryText}"
                                    FontSize="12"
                                    TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}" />
                             <Label Text="{Binding WeightTotalPreviewText}"
@@ -351,14 +351,43 @@
                                        TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
                                        VerticalOptions="Center"
                                        IsVisible="{Binding ShowStandaloneWeightValueInput}" />
-                                <Entry Grid.Column="1"
-                                       Text="{Binding Weight}"
-                                       Placeholder="{Binding WeightPlaceholder}"
-                                       Keyboard="Numeric"
-                                       FontSize="12"
-                                       WidthRequest="56"
-                                       HorizontalOptions="Start"
-                                       IsVisible="{Binding ShowStandardWeightInput}" />
+                                <Grid Grid.Column="1"
+                                      ColumnDefinitions="24,56,24"
+                                      ColumnSpacing="2"
+                                      HorizontalOptions="Start"
+                                      IsVisible="{Binding ShowStandardWeightInput}">
+                                    <Button Text="-"
+                                            WidthRequest="24"
+                                            HeightRequest="24"
+                                            MinimumHeightRequest="24"
+                                            MinimumWidthRequest="24"
+                                            Padding="0"
+                                            FontSize="11"
+                                            CommandParameter="-5"
+                                            Clicked="StandardWeightAdjust_Clicked"
+                                            Pressed="StandardWeightAdjust_Pressed"
+                                            Released="StandardWeightAdjust_Released" />
+                                    <Entry Grid.Column="1"
+                                           Text="{Binding Weight}"
+                                           Placeholder="{Binding QuickEditWeightPlaceholder}"
+                                           Keyboard="Numeric"
+                                           FontSize="12"
+                                           HorizontalTextAlignment="Center"
+                                           WidthRequest="56"
+                                           Unfocused="WeightEntry_Unfocused" />
+                                    <Button Grid.Column="2"
+                                            Text="+"
+                                            WidthRequest="24"
+                                            HeightRequest="24"
+                                            MinimumHeightRequest="24"
+                                            MinimumWidthRequest="24"
+                                            Padding="0"
+                                            FontSize="11"
+                                            CommandParameter="5"
+                                            Clicked="StandardWeightAdjust_Clicked"
+                                            Pressed="StandardWeightAdjust_Pressed"
+                                            Released="StandardWeightAdjust_Released" />
+                                </Grid>
                                 <Grid Grid.Column="1"
                                       ColumnDefinitions="24,56,24"
                                       ColumnSpacing="2"
@@ -484,6 +513,92 @@
                 </Grid>
             </Border>
 
+            <VerticalStackLayout Spacing="2"
+                                 IsVisible="{Binding ShowStandaloneWeightEditor}">
+                <Label Text="{Binding WeightLabel}"
+                       FontAttributes="Bold"
+                       IsVisible="{Binding ShowStandardWeightInput}" />
+                <Entry x:Name="WeightEntry"
+                       Placeholder="{Binding WeightPlaceholder}"
+                       Keyboard="Numeric"
+                       Text="{Binding Weight}"
+                       Unfocused="WeightEntry_Unfocused"
+                       IsVisible="{Binding ShowStandardWeightInput}" />
+                <Label Text="{Binding WeightHelperText}"
+                       FontSize="11"
+                       TextColor="Gray"
+                       IsVisible="{Binding HasWeightHelperText}" />
+                <Label Text="{Binding WeightTotalPreviewText}"
+                       FontSize="11"
+                       TextColor="Gray"
+                       IsVisible="{Binding ShowWeightTotalPreview}" />
+                <Label Text="{Binding BaseBodyWeightSummary}"
+                       FontSize="12"
+                       TextColor="Gray"
+                       HorizontalOptions="Fill"
+                       HorizontalTextAlignment="Start"
+                       Margin="58,0,0,0"
+                       IsVisible="{Binding ShowResistanceAdjustment}" />
+                <Label Text="Adjustment (+ resistance / - assistance)"
+                       FontAttributes="Bold"
+                       FontSize="12"
+                       HorizontalOptions="Fill"
+                       HorizontalTextAlignment="Start"
+                       Margin="58,0,0,0"
+                       IsVisible="{Binding ShowResistanceAdjustment}" />
+                <Grid ColumnDefinitions="24,60,24"
+                      ColumnSpacing="2"
+                      HorizontalOptions="Center"
+                      IsVisible="{Binding ShowResistanceAdjustment}">
+                    <Button Text="-"
+                            WidthRequest="24"
+                            HeightRequest="24"
+                            MinimumHeightRequest="24"
+                            MinimumWidthRequest="24"
+                            Padding="0"
+                            FontSize="11"
+                            CommandParameter="-5"
+                            Clicked="ResistanceAdjust_Clicked"
+                            Pressed="ResistanceAdjust_Pressed"
+                            Released="ResistanceAdjust_Released" />
+                    <Border Grid.Column="1"
+                            Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
+                            StrokeShape="RoundRectangle 12"
+                            Padding="0"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center">
+                        <Entry Text="{Binding ResistanceAdjustment}"
+                               Keyboard="Numeric"
+                               BackgroundColor="Transparent"
+                               ClearButtonVisibility="Never"
+                               HorizontalTextAlignment="Center"
+                               HorizontalOptions="Center"
+                               VerticalTextAlignment="Center"
+                               Margin="0"
+                               MaxLength="6" />
+                    </Border>
+                    <Button Grid.Column="2"
+                            Text="+"
+                            WidthRequest="24"
+                            HeightRequest="24"
+                            MinimumHeightRequest="24"
+                            MinimumWidthRequest="24"
+                            Padding="0"
+                            FontSize="11"
+                            CommandParameter="5"
+                            Clicked="ResistanceAdjust_Clicked"
+                            Pressed="ResistanceAdjust_Pressed"
+                            Released="ResistanceAdjust_Released" />
+                </Grid>
+                <Label Text="{Binding EffectiveLoadSummary}"
+                       FontSize="12"
+                       TextColor="Gray"
+                       HorizontalOptions="Fill"
+                       HorizontalTextAlignment="Start"
+                       Margin="58,0,0,0"
+                       IsVisible="{Binding ShowResistanceAdjustment}" />
+            </VerticalStackLayout>
+
             <VerticalStackLayout IsVisible="{Binding ShowAdvancedEditorContent}"
                                    Spacing="5">
                 <VerticalStackLayout Spacing="2"
@@ -524,92 +639,6 @@
                         </CollectionView.ItemTemplate>
                     </CollectionView>
                 </Border>
-
-                <VerticalStackLayout Spacing="2"
-                                     IsVisible="{Binding ShowStandaloneWeightEditor}">
-                    <Label Text="{Binding WeightLabel}"
-                           FontAttributes="Bold"
-                           IsVisible="{Binding ShowStandardWeightInput}" />
-                    <Entry x:Name="WeightEntry"
-                           Placeholder="{Binding WeightPlaceholder}"
-                           Keyboard="Numeric"
-                           Text="{Binding Weight}"
-                           Unfocused="WeightEntry_Unfocused"
-                           IsVisible="{Binding ShowStandardWeightInput}" />
-                    <Label Text="{Binding WeightHelperText}"
-                           FontSize="11"
-                           TextColor="Gray"
-                           IsVisible="{Binding HasWeightHelperText}" />
-                    <Label Text="{Binding WeightTotalPreviewText}"
-                           FontSize="11"
-                           TextColor="Gray"
-                           IsVisible="{Binding ShowWeightTotalPreview}" />
-                    <Label Text="{Binding BaseBodyWeightSummary}"
-                           FontSize="12"
-                           TextColor="Gray"
-                           HorizontalOptions="Fill"
-                           HorizontalTextAlignment="Start"
-                           Margin="58,0,0,0"
-                           IsVisible="{Binding ShowResistanceAdjustment}" />
-                    <Label Text="Adjustment (+ resistance / - assistance)"
-                           FontAttributes="Bold"
-                           FontSize="12"
-                           HorizontalOptions="Fill"
-                           HorizontalTextAlignment="Start"
-                           Margin="58,0,0,0"
-                           IsVisible="{Binding ShowResistanceAdjustment}" />
-                    <Grid ColumnDefinitions="24,60,24"
-                          ColumnSpacing="2"
-                          HorizontalOptions="Center"
-                          IsVisible="{Binding ShowResistanceAdjustment}">
-                        <Button Text="-"
-                                WidthRequest="24"
-                                HeightRequest="24"
-                                MinimumHeightRequest="24"
-                                MinimumWidthRequest="24"
-                                Padding="0"
-                                FontSize="11"
-                                CommandParameter="-5"
-                                Clicked="ResistanceAdjust_Clicked"
-                                Pressed="ResistanceAdjust_Pressed"
-                                Released="ResistanceAdjust_Released" />
-                        <Border Grid.Column="1"
-                                Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
-                                StrokeShape="RoundRectangle 12"
-                                Padding="0"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center">
-                            <Entry Text="{Binding ResistanceAdjustment}"
-                                   Keyboard="Numeric"
-                                   BackgroundColor="Transparent"
-                                   ClearButtonVisibility="Never"
-                                   HorizontalTextAlignment="Center"
-                                   HorizontalOptions="Center"
-                                   VerticalTextAlignment="Center"
-                                   Margin="0"
-                                   MaxLength="6" />
-                        </Border>
-                        <Button Grid.Column="2"
-                                Text="+"
-                                WidthRequest="24"
-                                HeightRequest="24"
-                                MinimumHeightRequest="24"
-                                MinimumWidthRequest="24"
-                                Padding="0"
-                                FontSize="11"
-                                CommandParameter="5"
-                                Clicked="ResistanceAdjust_Clicked"
-                                Pressed="ResistanceAdjust_Pressed"
-                                Released="ResistanceAdjust_Released" />
-                    </Grid>
-                    <Label Text="{Binding EffectiveLoadSummary}"
-                           FontSize="12"
-                           TextColor="Gray"
-                           HorizontalOptions="Fill"
-                           HorizontalTextAlignment="Start"
-                           Margin="58,0,0,0"
-                           IsVisible="{Binding ShowResistanceAdjustment}" />
-                </VerticalStackLayout>
 
                 <VerticalStackLayout Spacing="2"
                                      IsVisible="{Binding ShowCardioFields}">

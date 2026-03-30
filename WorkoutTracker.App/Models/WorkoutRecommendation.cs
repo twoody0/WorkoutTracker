@@ -32,7 +32,7 @@ public class WorkoutRecommendation : INotifyPropertyChanged
     public bool HasTargetRest => !string.IsNullOrWhiteSpace(TargetRestText);
     public string ActionButtonText => IsCardio ? "Track Workout" : "Use This Workout";
     public bool ShowUseButton => !IsSelected;
-    public bool ShowDetails => !IsSelected;
+    public bool ShowDetails => true;
     public bool ShowStrengthDetails => ShowDetails && IsWeightLifting;
     public bool ShowCardioDetails => ShowDetails && IsCardio;
     public bool ShowSelectedState => IsSelected;

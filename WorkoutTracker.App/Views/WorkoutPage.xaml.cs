@@ -17,6 +17,8 @@ public partial class WorkoutPage : ContentPage
     private bool _hasRepeatedResistanceAdjustment;
     private CancellationTokenSource? _bodyweightWeightAdjustCancellationTokenSource;
     private bool _hasRepeatedBodyweightWeightAdjustment;
+    private CancellationTokenSource? _standardWeightAdjustCancellationTokenSource;
+    private bool _hasRepeatedStandardWeightAdjustment;
 
     public WorkoutPage(WorkoutViewModel vm)
     {
@@ -36,6 +38,7 @@ public partial class WorkoutPage : ContentPage
         if (BindingContext is WorkoutViewModel vm)
         {
             await vm.ReloadWorkoutHistoryAsync();
+            vm.SelectFirstRecommendedWorkout();
         }
 
         UpdateRecommendationsHeight();
@@ -260,6 +263,68 @@ public partial class WorkoutPage : ContentPage
         }
 
         return double.TryParse(button.CommandParameter.ToString(), out delta);
+    }
+
+    private void StandardWeightAdjust_Pressed(object sender, EventArgs e)
+    {
+        if (TryGetResistanceDelta(sender, out var delta))
+        {
+            StartStandardWeightAdjustment(delta);
+        }
+    }
+
+    private void StandardWeightAdjust_Clicked(object sender, EventArgs e)
+    {
+        if (_hasRepeatedStandardWeightAdjustment)
+        {
+            return;
+        }
+
+        if (BindingContext is WorkoutViewModel vm && TryGetResistanceDelta(sender, out var delta))
+        {
+            vm.AdjustDisplayedWeight(delta);
+        }
+    }
+
+    private void StandardWeightAdjust_Released(object sender, EventArgs e)
+    {
+        _standardWeightAdjustCancellationTokenSource?.Cancel();
+        _standardWeightAdjustCancellationTokenSource?.Dispose();
+        _standardWeightAdjustCancellationTokenSource = null;
+    }
+
+    private void StartStandardWeightAdjustment(double delta)
+    {
+        StandardWeightAdjust_Released(this, EventArgs.Empty);
+        _hasRepeatedStandardWeightAdjustment = false;
+
+        var cancellationTokenSource = new CancellationTokenSource();
+        _standardWeightAdjustCancellationTokenSource = cancellationTokenSource;
+        _ = RepeatStandardWeightAdjustmentAsync(delta, cancellationTokenSource.Token);
+    }
+
+    private async Task RepeatStandardWeightAdjustmentAsync(double delta, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(350, cancellationToken);
+            _hasRepeatedStandardWeightAdjustment = true;
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    if (BindingContext is WorkoutViewModel vm)
+                    {
+                        vm.AdjustDisplayedWeight(delta);
+                    }
+                });
+                await Task.Delay(90, cancellationToken);
+            }
+        }
+        catch (TaskCanceledException)
+        {
+        }
     }
 
     private void BodyweightWeightAdjust_Pressed(object sender, EventArgs e)

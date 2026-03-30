@@ -239,10 +239,34 @@ public class WorkoutViewModel : BaseViewModel
         DumbbellLoadMode.EachSide => "One side",
         _ => "Enter weight (lbs or kg)"
     };
+    public string QuickEditWeightPlaceholder => CurrentDumbbellLoadMode switch
+    {
+        DumbbellLoadMode.EachDumbbell => "One dumbbell",
+        DumbbellLoadMode.EachSide => "One side",
+        _ => "0"
+    };
     public string WeightSummaryPrefix => "Weight";
     public string WeightSummaryText => string.IsNullOrWhiteSpace(Weight)
         ? WeightSummaryPrefix
         : $"{WeightSummaryPrefix}: {Weight}";
+    public string QuickAddWeightSummaryText
+    {
+        get
+        {
+            if (!string.IsNullOrWhiteSpace(Weight))
+            {
+                return WeightSummaryText;
+            }
+
+            if (_selectedRecommendation?.IsWeightLifting == true &&
+                !string.IsNullOrWhiteSpace(_selectedRecommendation.WeightDisplayValue))
+            {
+                return _selectedRecommendation.WeightDisplayText;
+            }
+
+            return $"{WeightSummaryPrefix}: 0";
+        }
+    }
     public string WeightHelperText => CurrentDumbbellLoadMode switch
     {
         DumbbellLoadMode.EachDumbbell => string.Empty,
@@ -487,6 +511,7 @@ public class WorkoutViewModel : BaseViewModel
             if (SetProperty(ref _weight, value))
             {
                 OnPropertyChanged(nameof(WeightSummaryText));
+                OnPropertyChanged(nameof(QuickAddWeightSummaryText));
                 OnPropertyChanged(nameof(EffectiveLoadSummary));
                 OnPropertyChanged(nameof(WeightTotalPreviewText));
                 OnPropertyChanged(nameof(ShowWeightTotalPreview));
@@ -597,6 +622,17 @@ public class WorkoutViewModel : BaseViewModel
         _workoutHistory = (await _workoutService.GetWorkouts()).ToList();
         HasWorkouts = _workoutHistory.Any();
         RefreshPlanRecommendations();
+    }
+
+    public void SelectFirstRecommendedWorkout()
+    {
+        var firstRecommendation = RecommendedPlanWorkouts.FirstOrDefault();
+        if (firstRecommendation == null)
+        {
+            return;
+        }
+
+        ApplyWorkoutTemplate(firstRecommendation, collapseForQuickAdd: true);
     }
 
     private async Task CheckForExistingWorkouts()
@@ -815,6 +851,7 @@ public class WorkoutViewModel : BaseViewModel
         _selectedRecommendation = recommendation;
         _selectedRecommendation.IsSelected = true;
         OnPropertyChanged(nameof(SelectedRecommendationItem));
+        OnPropertyChanged(nameof(QuickAddWeightSummaryText));
         ApplyWorkoutTemplate(recommendation.Workout, recommendation.LastUsedWeight, collapseForQuickAdd);
     }
 
@@ -827,9 +864,7 @@ public class WorkoutViewModel : BaseViewModel
         _suppressSuggestionRefresh = true;
         ExerciseSearchQuery = workout.Name;
         _suppressSuggestionRefresh = false;
-        Weight = historicalWeight.HasValue
-            ? GetDisplayWeightForExercise(historicalWeight.Value, workout.Name)
-            : workout.Weight > 0 ? GetDisplayWeightForExercise(workout.Weight, workout.Name) : string.Empty;
+        Weight = GetDefaultWeightForWorkout(workout, historicalWeight);
         ResistanceAdjustment = string.Empty;
         ApplyPlannedRepRange(workout.MinReps, workout.MaxReps);
         ApplyPlannedTargetRpe(workout.TargetRpe);
@@ -907,44 +942,15 @@ public class WorkoutViewModel : BaseViewModel
         OnPropertyChanged(nameof(ShowPlanRpeInfo));
         OnPropertyChanged(nameof(ManualWorkoutButtonText));
         OnPropertyChanged(nameof(TodayLabel));
+        OnPropertyChanged(nameof(QuickAddWeightSummaryText));
         UpdateActivePlanSummary();
 
         if (HasRecommendedPlanWorkouts)
         {
-            if (!_hasLoadedTemplate && string.IsNullOrWhiteSpace(Name) && string.IsNullOrWhiteSpace(ExerciseSearchQuery))
+            var firstRecommendation = RecommendedPlanWorkouts.FirstOrDefault();
+            if (firstRecommendation != null)
             {
-                var defaultStrengthRecommendation = RecommendedPlanWorkouts.FirstOrDefault(recommendation => recommendation.IsWeightLifting);
-                if (defaultStrengthRecommendation != null)
-                {
-                    ApplyWorkoutTemplate(defaultStrengthRecommendation, collapseForQuickAdd: true);
-                }
-            }
-            else
-            {
-                var matchingRecommendation = !string.IsNullOrWhiteSpace(selectedWorkoutKey)
-                    ? RecommendedPlanWorkouts.FirstOrDefault(recommendation =>
-                        string.Equals(GetWorkoutKey(recommendation.Workout), selectedWorkoutKey, StringComparison.OrdinalIgnoreCase))
-                    : null;
-
-                matchingRecommendation ??= RecommendedPlanWorkouts.FirstOrDefault(recommendation =>
-                    string.Equals(recommendation.Workout.Name, Name, StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(recommendation.Workout.MuscleGroup, SelectedMuscleGroup, StringComparison.OrdinalIgnoreCase));
-
-                if (matchingRecommendation != null)
-                {
-                    _selectedRecommendation = matchingRecommendation;
-                    _selectedRecommendation.IsSelected = true;
-                    OnPropertyChanged(nameof(SelectedRecommendationItem));
-                    OnPropertyChanged(nameof(CanEditSelectedMuscleGroup));
-                }
-                else if (_selectedRecommendation == null && HasRecommendedStrengthWorkouts && string.IsNullOrWhiteSpace(Name))
-                {
-                    var fallbackStrengthRecommendation = RecommendedPlanWorkouts.FirstOrDefault(recommendation => recommendation.IsWeightLifting);
-                    if (fallbackStrengthRecommendation != null)
-                    {
-                        ApplyWorkoutTemplate(fallbackStrengthRecommendation, collapseForQuickAdd: true);
-                    }
-                }
+                ApplyWorkoutTemplate(firstRecommendation, collapseForQuickAdd: true);
             }
         }
     }
@@ -984,6 +990,7 @@ public class WorkoutViewModel : BaseViewModel
         ClearPlannedTargetRpe();
         ClearPlannedTargetRest();
         OnPropertyChanged(nameof(SelectedRecommendationItem));
+        OnPropertyChanged(nameof(QuickAddWeightSummaryText));
         OnPropertyChanged(nameof(CanEditSelectedMuscleGroup));
     }
 
@@ -1241,6 +1248,23 @@ public class WorkoutViewModel : BaseViewModel
         ResistanceAdjustment = (currentWeight - baseWeight).ToString("0");
     }
 
+    public void AdjustDisplayedWeight(double delta)
+    {
+        if (ShowResistanceAdjustment)
+        {
+            return;
+        }
+
+        var currentWeight = 0.0;
+        if (double.TryParse(Weight, out var parsedWeight) && parsedWeight > 0)
+        {
+            currentWeight = parsedWeight;
+        }
+
+        currentWeight = Math.Max(0, currentWeight + delta);
+        Weight = currentWeight.ToString("0.#");
+    }
+
     public void CommitBodyweightWeightInput()
     {
         if (!ShowResistanceAdjustment || !HasBodyWeight)
@@ -1452,6 +1476,23 @@ public class WorkoutViewModel : BaseViewModel
             : storedWeight;
 
         return displayWeight.ToString("0.#");
+    }
+
+    private static string GetDefaultWeightForWorkout(Workout workout, double? historicalWeight)
+    {
+        if (workout.Type != WorkoutType.WeightLifting)
+        {
+            return string.Empty;
+        }
+
+        if (historicalWeight.HasValue && historicalWeight.Value > 0)
+        {
+            return GetDisplayWeightForExercise(historicalWeight.Value, workout.Name);
+        }
+
+        return workout.Weight > 0
+            ? GetDisplayWeightForExercise(workout.Weight, workout.Name)
+            : string.Empty;
     }
 
     private static string GetRecommendationWeightPrefix() => "Weight";
