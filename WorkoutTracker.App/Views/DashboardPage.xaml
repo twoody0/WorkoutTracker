@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     x:Class="WorkoutTracker.Views.DashboardPage"
+    x:Name="DashboardPageRoot"
     Title="Profile">
 
     <ScrollView>
@@ -322,41 +323,45 @@
             <HorizontalStackLayout Spacing="10"
                                    HorizontalOptions="Center"
                                    IsVisible="{Binding ShowStatsToggle}">
-                <Border StrokeThickness="0"
+                <Button Text=""
+                        Command="{Binding ShowStrengthStatsCommand}"
+                        WidthRequest="28"
+                        HeightRequest="28"
+                        MinimumWidthRequest="28"
+                        MinimumHeightRequest="28"
+                        Padding="0"
+                        CornerRadius="14"
+                        BorderWidth="0"
                         BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}"
-                        StrokeShape="RoundRectangle 6"
-                        WidthRequest="12"
-                        HeightRequest="12"
                         Opacity="0.35">
-                    <Border.Triggers>
-                        <DataTrigger TargetType="Border"
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button"
                                      Binding="{Binding IsStrengthStatsSelected}"
                                      Value="True">
                             <Setter Property="Opacity" Value="1" />
                         </DataTrigger>
-                    </Border.Triggers>
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding ShowStrengthStatsCommand}" />
-                    </Border.GestureRecognizers>
-                </Border>
+                    </Button.Triggers>
+                </Button>
 
-                <Border StrokeThickness="0"
+                <Button Text=""
+                        Command="{Binding ShowCardioStatsCommand}"
+                        WidthRequest="28"
+                        HeightRequest="28"
+                        MinimumWidthRequest="28"
+                        MinimumHeightRequest="28"
+                        Padding="0"
+                        CornerRadius="14"
+                        BorderWidth="0"
                         BackgroundColor="{AppThemeBinding Light=#1F2937, Dark=#CBD5E1}"
-                        StrokeShape="RoundRectangle 6"
-                        WidthRequest="12"
-                        HeightRequest="12"
                         Opacity="0.35">
-                    <Border.Triggers>
-                        <DataTrigger TargetType="Border"
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button"
                                      Binding="{Binding IsCardioStatsSelected}"
                                      Value="True">
                             <Setter Property="Opacity" Value="1" />
                         </DataTrigger>
-                    </Border.Triggers>
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding ShowCardioStatsCommand}" />
-                    </Border.GestureRecognizers>
-                </Border>
+                    </Button.Triggers>
+                </Button>
             </HorizontalStackLayout>
 
             <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
@@ -376,8 +381,89 @@
                                TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
                     </VerticalStackLayout>
 
-                    <DatePicker x:Name="DashboardDatePicker"
-                                Date="{Binding SelectedDate}" />
+                    <Button Text="{Binding CalendarToggleText}"
+                            Command="{Binding ToggleCalendarVisibilityCommand}"
+                            HorizontalOptions="Start"
+                            BackgroundColor="{AppThemeBinding Light=#E6FFFA, Dark=#123B36}"
+                            TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}" />
+
+                    <VerticalStackLayout Spacing="12"
+                                         IsVisible="{Binding IsCalendarExpanded}">
+                        <Grid ColumnDefinitions="Auto,*,Auto"
+                              VerticalOptions="Center">
+                            <Button Text="&lt;"
+                                    Command="{Binding ShowPreviousMonthCommand}"
+                                    BackgroundColor="{AppThemeBinding Light=#E6FFFA, Dark=#123B36}"
+                                    TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}"
+                                    FontSize="18"
+                                    FontAttributes="Bold" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding CurrentCalendarMonthLabel}"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalTextAlignment="Center"
+                                   FontAttributes="Bold"
+                                   FontSize="16" />
+                            <Button Grid.Column="2"
+                                    Text="&gt;"
+                                    Command="{Binding ShowNextMonthCommand}"
+                                    BackgroundColor="{AppThemeBinding Light=#E6FFFA, Dark=#123B36}"
+                                    TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}"
+                                    FontSize="18"
+                                    FontAttributes="Bold" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,*,*,*,*,*,*"
+                              ColumnSpacing="8">
+                            <Label Text="Sun" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                            <Label Grid.Column="1" Text="Mon" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                            <Label Grid.Column="2" Text="Tue" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                            <Label Grid.Column="3" Text="Wed" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                            <Label Grid.Column="4" Text="Thu" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                            <Label Grid.Column="5" Text="Fri" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                            <Label Grid.Column="6" Text="Sat" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                        </Grid>
+
+                        <CollectionView x:Name="DashboardCalendarView"
+                                        ItemsSource="{Binding CalendarDays}"
+                                        SelectionMode="Single"
+                                        SelectionChanged="OnCalendarSelectionChanged"
+                                        ItemSizingStrategy="MeasureFirstItem"
+                                        HeightRequest="312">
+                            <CollectionView.ItemsLayout>
+                                <GridItemsLayout Orientation="Vertical"
+                                                 Span="7"
+                                                 VerticalItemSpacing="8"
+                                                 HorizontalItemSpacing="8" />
+                            </CollectionView.ItemsLayout>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Stroke="{Binding BorderColor}"
+                                            BackgroundColor="{Binding BackgroundColor}"
+                                            StrokeShape="RoundRectangle 14"
+                                            StrokeThickness="1"
+                                            HeightRequest="44"
+                                            Padding="0">
+                                        <Grid RowDefinitions="*,Auto"
+                                              Padding="0,6,0,6"
+                                              InputTransparent="True">
+                                            <Label Text="{Binding DayNumberText}"
+                                                   TextColor="{Binding TextColor}"
+                                                   FontAttributes="{Binding DayFontAttributes}"
+                                                   HorizontalTextAlignment="Center"
+                                                   VerticalTextAlignment="Center" />
+                                            <BoxView Grid.Row="1"
+                                                     HeightRequest="6"
+                                                     WidthRequest="6"
+                                                     CornerRadius="3"
+                                                     HorizontalOptions="Center"
+                                                     Color="{Binding WorkoutDotColor}"
+                                                     IsVisible="{Binding HasWorkout}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
 
                     <Grid ColumnDefinitions="*,*"
                           ColumnSpacing="12">
@@ -427,8 +513,17 @@
                         <Button Text="Prev"
                                 Command="{Binding ShowPreviousWorkoutCommand}"
                                 IsEnabled="{Binding CanShowPreviousWorkout}"
-                                BackgroundColor="{AppThemeBinding Light=#E5EAF1, Dark=#334155}"
-                                TextColor="{AppThemeBinding Light=#1F2937, Dark=#FFFFFF}" />
+                                BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}"
+                                TextColor="White">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button"
+                                             Binding="{Binding CanShowPreviousWorkout}"
+                                             Value="False">
+                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#E5E7EB, Dark=#3F4A5A}" />
+                                    <Setter Property="TextColor" Value="{AppThemeBinding Light=#9CA3AF, Dark=#94A3B8}" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
                         <Label Grid.Column="1"
                                Text="{Binding CurrentWorkoutPositionSummary}"
                                HorizontalTextAlignment="Center"
@@ -439,7 +534,16 @@
                                 Command="{Binding ShowNextWorkoutCommand}"
                                 IsEnabled="{Binding CanShowNextWorkout}"
                                 BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}"
-                                TextColor="White" />
+                                TextColor="White">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button"
+                                             Binding="{Binding CanShowNextWorkout}"
+                                             Value="False">
+                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#E5E7EB, Dark=#3F4A5A}" />
+                                    <Setter Property="TextColor" Value="{AppThemeBinding Light=#9CA3AF, Dark=#94A3B8}" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
                     </Grid>
 
                     <Border Padding="12"
@@ -486,3 +590,4 @@
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
+

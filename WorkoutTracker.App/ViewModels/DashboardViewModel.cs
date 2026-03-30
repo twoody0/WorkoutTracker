@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Windows.Input;
+using Microsoft.Maui.Graphics;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 
@@ -14,7 +16,7 @@ public sealed class DashboardWorkoutHistoryItem
     public DateTime StartTime => Workout.StartTime;
     public string MuscleGroup => Workout.MuscleGroup;
     public int Sets => Workout.Sets;
-    public string RepDisplay => Workout.RepDisplay;
+    public string RepDisplay => Workout.Reps > 0 ? Workout.Reps.ToString(CultureInfo.InvariantCulture) : Workout.RepDisplay;
     public double Weight => Workout.Weight;
     public int DurationMinutes => Workout.DurationMinutes;
     public double DistanceMiles => Workout.DistanceMiles;
@@ -23,6 +25,102 @@ public sealed class DashboardWorkoutHistoryItem
     public bool HasDuration => Workout.HasDuration;
     public bool HasDistance => Workout.HasDistance;
     public bool HasSteps => Workout.HasSteps;
+}
+
+public sealed class DashboardCalendarDayItem : BaseViewModel
+{
+    public required DateTime Date { get; init; }
+    public required bool IsCurrentMonth { get; init; }
+    private bool _isSelected;
+    private bool _isDarkTheme;
+    private bool _hasWorkout;
+
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            if (SetProperty(ref _isSelected, value))
+            {
+                RaiseAppearanceChanged();
+            }
+        }
+    }
+
+    public bool IsDarkTheme
+    {
+        get => _isDarkTheme;
+        set
+        {
+            if (SetProperty(ref _isDarkTheme, value))
+            {
+                RaiseAppearanceChanged();
+            }
+        }
+    }
+
+    public bool HasWorkout
+    {
+        get => _hasWorkout;
+        set
+        {
+            if (SetProperty(ref _hasWorkout, value))
+            {
+                RaiseAppearanceChanged();
+            }
+        }
+    }
+
+    public bool IsToday => Date.Date == DateTime.Today;
+    public string DayNumberText => Date.Day.ToString(CultureInfo.InvariantCulture);
+    public Color BackgroundColor => IsSelected
+        ? Color.FromArgb("#0F766E")
+        : HasWorkout
+            ? Color.FromArgb(IsDarkTheme
+                ? (IsCurrentMonth ? "#134E4A" : "#1F2937")
+                : (IsCurrentMonth ? "#CCFBF1" : "#E2E8F0"))
+            : Colors.Transparent;
+    public Color BorderColor => IsSelected
+        ? Color.FromArgb("#0F766E")
+        : HasWorkout
+            ? Color.FromArgb("#0F766E")
+            : IsToday
+                ? Color.FromArgb(IsDarkTheme ? "#CBD5E1" : "#94A3B8")
+                : Color.FromArgb(IsDarkTheme
+                    ? (IsCurrentMonth ? "#475569" : "#334155")
+                    : (IsCurrentMonth ? "#D8E0EB" : "#E5E7EB"));
+    public Color TextColor => IsSelected
+        ? Colors.White
+        : HasWorkout
+            ? Color.FromArgb(IsDarkTheme ? "#5EEAD4" : "#0F766E")
+            : IsCurrentMonth
+                ? Color.FromArgb(IsDarkTheme ? "#F8FAFC" : "#18212B")
+                : Color.FromArgb(IsDarkTheme ? "#94A3B8" : "#8D9BAC");
+    public Color WorkoutDotColor => IsSelected
+        ? Colors.White
+        : Color.FromArgb("#0F766E");
+    public FontAttributes DayFontAttributes => IsSelected || IsToday || HasWorkout
+        ? FontAttributes.Bold
+        : FontAttributes.None;
+
+    private void RaiseAppearanceChanged()
+    {
+        OnPropertyChanged(nameof(BackgroundColor));
+        OnPropertyChanged(nameof(BorderColor));
+        OnPropertyChanged(nameof(TextColor));
+        OnPropertyChanged(nameof(WorkoutDotColor));
+        OnPropertyChanged(nameof(DayFontAttributes));
+    }
+}
+
+public sealed class DashboardDateSnapshot
+{
+    public required List<DashboardWorkoutHistoryItem> Workouts { get; init; }
+    public required int WorkoutCount { get; init; }
+    public required bool HasWeightlifting { get; init; }
+    public required bool HasCardio { get; init; }
+    public required double TotalWeightLifted { get; init; }
+    public required double CaloriesBurned { get; init; }
 }
 
 public class DashboardViewModel : BaseViewModel
@@ -39,9 +137,11 @@ public class DashboardViewModel : BaseViewModel
     private readonly IBodyWeightService _bodyWeightService;
     private readonly IThemeService _themeService;
     private readonly IWorkoutScheduleService _scheduleService;
+    private readonly ObservableCollection<DashboardCalendarDayItem> _calendarDays = new();
 
     private ObservableCollection<DashboardWorkoutHistoryItem> _workouts = new();
     private DateTime _selectedDate;
+    private DateTime _visibleCalendarMonth;
     private double _totalWeightLifted;
     private double _caloriesBurned;
     private bool _hasWeightlifting;
@@ -64,6 +164,12 @@ public class DashboardViewModel : BaseViewModel
     private string _favoriteTrainingDaySummary = "Most active day: not enough history yet.";
     private string _favoriteCardioWorkoutSummary = "Favorite cardio session: not enough history yet.";
     private PlanStatsMode _activePlanStatsMode;
+    private HashSet<DateTime> _workoutDates = new();
+    private bool _isCalendarExpanded;
+    private List<Workout> _allWorkouts = [];
+    private bool _hasLoadedWorkoutHistory;
+    private Dictionary<DateTime, DashboardDateSnapshot> _workoutSnapshotsByDate = [];
+    private DateTime _calendarGridStartDate;
 
     public DashboardViewModel(
         IWorkoutService workoutService,
@@ -81,22 +187,32 @@ public class DashboardViewModel : BaseViewModel
         LoadWorkoutsCommand = new Command(async () => await LoadWorkoutsAsync());
         ShowPreviousWorkoutCommand = new Command(ShowPreviousWorkout);
         ShowNextWorkoutCommand = new Command(ShowNextWorkout);
+        ShowPreviousMonthCommand = new Command(() => ChangeCalendarMonth(-1));
+        ShowNextMonthCommand = new Command(() => ChangeCalendarMonth(1));
+        SelectCalendarDateCommand = new Command<DateTime>(SelectCalendarDate);
+        ToggleCalendarVisibilityCommand = new Command(ToggleCalendarVisibility);
         ShowStrengthStatsCommand = new Command(() => SetActiveStatsMode(PlanStatsMode.Strength));
         ShowCardioStatsCommand = new Command(() => SetActiveStatsMode(PlanStatsMode.Cardio));
         ToggleThemeCommand = new Command(() =>
         {
             _themeService.ToggleTheme();
+            UpdateCalendarDays();
             OnPropertyChanged(nameof(IsDarkTheme));
             OnPropertyChanged(nameof(ThemeLabel));
             OnPropertyChanged(nameof(ThemeButtonText));
         });
 
+        _visibleCalendarMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
         SelectedDate = DateTime.Today;
     }
 
     public ICommand LoadWorkoutsCommand { get; }
     public ICommand ShowPreviousWorkoutCommand { get; }
     public ICommand ShowNextWorkoutCommand { get; }
+    public ICommand ShowPreviousMonthCommand { get; }
+    public ICommand ShowNextMonthCommand { get; }
+    public ICommand SelectCalendarDateCommand { get; }
+    public ICommand ToggleCalendarVisibilityCommand { get; }
     public ICommand ShowStrengthStatsCommand { get; }
     public ICommand ShowCardioStatsCommand { get; }
     public ICommand ToggleThemeCommand { get; }
@@ -114,8 +230,18 @@ public class DashboardViewModel : BaseViewModel
         {
             if (SetProperty(ref _selectedDate, value))
             {
+                if (_visibleCalendarMonth.Year != value.Year || _visibleCalendarMonth.Month != value.Month)
+                {
+                    _visibleCalendarMonth = new DateTime(value.Year, value.Month, 1);
+                    OnPropertyChanged(nameof(CurrentCalendarMonthLabel));
+                }
+
                 OnPropertyChanged(nameof(SelectedDateSummary));
-                LoadWorkoutsCommand.Execute(null);
+                UpdateCalendarDays();
+                if (_hasLoadedWorkoutHistory)
+                {
+                    ApplySelectedDateWorkouts();
+                }
             }
         }
     }
@@ -232,6 +358,24 @@ public class DashboardViewModel : BaseViewModel
 
     public string ThemeButtonText => IsDarkTheme ? "Use Light Mode" : "Use Dark Mode";
 
+    public ObservableCollection<DashboardCalendarDayItem> CalendarDays => _calendarDays;
+
+    public string CurrentCalendarMonthLabel => _visibleCalendarMonth.ToString("MMMM yyyy", CultureInfo.InvariantCulture);
+
+    public bool IsCalendarExpanded
+    {
+        get => _isCalendarExpanded;
+        set
+        {
+            if (SetProperty(ref _isCalendarExpanded, value))
+            {
+                OnPropertyChanged(nameof(CalendarToggleText));
+            }
+        }
+    }
+
+    public string CalendarToggleText => IsCalendarExpanded ? "Hide Calendar" : "Open Calendar";
+
     public string SelectedDateSummary => SelectedDate.Date == DateTime.Today
         ? "Showing today's workout history."
         : $"Showing workouts from {SelectedDate:dddd, MMM d}.";
@@ -276,21 +420,21 @@ public class DashboardViewModel : BaseViewModel
 
     private async Task LoadWorkoutsAsync()
     {
-        var allWorkouts = (await _workoutService.GetWorkouts()).ToList();
-        var filtered = allWorkouts
-            .Where(workout => workout.StartTime.Date == SelectedDate.Date)
-            .OrderByDescending(workout => workout.StartTime)
-            .ToList();
+        _allWorkouts = (await _workoutService.GetWorkouts()).ToList();
+        _hasLoadedWorkoutHistory = true;
+        _workoutDates = _allWorkouts
+            .Select(workout => workout.StartTime.Date)
+            .ToHashSet();
+        _workoutSnapshotsByDate = BuildWorkoutSnapshotsByDate(_allWorkouts);
 
-        TotalWorkoutSessions = allWorkouts.Count;
-        TotalWorkoutsForSelectedDate = filtered.Count;
-        StrengthWorkoutSessions = allWorkouts.Count(workout => workout.Type == WorkoutType.WeightLifting);
-        CardioWorkoutSessions = allWorkouts.Count(workout => workout.Type == WorkoutType.Cardio);
+        TotalWorkoutSessions = _allWorkouts.Count;
+        StrengthWorkoutSessions = _allWorkouts.Count(workout => workout.Type == WorkoutType.WeightLifting);
+        CardioWorkoutSessions = _allWorkouts.Count(workout => workout.Type == WorkoutType.Cardio);
 
-        var strengthHistory = allWorkouts
+        var strengthHistory = _allWorkouts
             .Where(workout => workout.Type == WorkoutType.WeightLifting)
             .ToList();
-        var cardioHistory = allWorkouts
+        var cardioHistory = _allWorkouts
             .Where(workout => workout.Type == WorkoutType.Cardio)
             .ToList();
 
@@ -304,53 +448,16 @@ public class DashboardViewModel : BaseViewModel
         _longestCardioSessionMinutes = cardioHistory.Select(GetEstimatedCardioMinutes).DefaultIfEmpty(0).Max();
         _longestCardioDistance = cardioHistory.Select(workout => workout.DistanceMiles).DefaultIfEmpty(0).Max();
         _biggestLiftSummary = GetBiggestLiftSummary(strengthHistory);
-        _favoriteTrainingDaySummary = GetFavoriteTrainingDaySummary(allWorkouts);
+        _favoriteTrainingDaySummary = GetFavoriteTrainingDaySummary(_allWorkouts);
         _favoriteCardioWorkoutSummary = GetFavoriteCardioWorkoutSummary(cardioHistory);
         if (_activePlanStatsMode == PlanStatsMode.None)
         {
             _activePlanStatsMode = GetDefaultStatsMode();
         }
 
-        HasWeightlifting = filtered.Any(workout =>
-            workout.Type == WorkoutType.WeightLifting && workout.Reps > 0 && workout.Sets > 0);
-        HasCardio = filtered.Any(workout =>
-            workout.Type == WorkoutType.Cardio && (workout.DurationMinutes > 0 || workout.DistanceMiles > 0 || workout.Steps > 0));
+        ApplySelectedDateWorkouts();
+        UpdateCalendarDays();
 
-        Workouts.Clear();
-        _currentWorkoutIndex = 0;
-        double total = 0;
-        var weightLbs = _bodyWeightService.GetBodyWeight() ?? _authService.CurrentUser?.Weight ?? 154;
-
-        foreach (var workout in filtered)
-        {
-            Workouts.Add(new DashboardWorkoutHistoryItem
-            {
-                Workout = workout,
-                CaloriesSummary = GetWorkoutCaloriesSummary(workout, weightLbs)
-            });
-            if (workout.Type == WorkoutType.WeightLifting && workout.Reps > 0 && workout.Sets > 0)
-            {
-                total += workout.Weight * workout.Reps * workout.Sets;
-            }
-        }
-
-        TotalWeightLifted = total;
-
-        var totalCardioMinutes = filtered
-            .Where(workout => workout.Type == WorkoutType.Cardio)
-            .Sum(GetEstimatedCardioMinutes);
-
-        var weightKg = weightLbs * 0.453592;
-        const double moderateCardioMet = 6.0;
-        CaloriesBurned = totalCardioMinutes * 0.0175 * moderateCardioMet * weightKg;
-
-        OnPropertyChanged(nameof(HasWorkoutsForSelectedDate));
-        OnPropertyChanged(nameof(ShowEmptyWorkoutState));
-        OnPropertyChanged(nameof(WorkoutHistorySummary));
-        OnPropertyChanged(nameof(CurrentWorkout));
-        OnPropertyChanged(nameof(CurrentWorkoutPositionSummary));
-        OnPropertyChanged(nameof(CanShowPreviousWorkout));
-        OnPropertyChanged(nameof(CanShowNextWorkout));
         OnPropertyChanged(nameof(BodyWeightSummary));
         OnPropertyChanged(nameof(BodyWeightInputValue));
         OnPropertyChanged(nameof(BodyWeightButtonText));
@@ -387,6 +494,152 @@ public class DashboardViewModel : BaseViewModel
         OnPropertyChanged(nameof(LongestCardioSessionSummary));
         OnPropertyChanged(nameof(LongestCardioDistanceSummary));
         OnPropertyChanged(nameof(FavoriteCardioWorkoutSummary));
+    }
+
+    private void ApplySelectedDateWorkouts()
+    {
+        var snapshot = _workoutSnapshotsByDate.GetValueOrDefault(SelectedDate.Date, new DashboardDateSnapshot
+        {
+            Workouts = [],
+            WorkoutCount = 0,
+            HasWeightlifting = false,
+            HasCardio = false,
+            TotalWeightLifted = 0,
+            CaloriesBurned = 0
+        });
+
+        TotalWorkoutsForSelectedDate = snapshot.WorkoutCount;
+        HasWeightlifting = snapshot.HasWeightlifting;
+        HasCardio = snapshot.HasCardio;
+
+        Workouts.Clear();
+        _currentWorkoutIndex = 0;
+
+        foreach (var workout in snapshot.Workouts)
+        {
+            Workouts.Add(workout);
+        }
+
+        TotalWeightLifted = snapshot.TotalWeightLifted;
+        CaloriesBurned = snapshot.CaloriesBurned;
+
+        OnPropertyChanged(nameof(HasWorkoutsForSelectedDate));
+        OnPropertyChanged(nameof(ShowEmptyWorkoutState));
+        OnPropertyChanged(nameof(WorkoutHistorySummary));
+        OnPropertyChanged(nameof(CurrentWorkout));
+        OnPropertyChanged(nameof(CurrentWorkoutPositionSummary));
+        OnPropertyChanged(nameof(CanShowPreviousWorkout));
+        OnPropertyChanged(nameof(CanShowNextWorkout));
+        OnPropertyChanged(nameof(ShowStrengthDaySummaryCard));
+        OnPropertyChanged(nameof(ShowCardioDaySummaryCard));
+    }
+
+    private Dictionary<DateTime, DashboardDateSnapshot> BuildWorkoutSnapshotsByDate(IEnumerable<Workout> workouts)
+    {
+        var weightLbs = _bodyWeightService.GetBodyWeight() ?? _authService.CurrentUser?.Weight ?? 154;
+        var weightKg = weightLbs * 0.453592;
+        const double moderateCardioMet = 6.0;
+
+        return workouts
+            .GroupBy(workout => workout.StartTime.Date)
+            .ToDictionary(
+                group => group.Key,
+                group =>
+                {
+                    var orderedWorkouts = group
+                        .OrderByDescending(workout => workout.StartTime)
+                        .ToList();
+
+                    var items = orderedWorkouts
+                        .Select(workout => new DashboardWorkoutHistoryItem
+                        {
+                            Workout = workout,
+                            CaloriesSummary = GetWorkoutCaloriesSummary(workout, weightLbs)
+                        })
+                        .ToList();
+
+                    var totalWeightLifted = orderedWorkouts
+                        .Where(workout => workout.Type == WorkoutType.WeightLifting && workout.Reps > 0 && workout.Sets > 0)
+                        .Sum(workout => workout.Weight * workout.Reps * workout.Sets);
+
+                    var totalCardioMinutes = orderedWorkouts
+                        .Where(workout => workout.Type == WorkoutType.Cardio)
+                        .Sum(GetEstimatedCardioMinutes);
+
+                    return new DashboardDateSnapshot
+                    {
+                        Workouts = items,
+                        WorkoutCount = items.Count,
+                        HasWeightlifting = orderedWorkouts.Any(workout =>
+                            workout.Type == WorkoutType.WeightLifting && workout.Reps > 0 && workout.Sets > 0),
+                        HasCardio = orderedWorkouts.Any(workout =>
+                            workout.Type == WorkoutType.Cardio && (workout.DurationMinutes > 0 || workout.DistanceMiles > 0 || workout.Steps > 0)),
+                        TotalWeightLifted = totalWeightLifted,
+                        CaloriesBurned = totalCardioMinutes * 0.0175 * moderateCardioMet * weightKg
+                    };
+                });
+    }
+
+    private void ChangeCalendarMonth(int offset)
+    {
+        _visibleCalendarMonth = _visibleCalendarMonth.AddMonths(offset);
+        OnPropertyChanged(nameof(CurrentCalendarMonthLabel));
+        UpdateCalendarDays();
+    }
+
+    private void SelectCalendarDate(DateTime date)
+    {
+        SelectedDate = date.Date;
+    }
+
+    public void SelectCalendarDay(DashboardCalendarDayItem? day)
+    {
+        if (day == null)
+        {
+            return;
+        }
+
+        SelectCalendarDate(day.Date);
+    }
+
+    private void ToggleCalendarVisibility()
+    {
+        IsCalendarExpanded = !IsCalendarExpanded;
+    }
+
+    private void UpdateCalendarDays()
+    {
+        var firstDayOfMonth = new DateTime(_visibleCalendarMonth.Year, _visibleCalendarMonth.Month, 1);
+        var gridStart = firstDayOfMonth.AddDays(-(int)firstDayOfMonth.DayOfWeek);
+        var isDarkTheme = _themeService.IsDarkTheme;
+
+        if (_calendarDays.Count == 42 && _calendarGridStartDate == gridStart)
+        {
+            foreach (var day in _calendarDays)
+            {
+                day.IsSelected = day.Date.Date == SelectedDate.Date;
+                day.IsDarkTheme = isDarkTheme;
+                day.HasWorkout = _workoutDates.Contains(day.Date.Date);
+            }
+
+            return;
+        }
+
+        _calendarGridStartDate = gridStart;
+        _calendarDays.Clear();
+
+        for (var offset = 0; offset < 42; offset++)
+        {
+            var date = gridStart.AddDays(offset);
+            _calendarDays.Add(new DashboardCalendarDayItem
+            {
+                Date = date,
+                IsCurrentMonth = date.Month == _visibleCalendarMonth.Month && date.Year == _visibleCalendarMonth.Year,
+                IsSelected = date.Date == SelectedDate.Date,
+                HasWorkout = _workoutDates.Contains(date.Date),
+                IsDarkTheme = isDarkTheme
+            });
+        }
     }
 
     private void ShowPreviousWorkout()

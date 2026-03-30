@@ -1,5 +1,6 @@
 using WorkoutTracker.ViewModels;
 using WorkoutTracker.Helpers;
+using Microsoft.Maui.Controls;
 
 namespace WorkoutTracker.Views;
 
@@ -26,7 +27,7 @@ public partial class DashboardPage : ContentPage
 
     private void RefreshSwipeTargets()
     {
-        TabSwipeNavigationHelper.Attach(this, "dashboard", DashboardRootLayout, DashboardDatePicker);
+        TabSwipeNavigationHelper.Attach(this, "dashboard", DashboardRootLayout);
         TabSwipeNavigationHelper.Refresh(this);
     }
 
@@ -62,6 +63,21 @@ public partial class DashboardPage : ContentPage
         {
             await Shell.Current.GoToAsync("//workout-plans");
             return;
+        }
+    }
+
+    private void OnCalendarSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (BindingContext is not DashboardViewModel vm)
+        {
+            return;
+        }
+
+        vm.SelectCalendarDay(e.CurrentSelection.FirstOrDefault() as DashboardCalendarDayItem);
+
+        if (sender is CollectionView collectionView)
+        {
+            collectionView.SelectedItem = null;
         }
     }
 }
