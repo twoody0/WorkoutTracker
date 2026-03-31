@@ -142,16 +142,23 @@ public class WorkoutViewModel : BaseViewModel
     public bool CanEditSelectedMuscleGroup => !(_selectedRecommendation != null && _workoutScheduleService.ActivePlan is { IsCustom: false });
     public bool HasRecommendedPlanWorkouts => RecommendedPlanWorkouts.Count > 0;
     public bool ShowPlanSection => HasActivePlan && (ShowPlanSuggestionsSection || ShowPlanCompletedSummary || ShowManualWorkoutPrompt || ShowRpeHelp);
-    public bool ShowPlanSuggestionsSection => HasRecommendedPlanWorkouts;
+    public bool ShowPlanSuggestionsSection => HasRecommendedPlanWorkouts && !ShowManualWorkoutEntry;
+    public bool ShowCompactPlanSuggestions => RecommendedPlanWorkouts.Count > 0 && RecommendedPlanWorkouts.Count < 4;
+    public bool ShowScrollablePlanSuggestions => RecommendedPlanWorkouts.Count >= 4;
     public bool ShowPlanCompletedState => HasActivePlan && !HasRecommendedPlanWorkouts;
     public bool ShowPlanCompletedSummary => ShowPlanCompletedState && !ShowManualWorkoutEntry;
     public bool ShowManualWorkoutPrompt => ShowPlanCompletedState && !ShowManualWorkoutEntry;
-    public bool ShowTrackCardioSessionButton => !HasActivePlan || HasRecommendedPlanWorkouts || ShowManualWorkoutEntry;
+    public bool ShowTopManualWorkoutButton => HasRecommendedPlanWorkouts && !ShowManualWorkoutEntry;
+    public bool ShowTrackCardioSessionButton => !HasActivePlan || ShowManualWorkoutEntry || ShowPlanCompletedState;
+    public bool IsManualWorkoutEntryActive => ShowManualWorkoutEntry;
+    public bool ShowBackToPlanButton => ShowManualWorkoutEntry && HasRecommendedPlanWorkouts;
     public bool HasRecommendedStrengthWorkouts => RecommendedPlanWorkouts.Any(workout => workout.IsWeightLifting);
     public bool HasRecommendedCardioWorkouts => RecommendedPlanWorkouts.Any(workout => workout.IsCardio);
     public bool ShowWorkoutEditor => !HasActivePlan || HasRecommendedStrengthWorkouts || ShowManualWorkoutEntry;
     public bool ShowQuickAddCard => ShowWorkoutEditor && IsQuickAddMode && !IsManualCardio;
-    public bool ShowStandaloneWeightEditor => ShowWorkoutEditor && ShowStandaloneWeightField;
+    public bool ShowStandaloneWeightEditor => ShowQuickAddStandaloneWeightEditor || ShowManualStandaloneWeightEditor;
+    public bool ShowQuickAddStandaloneWeightEditor => ShowWorkoutEditor && IsQuickAddMode && !IsAdvancedFieldsVisible && !IsManualCardio;
+    public bool ShowManualStandaloneWeightEditor => ShowWorkoutEditor && !IsQuickAddMode && IsAdvancedFieldsVisible && !IsManualCardio;
     public bool ShowAdvancedEditorContent => ShowWorkoutEditor && ShowAdvancedEditorSection;
     public bool ShowStrengthFields => !IsManualCardio;
     public bool ShowCardioFields => IsManualCardio;
@@ -180,6 +187,8 @@ public class WorkoutViewModel : BaseViewModel
                 OnPropertyChanged(nameof(ShowStandardWeightInput));
                 OnPropertyChanged(nameof(ShowQuickAddCard));
                 OnPropertyChanged(nameof(ShowStandaloneWeightEditor));
+                OnPropertyChanged(nameof(ShowQuickAddStandaloneWeightEditor));
+                OnPropertyChanged(nameof(ShowManualStandaloneWeightEditor));
                 OnPropertyChanged(nameof(ShowAdvancedEditorContent));
             }
         }
@@ -199,6 +208,8 @@ public class WorkoutViewModel : BaseViewModel
                 OnPropertyChanged(nameof(ShowStandardWeightInput));
                 OnPropertyChanged(nameof(ShowQuickAddCard));
                 OnPropertyChanged(nameof(ShowStandaloneWeightEditor));
+                OnPropertyChanged(nameof(ShowQuickAddStandaloneWeightEditor));
+                OnPropertyChanged(nameof(ShowManualStandaloneWeightEditor));
                 OnPropertyChanged(nameof(ShowAdvancedEditorContent));
             }
         }
@@ -594,16 +605,18 @@ public class WorkoutViewModel : BaseViewModel
     });
     public ICommand ShowManualWorkoutEntryCommand => new Command(() =>
     {
-        ShowManualWorkoutEntry = true;
+        OpenManualWorkoutEntry();
+    });
+    public ICommand BackToPlanSuggestionsCommand => new Command(() =>
+    {
+        ReturnToPlanSuggestions();
     });
 
     public ICommand SelectExerciseCommand => new Command<WeightliftingExercise>(exercise =>
     {
         if (exercise != null)
         {
-            Name = exercise.Name;
-            ExerciseSearchQuery = exercise.Name;
-            ExerciseSuggestions.Clear();
+            ApplySelectedExercise(exercise.Name);
         }
     });
 
@@ -918,6 +931,8 @@ public class WorkoutViewModel : BaseViewModel
         }
 
         OnPropertyChanged(nameof(HasRecommendedPlanWorkouts));
+        OnPropertyChanged(nameof(ShowCompactPlanSuggestions));
+        OnPropertyChanged(nameof(ShowScrollablePlanSuggestions));
         OnPropertyChanged(nameof(HasRecommendedStrengthWorkouts));
         OnPropertyChanged(nameof(HasRecommendedCardioWorkouts));
         OnPropertyChanged(nameof(HasActivePlan));
@@ -927,10 +942,15 @@ public class WorkoutViewModel : BaseViewModel
                 OnPropertyChanged(nameof(ShowPlanCompletedState));
                 OnPropertyChanged(nameof(ShowPlanCompletedSummary));
                 OnPropertyChanged(nameof(ShowManualWorkoutPrompt));
+                OnPropertyChanged(nameof(ShowTopManualWorkoutButton));
                 OnPropertyChanged(nameof(ShowTrackCardioSessionButton));
+                OnPropertyChanged(nameof(IsManualWorkoutEntryActive));
+                OnPropertyChanged(nameof(ShowBackToPlanButton));
                 OnPropertyChanged(nameof(ShowWorkoutEditor));
                 OnPropertyChanged(nameof(ShowQuickAddCard));
                 OnPropertyChanged(nameof(ShowStandaloneWeightEditor));
+                OnPropertyChanged(nameof(ShowQuickAddStandaloneWeightEditor));
+                OnPropertyChanged(nameof(ShowManualStandaloneWeightEditor));
                 OnPropertyChanged(nameof(ShowAdvancedEditorContent));
         OnPropertyChanged(nameof(ShowPlanRpeInfo));
         OnPropertyChanged(nameof(ManualWorkoutButtonText));
@@ -980,6 +1000,31 @@ public class WorkoutViewModel : BaseViewModel
         OnPropertyChanged(nameof(QuickEditExerciseName));
     }
 
+    private void ApplySelectedExercise(string exerciseName)
+    {
+        if (string.IsNullOrWhiteSpace(exerciseName))
+        {
+            return;
+        }
+
+        var trimmedExerciseName = exerciseName.Trim();
+
+        _suppressSuggestionRefresh = true;
+        Name = trimmedExerciseName;
+        ExerciseSearchQuery = trimmedExerciseName;
+        _suppressSuggestionRefresh = false;
+
+        if (!IsManualCardio)
+        {
+            Weight = GetDefaultWeightForExerciseName(trimmedExerciseName);
+            ApplyBodyweightDefaultsIfNeeded();
+            NotifyBodyweightStateChanged();
+        }
+
+        ExerciseSuggestions.Clear();
+        IsNameFieldFocused = false;
+    }
+
     private void SetSelectedRecommendation(WorkoutRecommendation? recommendation)
     {
         foreach (var item in RecommendedPlanWorkouts)
@@ -992,6 +1037,36 @@ public class WorkoutViewModel : BaseViewModel
         OnPropertyChanged(nameof(QuickAddWeightSummaryText));
         OnPropertyChanged(nameof(QuickEditExerciseName));
         OnPropertyChanged(nameof(CanEditSelectedMuscleGroup));
+    }
+
+    private void OpenManualWorkoutEntry()
+    {
+        ShowManualWorkoutEntry = true;
+        SetSelectedRecommendation(null);
+        IsQuickAddMode = false;
+        IsAdvancedFieldsVisible = true;
+        ClearPlannedRepRange();
+        ClearPlannedTargetRpe();
+        ClearPlannedTargetRest();
+        Name = string.Empty;
+        ExerciseSearchQuery = string.Empty;
+        Weight = "0";
+        ResistanceAdjustment = string.Empty;
+        Reps = "1";
+        Sets = "1";
+        DurationMinutesText = string.Empty;
+        DistanceMilesText = string.Empty;
+        StepsText = string.Empty;
+        ExerciseSuggestions.Clear();
+        IsNameFieldFocused = false;
+    }
+
+    private void ReturnToPlanSuggestions()
+    {
+        ShowManualWorkoutEntry = false;
+        IsQuickAddMode = true;
+        IsAdvancedFieldsVisible = false;
+        SelectFirstRecommendedWorkout();
     }
 
     private void UpdateActivePlanSummary()
@@ -1021,12 +1096,16 @@ public class WorkoutViewModel : BaseViewModel
             if (SetProperty(ref _showManualWorkoutEntry, value))
             {
                 OnPropertyChanged(nameof(ShowPlanSection));
-                OnPropertyChanged(nameof(ShowPlanCompletedSummary));
-                OnPropertyChanged(nameof(ShowManualWorkoutPrompt));
-                OnPropertyChanged(nameof(ShowTrackCardioSessionButton));
-                OnPropertyChanged(nameof(ShowWorkoutEditor));
+        OnPropertyChanged(nameof(ShowPlanCompletedSummary));
+        OnPropertyChanged(nameof(ShowManualWorkoutPrompt));
+        OnPropertyChanged(nameof(ShowTopManualWorkoutButton));
+        OnPropertyChanged(nameof(ShowTrackCardioSessionButton));
+        OnPropertyChanged(nameof(ShowBackToPlanButton));
+        OnPropertyChanged(nameof(ShowWorkoutEditor));
                 OnPropertyChanged(nameof(ShowQuickAddCard));
                 OnPropertyChanged(nameof(ShowStandaloneWeightEditor));
+                OnPropertyChanged(nameof(ShowQuickAddStandaloneWeightEditor));
+                OnPropertyChanged(nameof(ShowManualStandaloneWeightEditor));
                 OnPropertyChanged(nameof(ShowAdvancedEditorContent));
             }
         }
@@ -1059,6 +1138,23 @@ public class WorkoutViewModel : BaseViewModel
             .FirstOrDefault();
     }
 
+    private double? GetLastUsedWeight(string? exerciseName)
+    {
+        if (string.IsNullOrWhiteSpace(exerciseName))
+        {
+            return null;
+        }
+
+        return _workoutHistory
+            .Where(historyWorkout =>
+                historyWorkout.Type == WorkoutType.WeightLifting &&
+                historyWorkout.Weight > 0 &&
+                string.Equals(historyWorkout.Name, exerciseName, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(historyWorkout => historyWorkout.StartTime)
+            .Select(historyWorkout => (double?)historyWorkout.Weight)
+            .FirstOrDefault();
+    }
+
     private async Task ShowError(string message)
     {
         var currentWindow = Application.Current?.Windows.FirstOrDefault();
@@ -1066,6 +1162,25 @@ public class WorkoutViewModel : BaseViewModel
         {
             await currentPage.DisplayAlert("Error", message, "OK");
         }
+    }
+
+    public void CommitExerciseSelection()
+    {
+        if (IsManualCardio)
+        {
+            return;
+        }
+
+        var exerciseName = string.IsNullOrWhiteSpace(ExerciseSearchQuery)
+            ? Name
+            : ExerciseSearchQuery.Trim();
+
+        if (string.IsNullOrWhiteSpace(exerciseName))
+        {
+            return;
+        }
+
+        ApplySelectedExercise(exerciseName);
     }
 
     #endregion
@@ -1174,6 +1289,8 @@ public class WorkoutViewModel : BaseViewModel
         OnPropertyChanged(nameof(ShowQuickAddCard));
         OnPropertyChanged(nameof(ShowStandaloneWeightField));
         OnPropertyChanged(nameof(ShowStandaloneWeightEditor));
+        OnPropertyChanged(nameof(ShowQuickAddStandaloneWeightEditor));
+        OnPropertyChanged(nameof(ShowManualStandaloneWeightEditor));
         OnPropertyChanged(nameof(ShowStrengthFields));
         OnPropertyChanged(nameof(ShowCardioFields));
         OnPropertyChanged(nameof(ExercisePickerTitle));
@@ -1476,6 +1593,17 @@ public class WorkoutViewModel : BaseViewModel
             : storedWeight;
 
         return displayWeight.ToString("0.#");
+    }
+
+    private string GetDefaultWeightForExerciseName(string exerciseName)
+    {
+        var lastUsedWeight = GetLastUsedWeight(exerciseName);
+        if (lastUsedWeight.HasValue && lastUsedWeight.Value > 0)
+        {
+            return GetDisplayWeightForExercise(lastUsedWeight.Value, exerciseName);
+        }
+
+        return "0";
     }
 
     private static string GetDefaultWeightForWorkout(Workout workout, double? historicalWeight)

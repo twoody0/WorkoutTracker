@@ -64,6 +64,7 @@ public partial class WorkoutPage : ContentPage
         if (BindingContext is WorkoutViewModel vm)
         {
             vm.IsNameFieldFocused = false;
+            vm.CommitExerciseSelection();
         }
     }
 
@@ -81,6 +82,7 @@ public partial class WorkoutPage : ContentPage
             BindingContext is WorkoutViewModel vm)
         {
             vm.SelectExerciseCommand.Execute(exercise);
+            ExerciseEntry?.Unfocus();
         }
 
         ((CollectionView)sender).SelectedItem = null;
@@ -199,7 +201,10 @@ public partial class WorkoutPage : ContentPage
         if (e.PropertyName == nameof(WorkoutViewModel.SelectedRecommendationItem) &&
             vm.SelectedRecommendationItem == null)
         {
-            EnsureDefaultRecommendationSelected();
+            if (!vm.IsManualWorkoutEntryActive)
+            {
+                EnsureDefaultRecommendationSelected();
+            }
             return;
         }
 
@@ -213,14 +218,15 @@ public partial class WorkoutPage : ContentPage
             return;
         }
 
-        if (e.PropertyName == nameof(WorkoutViewModel.ShowTrackCardioSessionButton) &&
-            vm.ShowTrackCardioSessionButton)
+        if (e.PropertyName == nameof(WorkoutViewModel.IsManualWorkoutEntryActive) &&
+            vm.IsManualWorkoutEntryActive)
         {
             MainThread.BeginInvokeOnMainThread(async () =>
             {
-                if (PageScrollView != null)
+                if (PageScrollView != null && ManualWorkoutEditorSection != null)
                 {
-                    await PageScrollView.ScrollToAsync(0, 0, true);
+                    await Task.Delay(50);
+                    await PageScrollView.ScrollToAsync(ManualWorkoutEditorSection, ScrollToPosition.Start, true);
                 }
             });
         }
