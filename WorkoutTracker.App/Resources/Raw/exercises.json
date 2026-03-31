@@ -16,10 +16,6 @@
         "MuscleGroup": "Back"
     },
     {
-        "Name": "Seated Row",
-        "MuscleGroup": "Back"
-    },
-    {
         "Name": "T-Bar Row",
         "MuscleGroup": "Back"
     },
@@ -64,10 +60,6 @@
         "MuscleGroup": "Biceps"
     },
     {
-        "Name": "Bench Press",
-        "MuscleGroup": "Chest"
-    },
-    {
         "Name": "Incline Dumbbell Press",
         "MuscleGroup": "Chest"
     },
@@ -96,15 +88,7 @@
         "MuscleGroup": "Chest"
     },
     {
-        "Name": "Squat",
-        "MuscleGroup": "Legs"
-    },
-    {
         "Name": "Leg Press",
-        "MuscleGroup": "Legs"
-    },
-    {
-        "Name": "Lunges",
         "MuscleGroup": "Legs"
     },
     {
@@ -113,10 +97,6 @@
     },
     {
         "Name": "Leg Extension",
-        "MuscleGroup": "Legs"
-    },
-    {
-        "Name": "Leg Curl",
         "MuscleGroup": "Legs"
     },
     {
@@ -161,10 +141,6 @@
     },
     {
         "Name": "Close-Grip Bench Press",
-        "MuscleGroup": "Triceps"
-    },
-    {
-        "Name": "Triceps Dip",
         "MuscleGroup": "Triceps"
     },
     {
@@ -249,10 +225,6 @@
     },
     {
         "Name": "Rear-Foot Elevated Split Squat",
-        "MuscleGroup": "Legs"
-    },
-    {
-        "Name": "Reverse Lunge",
         "MuscleGroup": "Legs"
     },
     {
@@ -412,7 +384,7 @@
         "MuscleGroup": "Legs"
     },
     {
-        "Name": "Backward Lunge",
+        "Name": "Reverse Lunge",
         "MuscleGroup": "Legs"
     },
     {
