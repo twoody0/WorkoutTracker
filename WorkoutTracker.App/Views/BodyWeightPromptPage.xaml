@@ -45,7 +45,9 @@
                     <Entry x:Name="WeightEntry"
                            Keyboard="Numeric"
                            Placeholder="Weight in lb"
-                           ClearButtonVisibility="WhileEditing" />
+                           ClearButtonVisibility="WhileEditing"
+                           TextChanged="WeightEntry_TextChanged"
+                           MaxLength="6" />
                     <Label x:Name="ErrorLabel"
                            Text="Enter a valid body weight greater than 0."
                            FontSize="12"

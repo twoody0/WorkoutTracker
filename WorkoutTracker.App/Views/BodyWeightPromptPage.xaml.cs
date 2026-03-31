@@ -1,3 +1,5 @@
+using WorkoutTracker.Helpers;
+
 namespace WorkoutTracker.Views;
 
 public sealed class BodyWeightPromptResult
@@ -43,6 +45,20 @@ public partial class BodyWeightPromptPage : ContentPage
         });
     }
 
+    private void WeightEntry_TextChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (sender is not Entry entry)
+        {
+            return;
+        }
+
+        var sanitized = InputSanitizer.SanitizePositiveDecimalText(e.NewTextValue, InputSanitizer.MaxBodyWeight);
+        if (!string.Equals(entry.Text, sanitized, StringComparison.Ordinal))
+        {
+            entry.Text = sanitized;
+        }
+    }
+
     private async void OnCancelClicked(object? sender, EventArgs e)
     {
         await CloseAsync(CreateResult());
@@ -65,8 +81,8 @@ public partial class BodyWeightPromptPage : ContentPage
 
     private BodyWeightPromptResult? CreateResult(bool navigateToWorkoutPlans = false)
     {
-        var value = WeightEntry.Text?.Trim();
-        var hasValidWeight = double.TryParse(value, out var weight) && weight > 0;
+        var value = InputSanitizer.SanitizePositiveDecimalText(WeightEntry.Text, InputSanitizer.MaxBodyWeight);
+        var hasValidWeight = InputSanitizer.TryParseBodyWeight(value, out _);
         ErrorLabel.IsVisible = false;
 
         if (!hasValidWeight && !navigateToWorkoutPlans && string.IsNullOrWhiteSpace(value))

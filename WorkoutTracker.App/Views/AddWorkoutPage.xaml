@@ -184,6 +184,7 @@
                                    FontSize="14" />
                             <Entry Placeholder="Sets: 3"
                                    Text="{Binding Sets}"
+                                   TextChanged="SetsEntry_TextChanged"
                                    Keyboard="Numeric" />
                         </VerticalStackLayout>
 
@@ -194,6 +195,7 @@
                                    FontSize="14" />
                             <Entry Placeholder="Reps: 10"
                                    Text="{Binding Reps}"
+                                   TextChanged="RepsEntry_TextChanged"
                                    Keyboard="Numeric" />
                         </VerticalStackLayout>
                     </Grid>
@@ -205,18 +207,21 @@
                                 FontSize="14" />
                         <Entry Placeholder="Duration: 30"
                                Text="{Binding DurationMinutes}"
+                               TextChanged="DurationEntry_TextChanged"
                                Keyboard="Numeric" />
                         <Label Text="Distance (miles)"
                                FontAttributes="Bold"
                                FontSize="14" />
                         <Entry Placeholder="Distance: 2.5"
                                Text="{Binding DistanceMiles}"
+                               TextChanged="DistanceEntry_TextChanged"
                                Keyboard="Numeric" />
                         <Label Text="Tracked steps (optional)"
                                FontAttributes="Bold"
                                FontSize="14" />
                         <Entry Placeholder="Only if tracked by watch or phone"
                                Text="{Binding Steps}"
+                               TextChanged="StepsEntry_TextChanged"
                                Keyboard="Numeric" />
                     </VerticalStackLayout>
                 </VerticalStackLayout>

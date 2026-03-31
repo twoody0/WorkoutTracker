@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Windows.Input;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
+using WorkoutTracker.Helpers;
 
 namespace WorkoutTracker.ViewModels;
 
@@ -348,7 +349,7 @@ public class HomeViewModel : BaseViewModel
 
     public async Task<bool> UpdateBodyWeightAsync(string? weightText)
     {
-        if (!double.TryParse(weightText?.Trim(), out var weight) || weight <= 0)
+        if (!InputSanitizer.TryParseBodyWeight(weightText, out var weight))
         {
             return false;
         }

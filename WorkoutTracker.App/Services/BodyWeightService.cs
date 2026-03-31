@@ -1,3 +1,5 @@
+using WorkoutTracker.Helpers;
+
 namespace WorkoutTracker.Services;
 
 public sealed class BodyWeightService : IBodyWeightService
@@ -18,7 +20,7 @@ public sealed class BodyWeightService : IBodyWeightService
         var userWeight = _authService.CurrentUser?.Weight;
         if (userWeight.HasValue && userWeight.Value > 0)
         {
-            return userWeight.Value;
+            return Math.Min(userWeight.Value, InputSanitizer.MaxBodyWeight);
         }
 
         MigrateLegacyPreferenceIfNeeded();
@@ -30,7 +32,7 @@ public sealed class BodyWeightService : IBodyWeightService
 
         var result = command.ExecuteScalar()?.ToString();
         return double.TryParse(result, out var weight) && weight > 0
-            ? weight
+            ? Math.Min(weight, InputSanitizer.MaxBodyWeight)
             : null;
     }
 
@@ -38,6 +40,8 @@ public sealed class BodyWeightService : IBodyWeightService
 
     public Task SetBodyWeightAsync(double weight)
     {
+        weight = Math.Clamp(weight, 1, InputSanitizer.MaxBodyWeight);
+
         using var connection = _database.CreateConnection();
         using var command = connection.CreateCommand();
         command.CommandText =

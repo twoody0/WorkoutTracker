@@ -76,6 +76,34 @@ public partial class WorkoutPage : ContentPage
         }
     }
 
+    private void WeightEntry_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (sender is not Entry entry || BindingContext is not WorkoutViewModel vm)
+        {
+            return;
+        }
+
+        var maxWeight = vm.ShowResistanceAdjustment
+            ? InputSanitizer.MaxBodyWeight
+            : InputSanitizer.MaxWorkoutWeight;
+
+        var sanitized = InputSanitizer.SanitizePositiveDecimalText(e.NewTextValue, maxWeight);
+        if (!string.Equals(entry.Text, sanitized, StringComparison.Ordinal))
+        {
+            entry.Text = sanitized;
+        }
+    }
+
+    private void RepsEntry_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        ClampEntryText(sender, e.NewTextValue, InputSanitizer.MaxReps, isDecimal: false);
+    }
+
+    private void SetsEntry_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        ClampEntryText(sender, e.NewTextValue, InputSanitizer.MaxSets, isDecimal: false);
+    }
+
     private void OnExerciseSelected(object sender, SelectionChangedEventArgs e)
     {
         if (e.CurrentSelection?.FirstOrDefault() is WeightliftingExercise exercise &&
@@ -287,6 +315,23 @@ public partial class WorkoutPage : ContentPage
         }
 
         return double.TryParse(button.CommandParameter.ToString(), out delta);
+    }
+
+    private static void ClampEntryText(object sender, string? newTextValue, double maxValue, bool isDecimal)
+    {
+        if (sender is not Entry entry)
+        {
+            return;
+        }
+
+        var sanitized = isDecimal
+            ? InputSanitizer.SanitizePositiveDecimalText(newTextValue, maxValue)
+            : InputSanitizer.SanitizePositiveIntegerText(newTextValue, (int)maxValue);
+
+        if (!string.Equals(entry.Text, sanitized, StringComparison.Ordinal))
+        {
+            entry.Text = sanitized;
+        }
     }
 
     private void StandardWeightAdjust_Pressed(object sender, EventArgs e)

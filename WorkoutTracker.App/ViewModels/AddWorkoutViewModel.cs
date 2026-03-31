@@ -3,6 +3,7 @@ using System.Windows.Input;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 
+using WorkoutTracker.Helpers;
 namespace WorkoutTracker.ViewModels;
 
 public class AddWorkoutViewModel : BaseViewModel
@@ -36,7 +37,8 @@ public class AddWorkoutViewModel : BaseViewModel
         get => _name;
         set
         {
-            if (SetProperty(ref _name, value) && !_isApplyingLibrarySelection)
+            var sanitized = InputSanitizer.SanitizeName(value);
+            if (SetProperty(ref _name, sanitized) && !_isApplyingLibrarySelection)
             {
                 _ = UpdateExerciseSuggestionsAsync();
             }
@@ -46,7 +48,7 @@ public class AddWorkoutViewModel : BaseViewModel
     public string MuscleGroup
     {
         get => _muscleGroup;
-        set => SetProperty(ref _muscleGroup, value);
+        set => SetProperty(ref _muscleGroup, InputSanitizer.SanitizeMuscleGroup(value));
     }
 
     public string SelectedMuscleGroup
@@ -79,31 +81,31 @@ public class AddWorkoutViewModel : BaseViewModel
     public int Sets
     {
         get => _sets;
-        set => SetProperty(ref _sets, value);
+        set => SetProperty(ref _sets, Math.Clamp(value, 0, InputSanitizer.MaxSets));
     }
 
     public int Reps
     {
         get => _reps;
-        set => SetProperty(ref _reps, value);
+        set => SetProperty(ref _reps, Math.Clamp(value, 0, InputSanitizer.MaxReps));
     }
 
     public int Steps
     {
         get => _steps;
-        set => SetProperty(ref _steps, value);
+        set => SetProperty(ref _steps, Math.Clamp(value, 0, InputSanitizer.MaxSteps));
     }
 
     public int DurationMinutes
     {
         get => _durationMinutes;
-        set => SetProperty(ref _durationMinutes, value);
+        set => SetProperty(ref _durationMinutes, Math.Clamp(value, 0, InputSanitizer.MaxDurationMinutes));
     }
 
     public double DistanceMiles
     {
         get => _distanceMiles;
-        set => SetProperty(ref _distanceMiles, value);
+        set => SetProperty(ref _distanceMiles, Math.Clamp(value, 0, InputSanitizer.MaxDistanceMiles));
     }
 
     public List<WorkoutType> WorkoutTypes { get; } = Enum.GetValues(typeof(WorkoutType)).Cast<WorkoutType>().ToList();
@@ -169,12 +171,22 @@ public class AddWorkoutViewModel : BaseViewModel
         var recommendedWorkout = _selectedRecommendedWorkout?.Workout;
         var effectiveName = string.IsNullOrWhiteSpace(Name) ? recommendedWorkout?.Name ?? string.Empty : Name;
         var effectiveMuscleGroup = string.IsNullOrWhiteSpace(MuscleGroup) ? recommendedWorkout?.MuscleGroup ?? string.Empty : MuscleGroup;
+        effectiveName = InputSanitizer.SanitizeName(effectiveName);
+        effectiveMuscleGroup = InputSanitizer.SanitizeMuscleGroup(effectiveMuscleGroup);
 
         if (string.IsNullOrWhiteSpace(effectiveName) || string.IsNullOrWhiteSpace(effectiveMuscleGroup))
         {
             var page = Application.Current?.Windows.FirstOrDefault()?.Page;
             if (page != null)
                 await page.DisplayAlert("Error", "Please fill in all required fields.", "OK");
+            return;
+        }
+
+        if (SelectedType == WorkoutType.WeightLifting && (Reps <= 0 || Sets <= 0))
+        {
+            var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (page != null)
+                await page.DisplayAlert("Error", "Reps and sets must be greater than 0.", "OK");
             return;
         }
 

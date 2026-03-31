@@ -426,12 +426,13 @@ public class WorkoutViewModel : BaseViewModel
         get => _selectedMuscleGroup;
         set
         {
-            if (SetProperty(ref _selectedMuscleGroup, value))
+            var sanitized = InputSanitizer.SanitizeMuscleGroup(value);
+            if (SetProperty(ref _selectedMuscleGroup, sanitized))
             {
                 Name = string.Empty;
                 ExerciseSearchQuery = string.Empty;
                 ExerciseSuggestions.Clear();
-                IsNameFieldFocused = !IsManualCardio && !string.IsNullOrWhiteSpace(value);
+                IsNameFieldFocused = !IsManualCardio && !string.IsNullOrWhiteSpace(sanitized);
                 ApplyBodyweightDefaultsIfNeeded();
                 NotifyBodyweightStateChanged();
                 SyncSelectedRecommendationState();
@@ -447,7 +448,8 @@ public class WorkoutViewModel : BaseViewModel
         get => _exerciseSearchQuery;
         set
         {
-            if (SetProperty(ref _exerciseSearchQuery, value))
+            var sanitized = InputSanitizer.SanitizeName(value);
+            if (SetProperty(ref _exerciseSearchQuery, sanitized))
             {
                 ApplyBodyweightDefaultsIfNeeded();
                 NotifyBodyweightStateChanged();
@@ -465,11 +467,12 @@ public class WorkoutViewModel : BaseViewModel
         get => _name;
         set
         {
-            if (SetProperty(ref _name, value))
+            var sanitized = InputSanitizer.SanitizeName(value);
+            if (SetProperty(ref _name, sanitized))
             {
-                if (!string.Equals(_exerciseSearchQuery, value, StringComparison.Ordinal))
+                if (!string.Equals(_exerciseSearchQuery, sanitized, StringComparison.Ordinal))
                 {
-                    _exerciseSearchQuery = value;
+                    _exerciseSearchQuery = sanitized;
                     OnPropertyChanged(nameof(ExerciseSearchQuery));
                 }
 
@@ -487,7 +490,8 @@ public class WorkoutViewModel : BaseViewModel
         get => _durationMinutesText;
         set
         {
-            if (SetProperty(ref _durationMinutesText, value))
+            var sanitized = InputSanitizer.SanitizePositiveIntegerText(value, InputSanitizer.MaxDurationMinutes);
+            if (SetProperty(ref _durationMinutesText, sanitized))
             {
                 OnPropertyChanged(nameof(CanAddWorkout));
             }
@@ -499,7 +503,8 @@ public class WorkoutViewModel : BaseViewModel
         get => _distanceMilesText;
         set
         {
-            if (SetProperty(ref _distanceMilesText, value))
+            var sanitized = InputSanitizer.SanitizePositiveDecimalText(value, InputSanitizer.MaxDistanceMiles);
+            if (SetProperty(ref _distanceMilesText, sanitized))
             {
                 OnPropertyChanged(nameof(CanAddWorkout));
             }
@@ -511,7 +516,8 @@ public class WorkoutViewModel : BaseViewModel
         get => _stepsText;
         set
         {
-            if (SetProperty(ref _stepsText, value))
+            var sanitized = InputSanitizer.SanitizePositiveIntegerText(value, InputSanitizer.MaxSteps);
+            if (SetProperty(ref _stepsText, sanitized))
             {
                 OnPropertyChanged(nameof(CanAddWorkout));
             }
@@ -523,7 +529,11 @@ public class WorkoutViewModel : BaseViewModel
         get => _weight;
         set
         {
-            if (SetProperty(ref _weight, value))
+            var sanitized = InputSanitizer.SanitizePositiveDecimalText(
+                value,
+                ShowResistanceAdjustment ? InputSanitizer.MaxBodyWeight : InputSanitizer.MaxWorkoutWeight);
+
+            if (SetProperty(ref _weight, sanitized))
             {
                 OnPropertyChanged(nameof(WeightSummaryText));
                 OnPropertyChanged(nameof(QuickAddWeightSummaryText));
@@ -541,7 +551,8 @@ public class WorkoutViewModel : BaseViewModel
         get => _reps;
         set
         {
-            if (SetProperty(ref _reps, value))
+            var sanitized = InputSanitizer.SanitizePositiveIntegerText(value, InputSanitizer.MaxReps);
+            if (SetProperty(ref _reps, sanitized))
             {
                 SyncSelectedRecommendationState();
                 OnPropertyChanged(nameof(CurrentRepsSummary));
@@ -555,7 +566,8 @@ public class WorkoutViewModel : BaseViewModel
         get => _sets;
         set
         {
-            if (SetProperty(ref _sets, value))
+            var sanitized = InputSanitizer.SanitizePositiveIntegerText(value, InputSanitizer.MaxSets);
+            if (SetProperty(ref _sets, sanitized))
             {
                 SyncSelectedRecommendationState();
                 OnPropertyChanged(nameof(CanAddWorkout));
@@ -568,7 +580,12 @@ public class WorkoutViewModel : BaseViewModel
         get => _resistanceAdjustment;
         set
         {
-            if (SetProperty(ref _resistanceAdjustment, value))
+            var sanitized = InputSanitizer.SanitizeSignedDecimalText(
+                value,
+                -InputSanitizer.MaxResistanceAdjustment,
+                InputSanitizer.MaxResistanceAdjustment);
+
+            if (SetProperty(ref _resistanceAdjustment, sanitized))
             {
                 OnPropertyChanged(nameof(EffectiveLoadSummary));
                 OnPropertyChanged(nameof(ResistanceAdjustmentDisplay));
@@ -665,6 +682,9 @@ public class WorkoutViewModel : BaseViewModel
 
     private async Task AddWorkoutAsync()
     {
+        Name = Name;
+        ExerciseSearchQuery = ExerciseSearchQuery;
+
         if (string.IsNullOrWhiteSpace(Name))
         {
             await ShowError(IsManualCardio ? "Please select a cardio workout." : "Please select an exercise.");
@@ -730,6 +750,19 @@ public class WorkoutViewModel : BaseViewModel
         double.TryParse(Weight, out double parsedWeight);
         int.TryParse(Reps, out int parsedReps);
         int.TryParse(Sets, out int parsedSets);
+
+        if (parsedReps <= 0)
+        {
+            await ShowError("Please enter reps greater than 0.");
+            return;
+        }
+
+        if (parsedSets <= 0)
+        {
+            await ShowError("Please enter sets greater than 0.");
+            return;
+        }
+
         if (ShowResistanceAdjustment)
         {
             double.TryParse(ResistanceAdjustment, out var adjustment);
@@ -1319,7 +1352,10 @@ public class WorkoutViewModel : BaseViewModel
     public void AdjustResistanceAdjustment(double delta)
     {
         double.TryParse(ResistanceAdjustment, out var adjustment);
-        adjustment += delta;
+        adjustment = Math.Clamp(
+            adjustment + delta,
+            -InputSanitizer.MaxResistanceAdjustment,
+            InputSanitizer.MaxResistanceAdjustment);
         ResistanceAdjustment = adjustment.ToString("0");
     }
 
@@ -1327,7 +1363,7 @@ public class WorkoutViewModel : BaseViewModel
     {
         var currentReps = 0;
         int.TryParse(Reps, out currentReps);
-        currentReps = Math.Max(1, currentReps + delta);
+        currentReps = Math.Clamp(currentReps + delta, 1, InputSanitizer.MaxReps);
 
         if (HasPlannedRepRange)
         {
@@ -1341,7 +1377,7 @@ public class WorkoutViewModel : BaseViewModel
     {
         var currentSets = 0;
         int.TryParse(Sets, out currentSets);
-        currentSets = Math.Max(1, currentSets + delta);
+        currentSets = Math.Clamp(currentSets + delta, 1, InputSanitizer.MaxSets);
         Sets = currentSets.ToString();
     }
 
@@ -1360,7 +1396,7 @@ public class WorkoutViewModel : BaseViewModel
             currentWeight = parsedWeight;
         }
 
-        currentWeight = Math.Max(0, currentWeight + delta);
+        currentWeight = Math.Clamp(currentWeight + delta, 0, InputSanitizer.MaxBodyWeight);
         Weight = currentWeight.ToString("0");
         ResistanceAdjustment = (currentWeight - baseWeight).ToString("0");
     }
@@ -1378,7 +1414,7 @@ public class WorkoutViewModel : BaseViewModel
             currentWeight = parsedWeight;
         }
 
-        currentWeight = Math.Max(0, currentWeight + delta);
+        currentWeight = Math.Clamp(currentWeight + delta, 0, InputSanitizer.MaxWorkoutWeight);
         Weight = currentWeight.ToString("0.#");
     }
 
@@ -1396,6 +1432,7 @@ public class WorkoutViewModel : BaseViewModel
             return;
         }
 
+        enteredWeight = Math.Clamp(enteredWeight, 0, InputSanitizer.MaxBodyWeight);
         var adjustment = enteredWeight - baseWeight;
         ResistanceAdjustment = adjustment.ToString("0");
         Weight = baseWeight.ToString("0.#");
