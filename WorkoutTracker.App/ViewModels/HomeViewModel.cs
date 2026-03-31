@@ -10,8 +10,10 @@ public class HomeViewModel : BaseViewModel
 {
     private static readonly TimeSpan HeatFadeWindow = TimeSpan.FromHours(24);
     private const double MinimumHeatOpacity = 0.05;
-    private const double MaximumHeatOpacity = 0.70;
+    private const double MaximumHeatOpacity = 0.60;
     private const double HighHeatVolumeThreshold = 60.0;
+    private const int RecentExerciseComparisonWindow = 10;
+    private const double HistoricalLoadPreference = 0.65;
     private static Dictionary<string, ExerciseHeatMapDefinition>? _exerciseHeatMapLookup;
 
     private readonly IAppModeService _appModeService;
@@ -339,7 +341,7 @@ public class HomeViewModel : BaseViewModel
         var lastWorkoutAge = mostRecentWorkout == null
             ? string.Empty
             : GetRelativeAge(now - mostRecentWorkout.StartTime);
-        var progressionCount = workouts.Count(workout => GetProgressionHeatMultiplier(workout, FindPreviousWorkout(allWorkouts, workout)) > 1.05);
+        var progressionCount = workouts.Count(workout => GetProgressionHeatMultiplier(workout, FindRecentExerciseHistory(allWorkouts, workout)) > 1.05);
         var progressionText = progressionCount > 0
             ? $" {progressionCount} beat your previous mark."
             : string.Empty;
@@ -394,7 +396,6 @@ public class HomeViewModel : BaseViewModel
 
         foreach (var workout in recentWorkouts)
         {
-            var weightRatio = Math.Max(1, workout.Weight) / bodyWeight;
             var age = now - workout.StartTime;
             var fadeMultiplier = GetFadeMultiplier(age);
 
@@ -404,10 +405,12 @@ public class HomeViewModel : BaseViewModel
             }
 
             var definition = FindHeatMapDefinition(workout);
+            var recentHistory = FindRecentExerciseHistory(allWorkouts, workout);
+            var loadMultiplier = GetHeatLoadMultiplier(workout, bodyWeight, recentHistory);
             var movementEffortMultiplier = definition?.EffortMultiplier ?? 1.0;
-            var progressionMultiplier = GetProgressionHeatMultiplier(workout, FindPreviousWorkout(allWorkouts, workout));
+            var progressionMultiplier = GetProgressionHeatMultiplier(workout, recentHistory);
             var repIntentMultiplier = GetRepIntentHeatMultiplier(workout);
-            var effortScore = weightRatio *
+            var effortScore = loadMultiplier *
                               Math.Max(1, workout.Reps) *
                               Math.Max(1, workout.Sets) *
                               fadeMultiplier *
@@ -437,37 +440,87 @@ public class HomeViewModel : BaseViewModel
         return volumeByRegion;
     }
 
-    private static Workout? FindPreviousWorkout(IReadOnlyList<Workout> allWorkouts, Workout currentWorkout)
+    private static IReadOnlyList<Workout> FindRecentExerciseHistory(IReadOnlyList<Workout> allWorkouts, Workout currentWorkout)
     {
         return allWorkouts
             .Where(workout =>
                 workout.StartTime < currentWorkout.StartTime &&
                 string.Equals(workout.Name, currentWorkout.Name, StringComparison.OrdinalIgnoreCase) &&
                 workout.Type == WorkoutType.WeightLifting)
-            .MaxBy(workout => workout.StartTime);
+            .OrderByDescending(workout => workout.StartTime)
+            .Take(RecentExerciseComparisonWindow)
+            .ToList();
     }
 
-    private static double GetProgressionHeatMultiplier(Workout workout, Workout? previousWorkout)
+    private static double GetProgressionHeatMultiplier(Workout workout, IReadOnlyList<Workout> recentHistory)
     {
-        if (previousWorkout == null || workout.Type != WorkoutType.WeightLifting)
+        if (recentHistory.Count == 0 || workout.Type != WorkoutType.WeightLifting)
         {
             return 1.0;
         }
 
         var currentEstimatedMax = workout.EstimatedOneRepMax;
-        var previousEstimatedMax = previousWorkout.EstimatedOneRepMax;
         var currentVolume = workout.TrainingVolume;
-        var previousVolume = previousWorkout.TrainingVolume;
+        var averageEstimatedMax = recentHistory
+            .Where(previousWorkout => previousWorkout.EstimatedOneRepMax > 0)
+            .Select(previousWorkout => previousWorkout.EstimatedOneRepMax)
+            .DefaultIfEmpty(0)
+            .Average();
+        var bestEstimatedMax = recentHistory.Max(previousWorkout => previousWorkout.EstimatedOneRepMax);
+        var averageVolume = recentHistory
+            .Where(previousWorkout => previousWorkout.TrainingVolume > 0)
+            .Select(previousWorkout => previousWorkout.TrainingVolume)
+            .DefaultIfEmpty(0)
+            .Average();
+        var bestVolume = recentHistory.Max(previousWorkout => previousWorkout.TrainingVolume);
+        var bestRecentWeight = recentHistory.Max(previousWorkout => previousWorkout.Weight);
 
-        var estimatedMaxGain = GetPositiveImprovement(currentEstimatedMax, previousEstimatedMax);
-        var volumeGain = GetPositiveImprovement(currentVolume, previousVolume);
-        var lowRepPushBonus = workout.Reps <= 3 && workout.Weight > previousWorkout.Weight ? 0.08 : 0.0;
+        var averageEstimatedMaxGain = GetPositiveImprovement(currentEstimatedMax, averageEstimatedMax);
+        var bestEstimatedMaxGain = GetPositiveImprovement(currentEstimatedMax, bestEstimatedMax);
+        var averageVolumeGain = GetPositiveImprovement(currentVolume, averageVolume);
+        var bestVolumeGain = GetPositiveImprovement(currentVolume, bestVolume);
+        var lowRepPushBonus = workout.Reps <= 3 && workout.Weight > bestRecentWeight ? 0.08 : 0.0;
 
-        var bonus = Math.Min(0.24, estimatedMaxGain * 0.45) +
-                    Math.Min(0.16, volumeGain * 0.20) +
+        var bonus = Math.Min(0.18, averageEstimatedMaxGain * 0.35) +
+                    Math.Min(0.10, bestEstimatedMaxGain * 0.25) +
+                    Math.Min(0.12, averageVolumeGain * 0.16) +
+                    Math.Min(0.08, bestVolumeGain * 0.10) +
                     lowRepPushBonus;
 
         return 1.0 + Math.Min(0.35, bonus);
+    }
+
+    private static double GetHeatLoadMultiplier(Workout workout, double bodyWeight, IReadOnlyList<Workout> recentHistory)
+    {
+        var bodyWeightRatio = Math.Max(1, workout.Weight) / bodyWeight;
+        if (recentHistory.Count == 0)
+        {
+            return bodyWeightRatio;
+        }
+
+        var currentEstimatedMax = workout.EstimatedOneRepMax;
+        var averageEstimatedMax = recentHistory
+            .Where(previousWorkout => previousWorkout.EstimatedOneRepMax > 0)
+            .Select(previousWorkout => previousWorkout.EstimatedOneRepMax)
+            .DefaultIfEmpty(0)
+            .Average();
+        var recentAverageLoad = recentHistory
+            .Where(previousWorkout => previousWorkout.Weight > 0)
+            .Select(previousWorkout => previousWorkout.Weight)
+            .DefaultIfEmpty(0)
+            .Average();
+
+        var historicalEstimatedMaxRatio = currentEstimatedMax > 0 && averageEstimatedMax > 0
+            ? currentEstimatedMax / averageEstimatedMax
+            : 1.0;
+        var historicalLoadRatio = recentAverageLoad > 0
+            ? Math.Max(1, workout.Weight) / recentAverageLoad
+            : 1.0;
+        var historicalSignal = Math.Clamp((historicalEstimatedMaxRatio * 0.65) + (historicalLoadRatio * 0.35), 0.75, 1.5);
+        var historyBlend = Math.Min(1.0, recentHistory.Count / (double)RecentExerciseComparisonWindow);
+
+        return (bodyWeightRatio * (1.0 - (historyBlend * HistoricalLoadPreference))) +
+               (historicalSignal * (historyBlend * HistoricalLoadPreference));
     }
 
     private static double GetRepIntentHeatMultiplier(Workout workout)
