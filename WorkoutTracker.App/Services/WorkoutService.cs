@@ -17,6 +17,7 @@ public class WorkoutService : IWorkoutService
     };
     private readonly string _legacyWorkoutsFilePath;
     private List<Workout>? _cachedWorkouts;
+    private long _changeVersion;
 
     public WorkoutService(string? databasePath = null)
     {
@@ -25,6 +26,8 @@ public class WorkoutService : IWorkoutService
             Path.GetDirectoryName(_database.DatabasePath) ?? string.Empty,
             "workouts.json");
     }
+
+    public long ChangeVersion => Interlocked.Read(ref _changeVersion);
 
     public async Task AddWorkout(Workout workout)
     {
@@ -112,6 +115,7 @@ public class WorkoutService : IWorkoutService
 
         transaction.Commit();
         _cachedWorkouts = workouts.ToList();
+        Interlocked.Increment(ref _changeVersion);
         return Task.CompletedTask;
     }
 

@@ -90,6 +90,7 @@ public class WorkoutViewModel : BaseViewModel
     private bool _showRpeHelp;
     private CancellationTokenSource? _exerciseSuggestionDebounceCts;
     private int _exerciseSuggestionRequestVersion;
+    private long _lastLoadedWorkoutChangeVersion = -1;
 
     #endregion
 
@@ -651,10 +652,22 @@ public class WorkoutViewModel : BaseViewModel
 
     #region Private Methods
 
+    public async Task EnsureWorkoutHistoryFreshAsync(bool force = false)
+    {
+        var currentChangeVersion = _workoutService.ChangeVersion;
+        if (!force && _lastLoadedWorkoutChangeVersion == currentChangeVersion)
+        {
+            return;
+        }
+
+        await ReloadWorkoutHistoryAsync();
+    }
+
     public async Task ReloadWorkoutHistoryAsync()
     {
         _workoutHistory = (await _workoutService.GetWorkouts()).ToList();
         HasWorkouts = _workoutHistory.Any();
+        _lastLoadedWorkoutChangeVersion = _workoutService.ChangeVersion;
         RefreshPlanRecommendations();
     }
 
@@ -671,7 +684,7 @@ public class WorkoutViewModel : BaseViewModel
 
     private async Task CheckForExistingWorkouts()
     {
-        await ReloadWorkoutHistoryAsync();
+        await EnsureWorkoutHistoryFreshAsync(force: true);
     }
 
     private async Task StartManualCardioSessionAsync()

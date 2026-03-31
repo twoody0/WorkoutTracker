@@ -37,7 +37,7 @@ public partial class WorkoutPage : ContentPage
 
         if (BindingContext is WorkoutViewModel vm)
         {
-            await vm.ReloadWorkoutHistoryAsync();
+            await vm.EnsureWorkoutHistoryFreshAsync();
             EnsureDefaultRecommendationSelected();
         }
 

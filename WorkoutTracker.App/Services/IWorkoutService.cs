@@ -7,6 +7,8 @@ namespace WorkoutTracker.Services;
 /// </summary>
 public interface IWorkoutService
 {
+    long ChangeVersion { get; }
+
     #region Methods
 
     /// <summary>
