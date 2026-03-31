@@ -191,6 +191,7 @@ public class DashboardViewModel : BaseViewModel
         ShowNextMonthCommand = new Command(() => ChangeCalendarMonth(1));
         SelectCalendarDateCommand = new Command<DateTime>(SelectCalendarDate);
         ToggleCalendarVisibilityCommand = new Command(ToggleCalendarVisibility);
+        CloseCalendarVisibilityCommand = new Command(CloseCalendarVisibility);
         ShowStrengthStatsCommand = new Command(() => SetActiveStatsMode(PlanStatsMode.Strength));
         ShowCardioStatsCommand = new Command(() => SetActiveStatsMode(PlanStatsMode.Cardio));
         ToggleThemeCommand = new Command(() =>
@@ -213,6 +214,7 @@ public class DashboardViewModel : BaseViewModel
     public ICommand ShowNextMonthCommand { get; }
     public ICommand SelectCalendarDateCommand { get; }
     public ICommand ToggleCalendarVisibilityCommand { get; }
+    public ICommand CloseCalendarVisibilityCommand { get; }
     public ICommand ShowStrengthStatsCommand { get; }
     public ICommand ShowCardioStatsCommand { get; }
     public ICommand ToggleThemeCommand { get; }
@@ -605,6 +607,11 @@ public class DashboardViewModel : BaseViewModel
     private void ToggleCalendarVisibility()
     {
         IsCalendarExpanded = !IsCalendarExpanded;
+    }
+
+    private void CloseCalendarVisibility()
+    {
+        IsCalendarExpanded = false;
     }
 
     private void UpdateCalendarDays()

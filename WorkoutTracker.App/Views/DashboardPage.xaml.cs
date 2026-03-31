@@ -1,15 +1,19 @@
 using WorkoutTracker.ViewModels;
 using WorkoutTracker.Helpers;
 using Microsoft.Maui.Controls;
+using System.ComponentModel;
 
 namespace WorkoutTracker.Views;
 
 public partial class DashboardPage : ContentPage
 {
+    private DashboardViewModel? _viewModel;
+
     public DashboardPage(DashboardViewModel vm)
     {
         InitializeComponent();
         BindingContext = vm;
+        AttachViewModel(vm);
         RefreshSwipeTargets();
     }
 
@@ -19,10 +23,29 @@ public partial class DashboardPage : ContentPage
         if (BindingContext is DashboardViewModel vm)
         {
             vm.LoadWorkoutsCommand.Execute(null);
+            UpdateCalendarBackgroundBlur(vm.IsCalendarExpanded);
         }
         RefreshSwipeTargets();
         Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(150), () => TabSwipeNavigationHelper.Refresh(this));
         Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(500), () => TabSwipeNavigationHelper.Refresh(this));
+    }
+
+    protected override void OnBindingContextChanged()
+    {
+        base.OnBindingContextChanged();
+
+        if (ReferenceEquals(_viewModel, BindingContext))
+        {
+            return;
+        }
+
+        DetachViewModel();
+
+        if (BindingContext is DashboardViewModel vm)
+        {
+            AttachViewModel(vm);
+            UpdateCalendarBackgroundBlur(vm.IsCalendarExpanded);
+        }
     }
 
     private void RefreshSwipeTargets()
@@ -80,4 +103,32 @@ public partial class DashboardPage : ContentPage
             collectionView.SelectedItem = null;
         }
     }
+
+    private void AttachViewModel(DashboardViewModel vm)
+    {
+        _viewModel = vm;
+        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+    }
+
+    private void DetachViewModel()
+    {
+        if (_viewModel == null)
+        {
+            return;
+        }
+
+        _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        _viewModel = null;
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(DashboardViewModel.IsCalendarExpanded) &&
+            sender is DashboardViewModel vm)
+        {
+            UpdateCalendarBackgroundBlur(vm.IsCalendarExpanded);
+        }
+    }
+
+    partial void UpdateCalendarBackgroundBlur(bool isEnabled);
 }

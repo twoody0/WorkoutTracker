@@ -6,10 +6,19 @@
     x:Name="DashboardPageRoot"
     Title="Profile">
 
-    <ScrollView>
-        <VerticalStackLayout x:Name="DashboardRootLayout"
-                             Padding="20,18,20,28"
-                             Spacing="16">
+    <Grid>
+        <Grid x:Name="DashboardContentHost">
+        <ScrollView x:Name="DashboardScrollView">
+            <ScrollView.Triggers>
+                <DataTrigger TargetType="ScrollView"
+                             Binding="{Binding IsCalendarExpanded}"
+                             Value="True">
+                    <Setter Property="InputTransparent" Value="True" />
+                </DataTrigger>
+            </ScrollView.Triggers>
+            <VerticalStackLayout x:Name="DashboardRootLayout"
+                                 Padding="20,18,20,28"
+                                 Spacing="16">
             <Border StrokeThickness="0"
                     BackgroundColor="{AppThemeBinding Light=#F4F8FB, Dark=#111A24}"
                     StrokeShape="RoundRectangle 28"
@@ -381,89 +390,11 @@
                                TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
                     </VerticalStackLayout>
 
-                    <Button Text="{Binding CalendarToggleText}"
+                    <Button Text="Open Calendar"
                             Command="{Binding ToggleCalendarVisibilityCommand}"
                             HorizontalOptions="Start"
                             BackgroundColor="{AppThemeBinding Light=#E6FFFA, Dark=#123B36}"
                             TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}" />
-
-                    <VerticalStackLayout Spacing="12"
-                                         IsVisible="{Binding IsCalendarExpanded}">
-                        <Grid ColumnDefinitions="Auto,*,Auto"
-                              VerticalOptions="Center">
-                            <Button Text="&lt;"
-                                    Command="{Binding ShowPreviousMonthCommand}"
-                                    BackgroundColor="{AppThemeBinding Light=#E6FFFA, Dark=#123B36}"
-                                    TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}"
-                                    FontSize="18"
-                                    FontAttributes="Bold" />
-                            <Label Grid.Column="1"
-                                   Text="{Binding CurrentCalendarMonthLabel}"
-                                   HorizontalTextAlignment="Center"
-                                   VerticalTextAlignment="Center"
-                                   FontAttributes="Bold"
-                                   FontSize="16" />
-                            <Button Grid.Column="2"
-                                    Text="&gt;"
-                                    Command="{Binding ShowNextMonthCommand}"
-                                    BackgroundColor="{AppThemeBinding Light=#E6FFFA, Dark=#123B36}"
-                                    TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}"
-                                    FontSize="18"
-                                    FontAttributes="Bold" />
-                        </Grid>
-
-                        <Grid ColumnDefinitions="*,*,*,*,*,*,*"
-                              ColumnSpacing="8">
-                            <Label Text="Sun" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
-                            <Label Grid.Column="1" Text="Mon" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
-                            <Label Grid.Column="2" Text="Tue" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
-                            <Label Grid.Column="3" Text="Wed" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
-                            <Label Grid.Column="4" Text="Thu" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
-                            <Label Grid.Column="5" Text="Fri" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
-                            <Label Grid.Column="6" Text="Sat" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
-                        </Grid>
-
-                        <CollectionView x:Name="DashboardCalendarView"
-                                        ItemsSource="{Binding CalendarDays}"
-                                        SelectionMode="Single"
-                                        SelectionChanged="OnCalendarSelectionChanged"
-                                        ItemSizingStrategy="MeasureFirstItem"
-                                        HeightRequest="312">
-                            <CollectionView.ItemsLayout>
-                                <GridItemsLayout Orientation="Vertical"
-                                                 Span="7"
-                                                 VerticalItemSpacing="8"
-                                                 HorizontalItemSpacing="8" />
-                            </CollectionView.ItemsLayout>
-                            <CollectionView.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Stroke="{Binding BorderColor}"
-                                            BackgroundColor="{Binding BackgroundColor}"
-                                            StrokeShape="RoundRectangle 14"
-                                            StrokeThickness="1"
-                                            HeightRequest="44"
-                                            Padding="0">
-                                        <Grid RowDefinitions="*,Auto"
-                                              Padding="0,6,0,6"
-                                              InputTransparent="True">
-                                            <Label Text="{Binding DayNumberText}"
-                                                   TextColor="{Binding TextColor}"
-                                                   FontAttributes="{Binding DayFontAttributes}"
-                                                   HorizontalTextAlignment="Center"
-                                                   VerticalTextAlignment="Center" />
-                                            <BoxView Grid.Row="1"
-                                                     HeightRequest="6"
-                                                     WidthRequest="6"
-                                                     CornerRadius="3"
-                                                     HorizontalOptions="Center"
-                                                     Color="{Binding WorkoutDotColor}"
-                                                     IsVisible="{Binding HasWorkout}" />
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
-                    </VerticalStackLayout>
 
                     <Grid ColumnDefinitions="*,*"
                           ColumnSpacing="12">
@@ -587,7 +518,170 @@
                     </Border>
                 </VerticalStackLayout>
             </Border>
-        </VerticalStackLayout>
-    </ScrollView>
+            </VerticalStackLayout>
+        </ScrollView>
+        </Grid>
+
+        <Grid IsVisible="{Binding IsCalendarExpanded}"
+              InputTransparent="False"
+              BackgroundColor="{AppThemeBinding Light=#0DFFFFFF, Dark=#2210181F}"
+              RowDefinitions="*,Auto,*"
+              ColumnDefinitions="*,Auto,*"
+              ZIndex="10">
+            <Button Grid.Row="0"
+                    Grid.ColumnSpan="3"
+                    Command="{Binding CloseCalendarVisibilityCommand}"
+                    BackgroundColor="{AppThemeBinding Light=#26FFFFFF, Dark=#3010181F}"
+                    BorderWidth="0"
+                    CornerRadius="0"
+                    Padding="0" />
+            <Button Grid.Row="1"
+                    Grid.Column="0"
+                    Command="{Binding CloseCalendarVisibilityCommand}"
+                    BackgroundColor="{AppThemeBinding Light=#26FFFFFF, Dark=#3010181F}"
+                    BorderWidth="0"
+                    CornerRadius="0"
+                    Padding="0"
+                    WidthRequest="20" />
+            <Button Grid.Row="1"
+                    Grid.Column="2"
+                    Command="{Binding CloseCalendarVisibilityCommand}"
+                    BackgroundColor="{AppThemeBinding Light=#26FFFFFF, Dark=#3010181F}"
+                    BorderWidth="0"
+                    CornerRadius="0"
+                    Padding="0"
+                    WidthRequest="20" />
+            <Button Grid.Row="2"
+                    Grid.ColumnSpan="3"
+                    Command="{Binding CloseCalendarVisibilityCommand}"
+                    BackgroundColor="{AppThemeBinding Light=#26FFFFFF, Dark=#3010181F}"
+                    BorderWidth="0"
+                    CornerRadius="0"
+                    Padding="0" />
+
+            <Border Grid.Row="1"
+                    Grid.Column="1"
+                    Margin="20"
+                    StrokeThickness="0"
+                    BackgroundColor="{AppThemeBinding Light=#F5FAFF, Dark=#1A2532}"
+                    StrokeShape="RoundRectangle 28"
+                    Padding="18"
+                    WidthRequest="360"
+                    MaximumWidthRequest="420"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center">
+                <Border.Shadow>
+                    <Shadow Brush="{AppThemeBinding Light=#330F1720, Dark=Transparent}"
+                            Offset="0,8"
+                            Radius="26"
+                            Opacity="{AppThemeBinding Light=1, Dark=0}" />
+                </Border.Shadow>
+                <Grid RowDefinitions="Auto"
+                      InputTransparent="True">
+                    <Border StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=#80FFFFFF, Dark=#22FFFFFF}"
+                            StrokeShape="RoundRectangle 28"
+                            Margin="1" />
+                </Grid>
+                <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="12">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="Workout Calendar"
+                                       FontSize="22"
+                                       FontAttributes="Bold" />
+                                <Label Text="{Binding SelectedDateSummary}"
+                                       FontSize="13"
+                                       TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                            </VerticalStackLayout>
+                            <Button Grid.Column="1"
+                                    Text="X"
+                                    Command="{Binding CloseCalendarVisibilityCommand}"
+                                    WidthRequest="40"
+                                    HeightRequest="40"
+                                    Padding="0"
+                                    CornerRadius="20"
+                                    BackgroundColor="{AppThemeBinding Light=#E5E7EB, Dark=#334155}"
+                                    TextColor="{AppThemeBinding Light=#1F2937, Dark=#F8FAFC}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*,Auto"
+                              VerticalOptions="Center">
+                            <Button Text="&lt;"
+                                    Command="{Binding ShowPreviousMonthCommand}"
+                                    BackgroundColor="{AppThemeBinding Light=#E6FFFA, Dark=#123B36}"
+                                    TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}"
+                                    FontSize="18"
+                                    FontAttributes="Bold" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding CurrentCalendarMonthLabel}"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalTextAlignment="Center"
+                                   FontAttributes="Bold"
+                                   FontSize="16" />
+                            <Button Grid.Column="2"
+                                    Text="&gt;"
+                                    Command="{Binding ShowNextMonthCommand}"
+                                    BackgroundColor="{AppThemeBinding Light=#E6FFFA, Dark=#123B36}"
+                                    TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}"
+                                    FontSize="18"
+                                    FontAttributes="Bold" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,*,*,*,*,*,*"
+                              ColumnSpacing="8">
+                            <Label Text="Sun" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                            <Label Grid.Column="1" Text="Mon" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                            <Label Grid.Column="2" Text="Tue" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                            <Label Grid.Column="3" Text="Wed" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                            <Label Grid.Column="4" Text="Thu" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                            <Label Grid.Column="5" Text="Fri" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                            <Label Grid.Column="6" Text="Sat" HorizontalTextAlignment="Center" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#667384, Dark=#A2B0C2}" />
+                        </Grid>
+
+                        <CollectionView x:Name="DashboardCalendarView"
+                                        ItemsSource="{Binding CalendarDays}"
+                                        SelectionMode="Single"
+                                        SelectionChanged="OnCalendarSelectionChanged"
+                                        ItemSizingStrategy="MeasureFirstItem"
+                                        HeightRequest="312">
+                            <CollectionView.ItemsLayout>
+                                <GridItemsLayout Orientation="Vertical"
+                                                 Span="7"
+                                                 VerticalItemSpacing="8"
+                                                 HorizontalItemSpacing="8" />
+                            </CollectionView.ItemsLayout>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Stroke="{Binding BorderColor}"
+                                            BackgroundColor="{Binding BackgroundColor}"
+                                            StrokeShape="RoundRectangle 14"
+                                            StrokeThickness="1"
+                                            HeightRequest="44"
+                                            Padding="0">
+                                        <Grid RowDefinitions="*,Auto"
+                                              Padding="0,6,0,6"
+                                              InputTransparent="True">
+                                            <Label Text="{Binding DayNumberText}"
+                                                   TextColor="{Binding TextColor}"
+                                                   FontAttributes="{Binding DayFontAttributes}"
+                                                   HorizontalTextAlignment="Center"
+                                                   VerticalTextAlignment="Center" />
+                                            <BoxView Grid.Row="1"
+                                                     HeightRequest="6"
+                                                     WidthRequest="6"
+                                                     CornerRadius="3"
+                                                     HorizontalOptions="Center"
+                                                     Color="{Binding WorkoutDotColor}"
+                                                     IsVisible="{Binding HasWorkout}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+    </Grid>
 </ContentPage>
 
