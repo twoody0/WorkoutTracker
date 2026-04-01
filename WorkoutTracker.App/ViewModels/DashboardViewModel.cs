@@ -310,8 +310,8 @@ public class DashboardViewModel : BaseViewModel
     public bool ShowCardioStats => ShowCardioStatsSection && CardioWorkoutSessions > 0;
     public bool ShowEmptyCardioStats => ShowCardioStatsSection && !ShowCardioStats;
     public bool ShowTrainingSnapshot => true;
-    public bool ShowStrengthDaySummaryCard => ShowStrengthStatsSection && HasWeightlifting;
-    public bool ShowCardioDaySummaryCard => ShowCardioStatsSection && HasCardio;
+    public bool ShowStrengthDaySummaryCard => HasWeightlifting;
+    public bool ShowCardioDaySummaryCard => HasCardio;
     public bool ShowStrengthDaySummaryOnLeft => ShowStrengthDaySummaryCard && (!HasCardio || _firstWorkoutTypeForSelectedDate != WorkoutType.Cardio);
     public bool ShowStrengthDaySummaryOnRight => ShowStrengthDaySummaryCard && HasCardio && _firstWorkoutTypeForSelectedDate == WorkoutType.Cardio;
     public bool ShowCardioDaySummaryOnLeft => ShowCardioDaySummaryCard && (!HasWeightlifting || _firstWorkoutTypeForSelectedDate == WorkoutType.Cardio);
