@@ -40,6 +40,8 @@ public class CardioWorkoutViewModel : BaseViewModel
     private bool _isTracking;
     private bool _useStepTracking;
     private bool _isSessionNameFocused;
+    private bool _isPreparingStepTracking;
+    private bool _hasPreparedStepTracking;
     private int _plannedDurationMinutes;
     private double _plannedDistanceMiles;
     private double? _plannedTargetRpe;
@@ -107,6 +109,8 @@ public class CardioWorkoutViewModel : BaseViewModel
             if (SetProperty(ref _sessionName, value))
             {
                 UpdateCardioNameSuggestions();
+                OnPropertyChanged(nameof(HasSelectedSessionName));
+                OnPropertyChanged(nameof(ShowSessionControls));
                 OnPropertyChanged(nameof(SupportsStepTrackingForSelectedActivity));
                 OnPropertyChanged(nameof(StepTrackingStatusText));
                 OnPropertyChanged(nameof(HasEstimatedDistanceFromSteps));
@@ -131,7 +135,13 @@ public class CardioWorkoutViewModel : BaseViewModel
     public bool IsTracking
     {
         get => _isTracking;
-        set => SetProperty(ref _isTracking, value);
+        set
+        {
+            if (SetProperty(ref _isTracking, value))
+            {
+                OnPropertyChanged(nameof(ShowSessionControls));
+            }
+        }
     }
 
     public bool UseStepTracking
@@ -195,8 +205,10 @@ public class CardioWorkoutViewModel : BaseViewModel
     public bool HasPlannedTargetRpe => PlannedTargetRpe.HasValue && PlannedTargetRpe.Value > 0;
     public bool ShowPlannedTargets => HasPlannedDuration || HasPlannedDistance || HasPlannedTargetRpe;
     public string PlannedDurationText => $"Time: {PlannedDurationMinutes} min";
-    public string PlannedDistanceText => $"Distance: {PlannedDistanceMiles:0.#} mi";
+    public string PlannedDistanceText => $"Distance: {PlannedDistanceMiles:0.##} mi";
     public string PlannedTargetRpeText => $"RPE: {PlannedTargetRpe.GetValueOrDefault():0.#}";
+    public bool HasSelectedSessionName => !string.IsNullOrWhiteSpace(SessionName);
+    public bool ShowSessionControls => IsTracking;
     public bool SupportsStepTrackingForSelectedActivity => SupportsStepTracking(SessionName);
     public string StepTrackingSourceDescription => _stepCounterService.SourceDescription;
     public string StepTrackingStatusText => !SupportsStepTrackingForSelectedActivity
@@ -215,6 +227,45 @@ public class CardioWorkoutViewModel : BaseViewModel
 
     public ICommand StartSessionCommand => new Command(async () => await StartSessionAsync());
     public ICommand StopSessionCommand => new Command(async () => await StopSessionAsync());
+
+    public async Task PrepareStepTrackingAsync()
+    {
+        if (_isPreparingStepTracking || _hasPreparedStepTracking || IsTracking)
+        {
+            return;
+        }
+
+        _isPreparingStepTracking = true;
+
+        try
+        {
+            if (!SupportsStepTrackingForSelectedActivity)
+            {
+                UseStepTracking = false;
+                return;
+            }
+
+            if (!_stepCounterService.IsAvailable)
+            {
+                UseStepTracking = false;
+                OnPropertyChanged(nameof(StepTrackingStatusText));
+                return;
+            }
+
+            var hasAccess = await _stepCounterService.EnsureAccessAsync();
+            if (!hasAccess)
+            {
+                UseStepTracking = false;
+            }
+
+            OnPropertyChanged(nameof(StepTrackingStatusText));
+        }
+        finally
+        {
+            _hasPreparedStepTracking = true;
+            _isPreparingStepTracking = false;
+        }
+    }
 
     private void ApplyWorkoutTemplateIfAvailable()
     {
@@ -257,25 +308,30 @@ public class CardioWorkoutViewModel : BaseViewModel
         if (UseStepTracking && SupportsStepTrackingForSelectedActivity)
         {
             _stepCounterService.StartTracking(_sessionStartedAtUtc.Value);
+            OnPropertyChanged(nameof(StepTrackingStatusText));
         }
 
         StartSessionLoop();
     }
 
-    private async Task StartSessionAsync()
+    private Task StartSessionAsync()
     {
         if (IsTracking)
         {
-            return;
+            return Task.CompletedTask;
         }
 
         if (!SupportsStepTrackingForSelectedActivity)
         {
             UseStepTracking = false;
         }
-        else if (UseStepTracking && !await _stepCounterService.EnsureAccessAsync())
+        else if (UseStepTracking && !_stepCounterService.IsAvailable)
         {
             UseStepTracking = false;
+            OnPropertyChanged(nameof(StepTrackingStatusText));
+        }
+        else
+        {
             OnPropertyChanged(nameof(StepTrackingStatusText));
         }
 
@@ -288,9 +344,11 @@ public class CardioWorkoutViewModel : BaseViewModel
         if (UseStepTracking && SupportsStepTrackingForSelectedActivity)
         {
             _stepCounterService.StartTracking(_sessionStartedAtUtc.Value);
+            OnPropertyChanged(nameof(StepTrackingStatusText));
         }
 
         StartSessionLoop();
+        return Task.CompletedTask;
     }
 
     private async Task StopSessionAsync()
@@ -311,9 +369,14 @@ public class CardioWorkoutViewModel : BaseViewModel
         IsTracking = false;
         ClearTrackingState();
 
-        var parsedDistanceMiles = await ResolveDistanceMilesAsync();
         var sessionEndedAt = DateTimeOffset.UtcNow;
         var sessionStartedAt = _sessionStartedAtUtc.Value;
+        if (UseStepTracking && SupportsStepTrackingForSelectedActivity)
+        {
+            SessionSteps = await _stepCounterService.GetFinalStepCountAsync(sessionStartedAt, sessionEndedAt);
+        }
+
+        var parsedDistanceMiles = await ResolveDistanceMilesAsync();
         var completedPlannedWorkout = _plannedPlanWeekNumber > 0;
 
         var workout = new Workout(
@@ -445,7 +508,7 @@ public class CardioWorkoutViewModel : BaseViewModel
 
         if (double.TryParse(promptResult, out parsedDistanceMiles) && parsedDistanceMiles > 0)
         {
-            DistanceMilesText = parsedDistanceMiles.ToString("0.#");
+            DistanceMilesText = parsedDistanceMiles.ToString("0.##");
             return parsedDistanceMiles;
         }
 

@@ -69,7 +69,8 @@
 
             <Border Stroke="LightGray"
                     StrokeShape="RoundRectangle 12"
-                    Padding="16">
+                    Padding="16"
+                    IsVisible="{Binding ShowSessionControls}">
                 <VerticalStackLayout Spacing="8">
                     <Label Text="{Binding ElapsedTimeDisplay, StringFormat='Elapsed: {0}'}"
                            FontSize="20"
@@ -84,16 +85,17 @@
                            HorizontalTextAlignment="Center"
                            FontSize="12"
                            TextColor="Gray" />
-                    <Label Text="The timer keeps its place across lock/resume so you can reopen and stop it when you're done."
-                           FontSize="12"
-                           HorizontalTextAlignment="Center"
-                           TextColor="Gray" />
-                </VerticalStackLayout>
-            </Border>
+                     <Label Text="The timer keeps its place across lock/resume so you can reopen and stop it when you're done."
+                            FontSize="12"
+                            HorizontalTextAlignment="Center"
+                            TextColor="Gray" />
+                 </VerticalStackLayout>
+             </Border>
 
-            <Button Text="Start"
-                    Command="{Binding StartSessionCommand}"
-                    IsVisible="{Binding IsTracking, Converter={StaticResource InverseBooleanConverter}}" />
+             <Button Text="Start"
+                     Command="{Binding StartSessionCommand}"
+                     IsEnabled="{Binding HasSelectedSessionName}"
+                     IsVisible="{Binding IsTracking, Converter={StaticResource InverseBooleanConverter}}" />
             <Button Text="Stop and Save"
                     Command="{Binding StopSessionCommand}"
                     IsVisible="{Binding IsTracking}" />

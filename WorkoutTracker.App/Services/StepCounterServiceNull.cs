@@ -18,4 +18,7 @@ public sealed class StepCounterServiceNull : IStepCounterService
     public void StopTracking()
     {
     }
+
+    public Task<int> GetFinalStepCountAsync(DateTimeOffset sessionStartedAtUtc, DateTimeOffset sessionEndedAtUtc)
+        => Task.FromResult(0);
 }

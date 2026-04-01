@@ -158,7 +158,7 @@
                                                     <Label Text="{Binding DurationMinutes, StringFormat='Time goal: {0} min'}"
                                                            FontSize="13"
                                                            IsVisible="{Binding HasDuration}" />
-                                                    <Label Text="{Binding DistanceMiles, StringFormat='Distance goal: {0:F1} mi'}"
+                                                    <Label Text="{Binding DistanceMiles, StringFormat='Distance goal: {0:0.##} mi'}"
                                                            FontSize="13"
                                                            IsVisible="{Binding HasDistance}" />
                                                     <Label Text="{Binding Steps, StringFormat='Tracked steps: {0}'}"

@@ -10,14 +10,19 @@ public partial class CardioSessionPage : ContentPage
         BindingContext = vm;
     }
 
-    protected override void OnAppearing()
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
 
-        if (BindingContext is CardioWorkoutViewModel vm && string.IsNullOrWhiteSpace(vm.SessionName))
+        if (BindingContext is CardioWorkoutViewModel vm)
         {
-            vm.IsSessionNameFocused = true;
-            vm.ShowAllCardioNameSuggestions();
+            if (string.IsNullOrWhiteSpace(vm.SessionName))
+            {
+                vm.IsSessionNameFocused = true;
+                vm.ShowAllCardioNameSuggestions();
+            }
+
+            await vm.PrepareStepTrackingAsync();
         }
     }
 

@@ -19,7 +19,7 @@
 		<SingleProject>true</SingleProject>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<NoWarn>$(NoWarn);XC0022;XC0025</NoWarn>
+		<NoWarn>$(NoWarn);XC0022;XC0025;CS0618;CS0619</NoWarn>
 		<!-- App edition options:
 		     Free = local-only mode with no required login/signup/leaderboard
 		     Premium = account-based mode with login/signup/leaderboard enabled -->

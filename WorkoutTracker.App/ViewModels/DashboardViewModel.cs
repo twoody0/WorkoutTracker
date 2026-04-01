@@ -122,6 +122,7 @@ public sealed class DashboardDateSnapshot
     public required bool HasCardio { get; init; }
     public required double TotalWeightLifted { get; init; }
     public required double CaloriesBurned { get; init; }
+    public WorkoutType? FirstWorkoutType { get; init; }
 }
 
 public class DashboardViewModel : BaseViewModel
@@ -147,6 +148,7 @@ public class DashboardViewModel : BaseViewModel
     private double _caloriesBurned;
     private bool _hasWeightlifting;
     private bool _hasCardio;
+    private WorkoutType? _firstWorkoutTypeForSelectedDate;
     private int _currentWorkoutIndex;
     private int _totalWorkoutsForSelectedDate;
     private int _totalWorkoutSessions;
@@ -310,6 +312,10 @@ public class DashboardViewModel : BaseViewModel
     public bool ShowTrainingSnapshot => true;
     public bool ShowStrengthDaySummaryCard => ShowStrengthStatsSection && HasWeightlifting;
     public bool ShowCardioDaySummaryCard => ShowCardioStatsSection && HasCardio;
+    public bool ShowStrengthDaySummaryOnLeft => ShowStrengthDaySummaryCard && (!HasCardio || _firstWorkoutTypeForSelectedDate != WorkoutType.Cardio);
+    public bool ShowStrengthDaySummaryOnRight => ShowStrengthDaySummaryCard && HasCardio && _firstWorkoutTypeForSelectedDate == WorkoutType.Cardio;
+    public bool ShowCardioDaySummaryOnLeft => ShowCardioDaySummaryCard && (!HasWeightlifting || _firstWorkoutTypeForSelectedDate == WorkoutType.Cardio);
+    public bool ShowCardioDaySummaryOnRight => ShowCardioDaySummaryCard && HasWeightlifting && _firstWorkoutTypeForSelectedDate != WorkoutType.Cardio;
     public string StrengthStatsSubtitle => "Estimated 1RMs update from your logged weight and reps.";
     public string EmptyStrengthStatsMessage => "Log a few strength workouts to see these stats.";
     public string TopBenchPatternSummary => FormatWeightStat(_topBenchPatternOneRepMax);
@@ -327,13 +333,13 @@ public class DashboardViewModel : BaseViewModel
         ? $"{_lifetimeCardioMinutes:N0} total cardio minutes"
         : "No cardio minutes yet.";
     public string LifetimeCardioDistanceSummary => _lifetimeCardioDistance > 0
-        ? $"{_lifetimeCardioDistance:0.#} total cardio miles"
+        ? $"{_lifetimeCardioDistance:0.##} total cardio miles"
         : "No cardio distance yet.";
     public string LongestCardioSessionSummary => _longestCardioSessionMinutes > 0
         ? $"{_longestCardioSessionMinutes} min longest session"
         : "--";
     public string LongestCardioDistanceSummary => _longestCardioDistance > 0
-        ? $"{_longestCardioDistance:0.#} mi longest distance"
+        ? $"{_longestCardioDistance:0.##} mi longest distance"
         : "--";
     public string FavoriteCardioWorkoutSummary => _favoriteCardioWorkoutSummary;
 
@@ -514,6 +520,7 @@ public class DashboardViewModel : BaseViewModel
         TotalWorkoutsForSelectedDate = snapshot.WorkoutCount;
         HasWeightlifting = snapshot.HasWeightlifting;
         HasCardio = snapshot.HasCardio;
+        _firstWorkoutTypeForSelectedDate = snapshot.FirstWorkoutType;
 
         Workouts.Clear();
         _currentWorkoutIndex = 0;
@@ -535,6 +542,10 @@ public class DashboardViewModel : BaseViewModel
         OnPropertyChanged(nameof(CanShowNextWorkout));
         OnPropertyChanged(nameof(ShowStrengthDaySummaryCard));
         OnPropertyChanged(nameof(ShowCardioDaySummaryCard));
+        OnPropertyChanged(nameof(ShowStrengthDaySummaryOnLeft));
+        OnPropertyChanged(nameof(ShowStrengthDaySummaryOnRight));
+        OnPropertyChanged(nameof(ShowCardioDaySummaryOnLeft));
+        OnPropertyChanged(nameof(ShowCardioDaySummaryOnRight));
     }
 
     private Dictionary<DateTime, DashboardDateSnapshot> BuildWorkoutSnapshotsByDate(IEnumerable<Workout> workouts)
@@ -552,6 +563,9 @@ public class DashboardViewModel : BaseViewModel
                     var orderedWorkouts = group
                         .OrderByDescending(workout => workout.StartTime)
                         .ToList();
+                    var firstWorkoutOfDay = group
+                        .OrderBy(workout => workout.StartTime)
+                        .FirstOrDefault();
 
                     var items = orderedWorkouts
                         .Select(workout => new DashboardWorkoutHistoryItem
@@ -578,7 +592,8 @@ public class DashboardViewModel : BaseViewModel
                         HasCardio = orderedWorkouts.Any(workout =>
                             workout.Type == WorkoutType.Cardio && (workout.DurationMinutes > 0 || workout.DistanceMiles > 0 || workout.Steps > 0)),
                         TotalWeightLifted = totalWeightLifted,
-                        CaloriesBurned = totalCardioMinutes * 0.0175 * moderateCardioMet * weightKg
+                        CaloriesBurned = totalCardioMinutes * 0.0175 * moderateCardioMet * weightKg,
+                        FirstWorkoutType = firstWorkoutOfDay?.Type
                     };
                 });
     }

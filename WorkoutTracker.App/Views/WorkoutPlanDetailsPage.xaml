@@ -176,7 +176,7 @@
                                                                             <Label Text="{Binding Workout.DurationMinutes, StringFormat='Time: {0} min'}"
                                                                                    FontSize="14"
                                                                                    IsVisible="{Binding Workout.HasDuration}" />
-                                                                            <Label Text="{Binding Workout.DistanceMiles, StringFormat='Distance: {0:F1} mi'}"
+                                                                            <Label Text="{Binding Workout.DistanceMiles, StringFormat='Distance: {0:0.##} mi'}"
                                                                                    FontSize="14"
                                                                                    IsVisible="{Binding Workout.HasDistance}" />
                                                                             <Label Text="{Binding Workout.TargetRpeDisplay, StringFormat='Target RPE: {0}'}"

@@ -24,6 +24,7 @@ public class AddWorkoutViewModel : BaseViewModel
     private int _steps;
     private int _durationMinutes;
     private double _distanceMiles;
+    private string _distanceMilesText = string.Empty;
     private string _recommendedWorkoutSummary = "Build a custom workout for this day.";
     private RecommendedWorkoutOption? _selectedRecommendedWorkout;
     private bool _isApplyingLibrarySelection;
@@ -112,7 +113,46 @@ public class AddWorkoutViewModel : BaseViewModel
     public double DistanceMiles
     {
         get => _distanceMiles;
-        set => SetProperty(ref _distanceMiles, Math.Clamp(value, 0, InputSanitizer.MaxDistanceMiles));
+        set
+        {
+            var clamped = Math.Clamp(value, 0, InputSanitizer.MaxDistanceMiles);
+            if (SetProperty(ref _distanceMiles, clamped))
+            {
+                var formatted = clamped > 0 ? clamped.ToString("0.##") : string.Empty;
+                if (!string.Equals(_distanceMilesText, formatted, StringComparison.Ordinal))
+                {
+                    _distanceMilesText = formatted;
+                    OnPropertyChanged(nameof(DistanceMilesText));
+                }
+            }
+        }
+    }
+
+    public string DistanceMilesText
+    {
+        get => _distanceMilesText;
+        set
+        {
+            var sanitized = InputSanitizer.SanitizePositiveDecimalText(value, InputSanitizer.MaxDistanceMiles, decimals: 2);
+            if (!SetProperty(ref _distanceMilesText, sanitized))
+            {
+                return;
+            }
+
+            if (double.TryParse(sanitized, out var parsedDistance))
+            {
+                if (Math.Abs(_distanceMiles - parsedDistance) > 0.0001)
+                {
+                    _distanceMiles = parsedDistance;
+                    OnPropertyChanged(nameof(DistanceMiles));
+                }
+            }
+            else if (_distanceMiles != 0)
+            {
+                _distanceMiles = 0;
+                OnPropertyChanged(nameof(DistanceMiles));
+            }
+        }
     }
 
     public List<WorkoutType> WorkoutTypes { get; } = Enum.GetValues(typeof(WorkoutType)).Cast<WorkoutType>().ToList();

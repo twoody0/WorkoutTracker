@@ -933,7 +933,7 @@ public class WorkoutViewModel : BaseViewModel
         Reps = GetDefaultRepsForWorkout(workout).ToString();
         Sets = workout.Sets.ToString();
         DurationMinutesText = workout.DurationMinutes > 0 ? workout.DurationMinutes.ToString() : string.Empty;
-        DistanceMilesText = workout.DistanceMiles > 0 ? workout.DistanceMiles.ToString("0.#") : string.Empty;
+        DistanceMilesText = workout.DistanceMiles > 0 ? workout.DistanceMiles.ToString("0.##") : string.Empty;
         StepsText = workout.Steps > 0 ? workout.Steps.ToString() : string.Empty;
         ApplyBodyweightDefaultsIfNeeded();
         NotifyBodyweightStateChanged();
@@ -1726,7 +1726,7 @@ public class WorkoutViewModel : BaseViewModel
     private static string GetRecommendationDistanceText(Workout workout)
     {
         return workout.Type == WorkoutType.Cardio && workout.DistanceMiles > 0
-            ? $"Distance: {workout.DistanceMiles:0.#} mi"
+            ? $"Distance: {workout.DistanceMiles:0.##} mi"
             : string.Empty;
     }
 

@@ -45,5 +45,10 @@ public interface IStepCounterService
     /// </summary>
     void StopTracking();
 
+    /// <summary>
+    /// Reconciles step data for a completed session window and returns the best available total.
+    /// </summary>
+    Task<int> GetFinalStepCountAsync(DateTimeOffset sessionStartedAtUtc, DateTimeOffset sessionEndedAtUtc);
+
     #endregion
 }

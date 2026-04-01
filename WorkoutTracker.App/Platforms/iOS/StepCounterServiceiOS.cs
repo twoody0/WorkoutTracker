@@ -71,6 +71,16 @@ public sealed class StepCounterServiceiOS : IStepCounterService
         _pollingCancellation = null;
     }
 
+    public async Task<int> GetFinalStepCountAsync(DateTimeOffset sessionStartedAtUtc, DateTimeOffset sessionEndedAtUtc)
+    {
+        if (_healthStore == null)
+        {
+            return 0;
+        }
+
+        return await QueryStepCountAsync(sessionStartedAtUtc, sessionEndedAtUtc).ConfigureAwait(false);
+    }
+
     private async Task PollStepsAsync(CancellationToken cancellationToken)
     {
         try
@@ -94,6 +104,16 @@ public sealed class StepCounterServiceiOS : IStepCounterService
             return Task.FromResult(0);
         }
 
+        return QueryStepCountAsync(_sessionStartedAtUtc.Value, DateTimeOffset.UtcNow);
+    }
+
+    private Task<int> QueryStepCountAsync(DateTimeOffset startTimeUtc, DateTimeOffset endTimeUtc)
+    {
+        if (_healthStore == null)
+        {
+            return Task.FromResult(0);
+        }
+
         var completionSource = new TaskCompletionSource<int>();
         var stepType = HKQuantityType.Create(HKQuantityTypeIdentifier.StepCount);
         if (stepType == null)
@@ -102,8 +122,8 @@ public sealed class StepCounterServiceiOS : IStepCounterService
             return completionSource.Task;
         }
 
-        var startDate = ToNSDate(_sessionStartedAtUtc.Value);
-        var endDate = NSDate.Now;
+        var startDate = ToNSDate(startTimeUtc);
+        var endDate = ToNSDate(endTimeUtc);
         var predicate = HKQuery.GetPredicateForSamples(startDate, endDate, HKQueryOptions.StrictStartDate);
 
         var query = new HKStatisticsQuery(

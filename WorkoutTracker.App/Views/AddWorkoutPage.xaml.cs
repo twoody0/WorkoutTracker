@@ -60,7 +60,7 @@ public partial class AddWorkoutPage : ContentPage
 
     private void DistanceEntry_TextChanged(object sender, TextChangedEventArgs e)
     {
-        ClampEntryText(sender, e.NewTextValue, InputSanitizer.MaxDistanceMiles, isDecimal: true);
+        ClampEntryText(sender, e.NewTextValue, InputSanitizer.MaxDistanceMiles, isDecimal: true, decimalPlaces: 2);
     }
 
     private void StepsEntry_TextChanged(object sender, TextChangedEventArgs e)
@@ -68,7 +68,7 @@ public partial class AddWorkoutPage : ContentPage
         ClampEntryText(sender, e.NewTextValue, InputSanitizer.MaxSteps, isDecimal: false);
     }
 
-    private static void ClampEntryText(object sender, string? newTextValue, double maxValue, bool isDecimal)
+    private static void ClampEntryText(object sender, string? newTextValue, double maxValue, bool isDecimal, int decimalPlaces = 1)
     {
         if (sender is not Entry entry)
         {
@@ -76,7 +76,7 @@ public partial class AddWorkoutPage : ContentPage
         }
 
         var sanitized = isDecimal
-            ? InputSanitizer.SanitizePositiveDecimalText(newTextValue, maxValue)
+            ? InputSanitizer.SanitizePositiveDecimalText(newTextValue, maxValue, decimalPlaces)
             : InputSanitizer.SanitizePositiveIntegerText(newTextValue, (int)maxValue);
 
         if (!string.Equals(entry.Text, sanitized, StringComparison.Ordinal))

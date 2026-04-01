@@ -403,7 +403,7 @@
                                 BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#1A2230}"
                                 StrokeShape="RoundRectangle 18"
                                 Padding="14"
-                                IsVisible="{Binding ShowStrengthDaySummaryCard}">
+                                IsVisible="{Binding ShowStrengthDaySummaryOnLeft}">
                             <VerticalStackLayout Spacing="4">
                                 <Label Text="Strength Volume"
                                        FontAttributes="Bold"
@@ -419,12 +419,44 @@
                                 BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#1A2230}"
                                 StrokeShape="RoundRectangle 18"
                                 Padding="14"
-                                IsVisible="{Binding ShowCardioDaySummaryCard}">
+                                IsVisible="{Binding ShowCardioDaySummaryOnRight}">
                             <VerticalStackLayout Spacing="4">
                                 <Label Text="Cardio Burn"
                                        FontAttributes="Bold"
                                        FontSize="14" />
                                 <Label Text="{Binding CaloriesBurned, StringFormat='{0:N0} kcal'}"
+                                       FontSize="18"
+                                       FontAttributes="Bold" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border Grid.Column="0"
+                                Stroke="{AppThemeBinding Light=#E0E7EF, Dark=#334050}"
+                                BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#1A2230}"
+                                StrokeShape="RoundRectangle 18"
+                                Padding="14"
+                                IsVisible="{Binding ShowCardioDaySummaryOnLeft}">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="Cardio Burn"
+                                       FontAttributes="Bold"
+                                       FontSize="14" />
+                                <Label Text="{Binding CaloriesBurned, StringFormat='{0:N0} kcal'}"
+                                       FontSize="18"
+                                       FontAttributes="Bold" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                Stroke="{AppThemeBinding Light=#E0E7EF, Dark=#334050}"
+                                BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#1A2230}"
+                                StrokeShape="RoundRectangle 18"
+                                Padding="14"
+                                IsVisible="{Binding ShowStrengthDaySummaryOnRight}">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="Strength Volume"
+                                       FontAttributes="Bold"
+                                       FontSize="14" />
+                                <Label Text="{Binding TotalWeightLifted, StringFormat='{0:N0} lb moved'}"
                                        FontSize="18"
                                        FontAttributes="Bold" />
                             </VerticalStackLayout>
@@ -508,9 +540,9 @@
                             <Label Text="{Binding DurationMinutes, StringFormat='Time: {0} min'}"
                                    FontSize="13"
                                    IsVisible="{Binding HasDuration}" />
-                            <Label Text="{Binding DistanceMiles, StringFormat='Distance: {0:F1} mi'}"
-                                   FontSize="13"
-                                   IsVisible="{Binding HasDistance}" />
+                            <Label Text="{Binding DistanceMiles, StringFormat='Distance: {0:0.##} mi'}"
+                                    FontSize="13"
+                                    IsVisible="{Binding HasDistance}" />
                             <Label Text="{Binding Steps, StringFormat='Tracked steps: {0}'}"
                                    FontSize="13"
                                    IsVisible="{Binding HasSteps}" />

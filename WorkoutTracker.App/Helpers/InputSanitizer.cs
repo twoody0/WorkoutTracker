@@ -62,6 +62,18 @@ public static class InputSanitizer
             return string.Empty;
         }
 
+        if (cleaned == ".")
+        {
+            return cleaned;
+        }
+
+        if (cleaned.EndsWith(".", StringComparison.Ordinal) &&
+            double.TryParse(cleaned[..^1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var partialWhole))
+        {
+            var clampedWhole = Math.Clamp(partialWhole, 0, maxValue);
+            return $"{clampedWhole.ToString("0", CultureInfo.InvariantCulture)}.";
+        }
+
         if (!double.TryParse(cleaned, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var parsed))
         {
             parsed = maxValue;
