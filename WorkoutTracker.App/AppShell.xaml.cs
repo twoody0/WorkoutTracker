@@ -1,4 +1,5 @@
-﻿using WorkoutTracker.Services;
+using Microsoft.Maui.Storage;
+using WorkoutTracker.Services;
 using WorkoutTracker.Views;
 
 namespace WorkoutTracker;
@@ -6,6 +7,8 @@ namespace WorkoutTracker;
 public partial class AppShell : Shell
 {
     private readonly IAppModeService _appModeService;
+    private bool _isResumingActiveCardioSession;
+    private const string ActiveCardioSessionPreferenceKey = "cardio_session.is_tracking";
 
     public AppShell(IAppModeService appModeService)
     {
@@ -13,10 +16,8 @@ public partial class AppShell : Shell
 
         _appModeService = appModeService;
 
-        // Initial navigation setup
         BuildSignedInTabs();
 
-        // Register routes (optional since we’re using DI below)
         Routing.RegisterRoute(nameof(SignupPage), typeof(SignupPage));
         Routing.RegisterRoute(nameof(LoginPage), typeof(LoginPage));
         Routing.RegisterRoute(nameof(DashboardPage), typeof(DashboardPage));
@@ -114,5 +115,37 @@ public partial class AppShell : Shell
         routes.Add("workout-plans");
         routes.Add("dashboard");
         return routes;
+    }
+
+    public async Task ResumeActiveCardioSessionIfNeededAsync()
+    {
+        if (_isResumingActiveCardioSession || !Preferences.Get(ActiveCardioSessionPreferenceKey, false))
+        {
+            return;
+        }
+
+        if (CurrentPage is CardioSessionPage || Navigation.NavigationStack.OfType<CardioSessionPage>().Any())
+        {
+            return;
+        }
+
+        _isResumingActiveCardioSession = true;
+
+        try
+        {
+            await GoToAsync("//add-workout");
+            await Task.Delay(50);
+
+            if (CurrentPage is CardioSessionPage || Navigation.NavigationStack.OfType<CardioSessionPage>().Any())
+            {
+                return;
+            }
+
+            await Navigation.PushAsync(App.Services.GetRequiredService<CardioSessionPage>());
+        }
+        finally
+        {
+            _isResumingActiveCardioSession = false;
+        }
     }
 }

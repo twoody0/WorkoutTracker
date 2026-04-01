@@ -20,7 +20,23 @@ public partial class App : Application
     {
         try
         {
-            return new Window(CreateRootPage());
+            var rootPage = CreateRootPage();
+            var window = new Window(rootPage);
+
+            if (rootPage is AppShell shell)
+            {
+                window.Created += (_, _) =>
+                {
+                    MainThread.BeginInvokeOnMainThread(async () => await shell.ResumeActiveCardioSessionIfNeededAsync());
+                };
+
+                window.Resumed += (_, _) =>
+                {
+                    MainThread.BeginInvokeOnMainThread(async () => await shell.ResumeActiveCardioSessionIfNeededAsync());
+                };
+            }
+
+            return window;
         }
         catch (Exception ex)
         {

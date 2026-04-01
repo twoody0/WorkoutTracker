@@ -36,6 +36,11 @@ public class MainActivity : MauiAppCompatActivity
     {
         base.OnResume();
         ApplySystemBarColors();
+
+        if (MauiApplication.Current?.Windows.FirstOrDefault()?.Page is AppShell shell)
+        {
+            MainThread.BeginInvokeOnMainThread(async () => await shell.ResumeActiveCardioSessionIfNeededAsync());
+        }
     }
 
     protected override void OnDestroy()
