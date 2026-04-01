@@ -341,13 +341,12 @@
                         Padding="0"
                         CornerRadius="14"
                         BorderWidth="0"
-                        BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}"
-                        Opacity="0.35">
+                        BackgroundColor="{AppThemeBinding Light=#D1D5DB, Dark=#475569}">
                     <Button.Triggers>
                         <DataTrigger TargetType="Button"
                                      Binding="{Binding IsStrengthStatsSelected}"
                                      Value="True">
-                            <Setter Property="Opacity" Value="1" />
+                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}" />
                         </DataTrigger>
                     </Button.Triggers>
                 </Button>
@@ -361,13 +360,12 @@
                         Padding="0"
                         CornerRadius="14"
                         BorderWidth="0"
-                        BackgroundColor="{AppThemeBinding Light=#1F2937, Dark=#CBD5E1}"
-                        Opacity="0.35">
+                        BackgroundColor="{AppThemeBinding Light=#D1D5DB, Dark=#475569}">
                     <Button.Triggers>
                         <DataTrigger TargetType="Button"
                                      Binding="{Binding IsCardioStatsSelected}"
                                      Value="True">
-                            <Setter Property="Opacity" Value="1" />
+                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}" />
                         </DataTrigger>
                     </Button.Triggers>
                 </Button>
