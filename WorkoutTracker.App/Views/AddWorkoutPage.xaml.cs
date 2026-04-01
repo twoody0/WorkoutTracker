@@ -43,6 +43,12 @@ public partial class AddWorkoutPage : ContentPage
         ViewModel.InitializeDefaultRecommendation();
     }
 
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        ViewModel.RefreshRecommendations();
+    }
+
     private void RepsEntry_TextChanged(object sender, TextChangedEventArgs e)
     {
         ClampEntryText(sender, e.NewTextValue, InputSanitizer.MaxReps, isDecimal: false);

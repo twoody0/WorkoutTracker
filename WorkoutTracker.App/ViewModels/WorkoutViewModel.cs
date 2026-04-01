@@ -82,6 +82,7 @@ public class WorkoutViewModel : BaseViewModel
     private bool _isQuickAddMode;
     private bool _isAdvancedFieldsVisible = true;
     private bool _showManualWorkoutEntry;
+    private bool _hadActivePlanOnLastRefresh;
     private bool _suppressSuggestionRefresh;
     private bool _isApplyingRecommendation;
     private List<Workout> _workoutHistory = new();
@@ -91,6 +92,7 @@ public class WorkoutViewModel : BaseViewModel
     private CancellationTokenSource? _exerciseSuggestionDebounceCts;
     private int _exerciseSuggestionRequestVersion;
     private long _lastLoadedWorkoutChangeVersion = -1;
+    private string _lastPlanRecommendationSignature = string.Empty;
 
     #endregion
 
@@ -677,6 +679,17 @@ public class WorkoutViewModel : BaseViewModel
         RefreshPlanRecommendations();
     }
 
+    public void EnsurePlanRecommendationsFresh()
+    {
+        var currentSignature = BuildPlanRecommendationSignature();
+        if (string.Equals(_lastPlanRecommendationSignature, currentSignature, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        RefreshPlanRecommendations();
+    }
+
     public void SelectFirstRecommendedWorkout()
     {
         var defaultRecommendation = RecommendedPlanWorkouts.FirstOrDefault(recommendation => recommendation.IsWeightLifting);
@@ -947,6 +960,11 @@ public class WorkoutViewModel : BaseViewModel
 
     public void RefreshPlanRecommendations()
     {
+        _lastPlanRecommendationSignature = BuildPlanRecommendationSignature();
+        var hadActivePlanBeforeRefresh = _hadActivePlanOnLastRefresh;
+        var hasActivePlanNow = _workoutScheduleService.ActivePlan != null;
+        _hadActivePlanOnLastRefresh = hasActivePlanNow;
+
         RecommendedPlanWorkouts.Clear();
         _selectedRecommendation = null;
 
@@ -1012,6 +1030,13 @@ public class WorkoutViewModel : BaseViewModel
 
         if (HasRecommendedPlanWorkouts)
         {
+            if (!hadActivePlanBeforeRefresh && hasActivePlanNow)
+            {
+                ShowManualWorkoutEntry = false;
+                IsQuickAddMode = true;
+                IsAdvancedFieldsVisible = false;
+            }
+
             SelectFirstRecommendedWorkout();
         }
     }
@@ -1728,6 +1753,29 @@ public class WorkoutViewModel : BaseViewModel
         return workout.Type == WorkoutType.Cardio && workout.DistanceMiles > 0
             ? $"Distance: {workout.DistanceMiles:0.##} mi"
             : string.Empty;
+    }
+
+    private string BuildPlanRecommendationSignature()
+    {
+        var activePlanName = _workoutScheduleService.ActivePlan?.Name?.Trim() ?? string.Empty;
+        var todaysPlannedWorkouts = _workoutScheduleService.GetActivePlanWorkoutsForDay(DateTime.Today.DayOfWeek);
+
+        return string.Join("||",
+            DateTime.Today.DayOfWeek,
+            activePlanName,
+            string.Join("::", todaysPlannedWorkouts.Select(workout => string.Join("|",
+                workout.Day,
+                workout.Type,
+                workout.Name?.Trim(),
+                workout.MuscleGroup?.Trim(),
+                workout.Sets,
+                workout.Reps,
+                workout.DurationMinutes,
+                workout.DistanceMiles,
+                workout.Steps,
+                workout.PlanWeekNumber,
+                workout.TargetRpe,
+                workout.TargetRestRange?.Trim()))));
     }
 
     private void NotifyExerciseImageStateChanged()

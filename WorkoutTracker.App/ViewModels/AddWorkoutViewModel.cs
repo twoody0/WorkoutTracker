@@ -12,8 +12,8 @@ public class AddWorkoutViewModel : BaseViewModel
     private readonly IWorkoutLibraryService _workoutLibraryService;
     private readonly ObservableCollection<Workout> _workouts;
     private readonly INavigation _navigation;
-    private readonly IReadOnlyList<Workout> _recommendedWorkoutSource;
-    private readonly string _recommendationSourceName;
+    private IReadOnlyList<Workout> _recommendedWorkoutSource;
+    private string _recommendationSourceName;
     private readonly Action<Workout> _saveWorkoutAction;
     private string _name = string.Empty;
     private string _muscleGroup = string.Empty;
@@ -26,6 +26,7 @@ public class AddWorkoutViewModel : BaseViewModel
     private double _distanceMiles;
     private string _distanceMilesText = string.Empty;
     private string _recommendedWorkoutSummary = "Build a custom workout for this day.";
+    private string _lastRecommendationSignature = string.Empty;
     private RecommendedWorkoutOption? _selectedRecommendedWorkout;
     private bool _isApplyingLibrarySelection;
     private CancellationTokenSource? _exerciseSuggestionDebounceCts;
@@ -206,6 +207,7 @@ public class AddWorkoutViewModel : BaseViewModel
         _navigation = navigation;
         _recommendedWorkoutSource = recommendedWorkouts?.ToList() ?? [];
         _recommendationSourceName = recommendationSourceName;
+        _lastRecommendationSignature = BuildRecommendationSignature(_recommendationSourceName, _recommendedWorkoutSource);
         _saveWorkoutAction = saveWorkoutAction;
 
         SelectedType = WorkoutType.WeightLifting; // Default
@@ -214,6 +216,46 @@ public class AddWorkoutViewModel : BaseViewModel
         SelectExerciseSuggestionCommand = new Command<WeightliftingExercise>(SelectExerciseSuggestion);
 
         LoadRecommendations();
+    }
+
+    public void RefreshRecommendations()
+    {
+        if (_scheduleService != null)
+        {
+            var refreshedSource = _scheduleService.GetActivePlanWorkoutsForDay(Day).ToList();
+            var refreshedPlanName = _scheduleService.ActivePlan?.Name ?? string.Empty;
+            var refreshedSignature = BuildRecommendationSignature(refreshedPlanName, refreshedSource);
+
+            if (string.Equals(_lastRecommendationSignature, refreshedSignature, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _recommendedWorkoutSource = refreshedSource;
+            _recommendationSourceName = refreshedPlanName;
+            _lastRecommendationSignature = refreshedSignature;
+        }
+
+        LoadRecommendations();
+
+        if (HasRecommendedWorkouts)
+        {
+            if (_selectedRecommendedWorkout == null ||
+                !RecommendedWorkouts.Any(option => ReferenceEquals(option, _selectedRecommendedWorkout)) &&
+                !RecommendedWorkouts.Any(option => AreWorkoutsEquivalent(option.Workout, _selectedRecommendedWorkout.Workout)))
+            {
+                _selectedRecommendedWorkout = null;
+                InitializeDefaultRecommendation();
+            }
+        }
+        else
+        {
+            if (_selectedRecommendedWorkout != null)
+            {
+                _selectedRecommendedWorkout.IsSelected = false;
+                _selectedRecommendedWorkout = null;
+            }
+        }
     }
 
     private async void SaveWorkout()
@@ -403,6 +445,31 @@ public class AddWorkoutViewModel : BaseViewModel
         OnPropertyChanged(nameof(HasSelectedExerciseInfo));
         OnPropertyChanged(nameof(HasSelectedExerciseImage));
         OnPropertyChanged(nameof(SelectedExerciseImageSource));
+    }
+
+    private static bool AreWorkoutsEquivalent(Workout left, Workout right)
+    {
+        return string.Equals(left.Name, right.Name, StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(left.MuscleGroup, right.MuscleGroup, StringComparison.OrdinalIgnoreCase) &&
+               left.Type == right.Type &&
+               left.Day == right.Day;
+    }
+
+    private static string BuildRecommendationSignature(string planName, IEnumerable<Workout> workouts)
+    {
+        return string.Join("||",
+            planName.Trim(),
+            string.Join("::", workouts.Select(workout => string.Join("|",
+                workout.Day,
+                workout.Type,
+                workout.Name?.Trim(),
+                workout.MuscleGroup?.Trim(),
+                workout.Sets,
+                workout.Reps,
+                workout.DurationMinutes,
+                workout.DistanceMiles,
+                workout.Steps,
+                workout.PlanWeekNumber))));
     }
 }
 
