@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="WorkoutTracker.Views.ExerciseImagePage"
+             BackgroundColor="#CC0F1720"
+             Shell.NavBarIsVisible="False">
+
+    <Grid Padding="16"
+          RowDefinitions="Auto,*">
+        <Button Grid.Row="0"
+                Text="Close"
+                HorizontalOptions="End"
+                VerticalOptions="Start"
+                Clicked="OnCloseClicked"
+                BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1A2230}"
+                TextColor="{AppThemeBinding Light=#0F172A, Dark=#CCFBF1}" />
+
+        <Border Grid.Row="1"
+                Margin="0,12,0,0"
+                Padding="0"
+                StrokeThickness="0"
+                StrokeShape="RoundRectangle 18"
+                BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#111827}"
+                VerticalOptions="Center"
+                MaximumWidthRequest="760">
+            <ScrollView>
+                <VerticalStackLayout Padding="16"
+                                     Spacing="16">
+                    <VerticalStackLayout Spacing="6">
+                        <Border HorizontalOptions="Center"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 999"
+                                Padding="10,4"
+                                BackgroundColor="{AppThemeBinding Light=#CCFBF1, Dark=#134E4A}">
+                            <Label Text="{Binding CardLabel}"
+                                   FontAttributes="Bold"
+                                   FontSize="12"
+                                   TextColor="{AppThemeBinding Light=#0F766E, Dark=#CCFBF1}" />
+                        </Border>
+
+                        <Label Text="{Binding ExerciseName}"
+                               FontAttributes="Bold"
+                               FontSize="22"
+                               HorizontalOptions="Center"
+                               HorizontalTextAlignment="Center" />
+
+                        <Label Text="{Binding Subheading}"
+                               FontSize="13"
+                               Opacity="0.8"
+                               HorizontalOptions="Center"
+                               HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+
+                    <Border StrokeThickness="0"
+                            StrokeShape="RoundRectangle 14"
+                            BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#0F172A}"
+                            Padding="10"
+                            IsVisible="{Binding HasImage}">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Movement Demo"
+                                   FontAttributes="Bold"
+                                   FontSize="14"
+                                   TextColor="{AppThemeBinding Light=#0F766E, Dark=#99F6E4}" />
+                            <Image Source="{Binding ImageSource}"
+                                   Aspect="AspectFit"
+                                   HeightRequest="420" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border StrokeThickness="0"
+                            StrokeShape="RoundRectangle 14"
+                            BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#0F172A}"
+                            Padding="14">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="What This Exercise Trains"
+                                   FontAttributes="Bold"
+                                   FontSize="16"
+                                   TextColor="{AppThemeBinding Light=#0F766E, Dark=#99F6E4}" />
+                            <Label Text="{Binding Summary}"
+                                   LineBreakMode="WordWrap" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border StrokeThickness="0"
+                            StrokeShape="RoundRectangle 14"
+                            BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#0F172A}"
+                            Padding="14">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="What To Focus On"
+                                   FontAttributes="Bold"
+                                   FontSize="16"
+                                   TextColor="{AppThemeBinding Light=#0F766E, Dark=#99F6E4}" />
+                            <Label Text="{Binding CoachingIntro}"
+                                   FontSize="13"
+                                   Opacity="0.8"
+                                   LineBreakMode="WordWrap" />
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Cues}"
+                                                 Spacing="8">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="Auto,*"
+                                              ColumnSpacing="10">
+                                            <Border WidthRequest="22"
+                                                    HeightRequest="22"
+                                                    VerticalOptions="Start"
+                                                    StrokeThickness="0"
+                                                    StrokeShape="RoundRectangle 11"
+                                                    BackgroundColor="{AppThemeBinding Light=#CCFBF1, Dark=#134E4A}">
+                                                <Label Text="•"
+                                                       HorizontalOptions="Center"
+                                                       VerticalOptions="Center"
+                                                       FontSize="14"
+                                                       TextColor="{AppThemeBinding Light=#0F766E, Dark=#CCFBF1}" />
+                                            </Border>
+                                            <Label Grid.Column="1"
+                                                   Text="{Binding .}"
+                                                   LineBreakMode="WordWrap"
+                                                   VerticalTextAlignment="Center" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+            </ScrollView>
+        </Border>
+    </Grid>
+</ContentPage>

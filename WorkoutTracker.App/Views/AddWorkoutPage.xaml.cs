@@ -84,4 +84,30 @@ public partial class AddWorkoutPage : ContentPage
             entry.Text = sanitized;
         }
     }
+
+    private async void OnExerciseImageClicked(object sender, EventArgs e)
+    {
+        if (sender is not ImageButton button || button.CommandParameter is not string exerciseName)
+        {
+            return;
+        }
+
+        await ShowExerciseImageAsync(exerciseName);
+    }
+
+    private async void OnSelectedExerciseImageClicked(object sender, EventArgs e)
+    {
+        await ShowExerciseImageAsync(ViewModel.Name);
+    }
+
+    private async Task ShowExerciseImageAsync(string? exerciseName)
+    {
+        if (!ExerciseInfoCatalog.HasInfo(exerciseName))
+        {
+            await DisplayAlert("Exercise Info Not Available", "No exercise details have been added for this exercise yet.", "OK");
+            return;
+        }
+
+        await Navigation.PushModalAsync(new ExerciseImagePage(exerciseName!.Trim()));
+    }
 }

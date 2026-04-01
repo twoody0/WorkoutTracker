@@ -29,6 +29,9 @@ public class RecommendedWorkoutOption : INotifyPropertyChanged
     public bool ShowCardioDetails => ShowDetails && IsCardio;
     public bool ShowUseButton => !IsSelected;
     public bool ShowSelectedState => IsSelected;
+    public bool HasExerciseInfo => IsWeightLifting && Helpers.ExerciseInfoCatalog.HasInfo(Name);
+    public bool HasExerciseImage => IsWeightLifting && Helpers.ExerciseImageCatalog.HasImage(Name);
+    public string ExerciseImageSource => Helpers.ExerciseImageCatalog.GetImageSource(Name);
     public string SelectedText => "Currently selected";
 
     public bool IsSelected

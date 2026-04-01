@@ -147,6 +147,25 @@ public partial class WorkoutPage : ContentPage
         }
     }
 
+    private async void OnExerciseImageClicked(object sender, EventArgs e)
+    {
+        if (sender is not ImageButton button ||
+            button.BindingContext is not WorkoutRecommendation recommendation)
+        {
+            return;
+        }
+
+        await ShowExerciseImageAsync(recommendation.Workout.Name);
+    }
+
+    private async void OnSelectedExerciseImageClicked(object sender, EventArgs e)
+    {
+        if (BindingContext is WorkoutViewModel vm)
+        {
+            await ShowExerciseImageAsync(vm.QuickEditExerciseName);
+        }
+    }
+
     private void ResistanceAdjust_Pressed(object sender, EventArgs e)
     {
         if (TryGetResistanceDelta(sender, out var delta))
@@ -315,6 +334,17 @@ public partial class WorkoutPage : ContentPage
         }
 
         return double.TryParse(button.CommandParameter.ToString(), out delta);
+    }
+
+    private async Task ShowExerciseImageAsync(string? exerciseName)
+    {
+        if (!ExerciseInfoCatalog.HasInfo(exerciseName))
+        {
+            await DisplayAlert("Exercise Info Not Available", "No exercise details have been added for this exercise yet.", "OK");
+            return;
+        }
+
+        await Navigation.PushModalAsync(new ExerciseImagePage(exerciseName!.Trim()));
     }
 
     private static void ClampEntryText(object sender, string? newTextValue, double maxValue, bool isDecimal)

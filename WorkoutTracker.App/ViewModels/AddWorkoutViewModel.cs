@@ -38,7 +38,13 @@ public class AddWorkoutViewModel : BaseViewModel
         set
         {
             var sanitized = InputSanitizer.SanitizeName(value);
-            if (SetProperty(ref _name, sanitized) && !_isApplyingLibrarySelection)
+            if (!SetProperty(ref _name, sanitized))
+            {
+                return;
+            }
+
+            NotifyExerciseImageStateChanged();
+            if (!_isApplyingLibrarySelection)
             {
                 _ = UpdateExerciseSuggestionsAsync();
             }
@@ -73,6 +79,7 @@ public class AddWorkoutViewModel : BaseViewModel
             {
                 OnPropertyChanged(nameof(IsWeightLifting));
                 OnPropertyChanged(nameof(IsCardio));
+                NotifyExerciseImageStateChanged();
                 _ = UpdateExerciseSuggestionsAsync();
             }
         }
@@ -117,6 +124,9 @@ public class AddWorkoutViewModel : BaseViewModel
     public bool IsCardio => SelectedType == WorkoutType.Cardio;
     public bool HasRecommendedWorkouts => RecommendedWorkouts.Count > 0;
     public bool HasExerciseSuggestions => ExerciseSuggestions.Count > 0;
+    public bool HasSelectedExerciseInfo => IsWeightLifting && ExerciseInfoCatalog.HasInfo(Name);
+    public bool HasSelectedExerciseImage => IsWeightLifting && ExerciseImageCatalog.HasImage(Name);
+    public string SelectedExerciseImageSource => ExerciseImageCatalog.GetImageSource(Name);
     public string ActivePlanName => _recommendationSourceName;
     public string RecommendedWorkoutSummary
     {
@@ -346,6 +356,13 @@ public class AddWorkoutViewModel : BaseViewModel
         }
 
         OnPropertyChanged(nameof(HasExerciseSuggestions));
+    }
+
+    private void NotifyExerciseImageStateChanged()
+    {
+        OnPropertyChanged(nameof(HasSelectedExerciseInfo));
+        OnPropertyChanged(nameof(HasSelectedExerciseImage));
+        OnPropertyChanged(nameof(SelectedExerciseImageSource));
     }
 }
 

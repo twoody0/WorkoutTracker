@@ -24,17 +24,30 @@
                                    </DataTrigger>
                             </Border.Triggers>
                             <VerticalStackLayout Spacing="4">
-                                   <Grid ColumnDefinitions="*,Auto"
-                                         ColumnSpacing="6">
-                                          <Label Text="{Binding Workout.Name}"
-                                                 FontAttributes="Bold"
-                                                 Margin="0"
-                                                 VerticalOptions="Center"
-                                                 LineBreakMode="WordWrap"/>
-                                          <Button Grid.Column="1"
-                                                  Text="{Binding ActionButtonText}"
-                                                  Command="{Binding Source={x:Reference Page}, Path=BindingContext.UseRecommendedWorkoutCommand}"
-                                                  CommandParameter="{Binding .}"
+                                    <Grid ColumnDefinitions="*,Auto"
+                                          ColumnSpacing="6">
+                                           <HorizontalStackLayout Spacing="4"
+                                                                  VerticalOptions="Center">
+                                                  <Label Text="{Binding Workout.Name}"
+                                                         FontAttributes="Bold"
+                                                         Margin="0"
+                                                         VerticalOptions="Center"
+                                                         LineBreakMode="WordWrap"/>
+                                                   <ImageButton Source="info.png"
+                                                                HeightRequest="16"
+                                                                WidthRequest="16"
+                                                                MinimumHeightRequest="16"
+                                                                MinimumWidthRequest="16"
+                                                                Padding="0"
+                                                                BackgroundColor="Transparent"
+                                                                VerticalOptions="Center"
+                                                                IsVisible="{Binding ShowSelectedState}"
+                                                                Clicked="OnExerciseImageClicked"/>
+                                           </HorizontalStackLayout>
+                                           <Button Grid.Column="1"
+                                                   Text="{Binding ActionButtonText}"
+                                                   Command="{Binding Source={x:Reference Page}, Path=BindingContext.UseRecommendedWorkoutCommand}"
+                                                   CommandParameter="{Binding .}"
                                                   Padding="10,0"
                                                   MinimumHeightRequest="28"
                                                   HeightRequest="28"
@@ -114,11 +127,11 @@
                                                         LineBreakMode="TailTruncation"/>
                                           </VerticalStackLayout>
                                    </Grid>
-                                   <Label Text="{Binding SelectedText}"
-                                          FontSize="12"
-                                          FontAttributes="Bold"
-                                          TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}"
-                                          IsVisible="{Binding ShowSelectedState}"/>
+                                    <Label Text="{Binding SelectedText}"
+                                           FontSize="12"
+                                           FontAttributes="Bold"
+                                           TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}"
+                                           IsVisible="{Binding ShowSelectedState}"/>
                             </VerticalStackLayout>
                      </Border>
               </DataTemplate>
@@ -233,16 +246,31 @@
                              Margin="0,0,0,10">
                             <Grid RowDefinitions="Auto,Auto"
                                           RowSpacing="4">
-                                   <Label Grid.Row="0"
-                                          Text="{Binding QuickEditExerciseName}"
-                                          FontAttributes="Bold"
-                                          FontSize="16"
-                                          IsVisible="{Binding ShowQuickAddReadOnlySummary}"/>
-                                   <Entry Grid.Row="0"
-                                          Text="{Binding Name}"
-                                          FontAttributes="Bold"
-                                          FontSize="16"
-                                          IsVisible="{Binding ShowQuickAddInlineEditors}"/>
+                                    <Grid Grid.Row="0"
+                                          ColumnDefinitions="*,Auto"
+                                          ColumnSpacing="8">
+                                           <Label Text="{Binding QuickEditExerciseName}"
+                                                  FontAttributes="Bold"
+                                                  FontSize="16"
+                                                  VerticalOptions="Center"
+                                                  IsVisible="{Binding ShowQuickAddReadOnlySummary}"/>
+                                           <Entry Text="{Binding Name}"
+                                                  FontAttributes="Bold"
+                                                  FontSize="16"
+                                                  VerticalOptions="Center"
+                                                  IsVisible="{Binding ShowQuickAddInlineEditors}"/>
+                                           <ImageButton Grid.Column="1"
+                                                        Source="info.png"
+                                                        HeightRequest="14"
+                                                        WidthRequest="14"
+                                                        MinimumHeightRequest="14"
+                                                        MinimumWidthRequest="14"
+                                                        Padding="0"
+                                                        BackgroundColor="Transparent"
+                                                        VerticalOptions="Center"
+                                                        IsVisible="{Binding ShowQuickEditExerciseInfo}"
+                                                        Clicked="OnSelectedExerciseImageClicked"/>
+                                    </Grid>
                                    <Grid Grid.Row="1"
                                          ColumnDefinitions="Auto,Auto,Auto"
                                          ColumnSpacing="12"
@@ -735,12 +763,26 @@
                             <VerticalStackLayout Spacing="2">
                                    <Label Text="Exercise"
                                                  FontAttributes="Bold"/>
-                                   <Entry x:Name="ExerciseEntry"
-                                          Placeholder="Type exercise name..."
-                                          Text="{Binding ExerciseSearchQuery}"
-                                          IsVisible="{Binding ShowStrengthFields}"
-                                          Focused="ExerciseEntry_Focused"
-                                          Unfocused="ExerciseEntry_Unfocused"/>
+                                    <Grid ColumnDefinitions="*,Auto"
+                                          ColumnSpacing="8"
+                                          IsVisible="{Binding ShowStrengthFields}">
+                                           <Entry x:Name="ExerciseEntry"
+                                                  Placeholder="Type exercise name..."
+                                                  Text="{Binding ExerciseSearchQuery}"
+                                                  Focused="ExerciseEntry_Focused"
+                                                  Unfocused="ExerciseEntry_Unfocused"/>
+                                           <ImageButton Grid.Column="1"
+                                                        Source="info.png"
+                                                        HeightRequest="14"
+                                                        WidthRequest="14"
+                                                        MinimumHeightRequest="14"
+                                                        MinimumWidthRequest="14"
+                                                        Padding="0"
+                                                        BackgroundColor="Transparent"
+                                                        VerticalOptions="Center"
+                                                        IsVisible="{Binding HasSelectedExerciseInfo}"
+                                                        Clicked="OnSelectedExerciseImageClicked"/>
+                                    </Grid>
                             </VerticalStackLayout>
 
                             <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"

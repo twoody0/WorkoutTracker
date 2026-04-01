@@ -264,6 +264,10 @@ public class WorkoutViewModel : BaseViewModel
     public string QuickEditExerciseName => !string.IsNullOrWhiteSpace(Name)
         ? Name
         : _selectedRecommendation?.Workout.Name ?? string.Empty;
+    public bool HasSelectedExerciseInfo => ExerciseInfoCatalog.HasInfo(QuickEditExerciseName);
+    public bool ShowQuickEditExerciseInfo => HasSelectedExerciseInfo && _selectedRecommendation == null;
+    public bool HasSelectedExerciseImage => ExerciseImageCatalog.HasImage(QuickEditExerciseName);
+    public string SelectedExerciseImageSource => ExerciseImageCatalog.GetImageSource(QuickEditExerciseName);
     public string QuickAddWeightSummaryText
     {
         get
@@ -454,6 +458,7 @@ public class WorkoutViewModel : BaseViewModel
             {
                 ApplyBodyweightDefaultsIfNeeded();
                 NotifyBodyweightStateChanged();
+                NotifyExerciseImageStateChanged();
                 OnPropertyChanged(nameof(CanAddWorkout));
                 if (!_suppressSuggestionRefresh)
                 {
@@ -478,6 +483,7 @@ public class WorkoutViewModel : BaseViewModel
                 }
 
                 OnPropertyChanged(nameof(QuickEditExerciseName));
+                NotifyExerciseImageStateChanged();
                 ApplyBodyweightDefaultsIfNeeded();
                 NotifyBodyweightStateChanged();
                 SyncSelectedRecommendationState();
@@ -1044,6 +1050,7 @@ public class WorkoutViewModel : BaseViewModel
         ClearPlannedTargetRpe();
         ClearPlannedTargetRest();
         OnPropertyChanged(nameof(QuickEditExerciseName));
+        NotifyExerciseImageStateChanged();
     }
 
     private void ApplySelectedExercise(string exerciseName)
@@ -1082,6 +1089,7 @@ public class WorkoutViewModel : BaseViewModel
         OnPropertyChanged(nameof(SelectedRecommendationItem));
         OnPropertyChanged(nameof(QuickAddWeightSummaryText));
         OnPropertyChanged(nameof(QuickEditExerciseName));
+        NotifyExerciseImageStateChanged();
         OnPropertyChanged(nameof(CanEditSelectedMuscleGroup));
     }
 
@@ -1720,6 +1728,14 @@ public class WorkoutViewModel : BaseViewModel
         return workout.Type == WorkoutType.Cardio && workout.DistanceMiles > 0
             ? $"Distance: {workout.DistanceMiles:0.#} mi"
             : string.Empty;
+    }
+
+    private void NotifyExerciseImageStateChanged()
+    {
+        OnPropertyChanged(nameof(HasSelectedExerciseInfo));
+        OnPropertyChanged(nameof(ShowQuickEditExerciseInfo));
+        OnPropertyChanged(nameof(HasSelectedExerciseImage));
+        OnPropertyChanged(nameof(SelectedExerciseImageSource));
     }
 
     #endregion
