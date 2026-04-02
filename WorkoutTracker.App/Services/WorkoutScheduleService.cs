@@ -113,6 +113,8 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         {
             ["Beginner Full Body Foundation"] = "Upper/Lower Strength Builder",
             ["Upper/Lower Strength Builder"] = "Push/Pull/Legs Hypertrophy",
+            ["Push/Pull/Legs Hypertrophy"] = "Arnold Split Mass Builder",
+            ["Arnold Split Mass Builder"] = "Classic Body Part Split",
             ["Brisk Walking Starter"] = "Interval Conditioning Builder",
             ["Interval Conditioning Builder"] = "Couch to 5K Starter"
         };

@@ -20,11 +20,31 @@
         "MuscleGroup": "Back"
     },
     {
-        "Name": "Face Pulls",
+        "Name": "Single-Arm Dumbbell Row",
         "MuscleGroup": "Back"
     },
     {
-        "Name": "Single-Arm Dumbbell Row",
+        "Name": "Chest-Supported Row",
+        "MuscleGroup": "Back"
+    },
+    {
+        "Name": "Seated Cable Row",
+        "MuscleGroup": "Back"
+    },
+    {
+        "Name": "Resistance Band Row",
+        "MuscleGroup": "Back"
+    },
+    {
+        "Name": "Assisted Pull-Up",
+        "MuscleGroup": "Back"
+    },
+    {
+        "Name": "Weighted Pull-Up",
+        "MuscleGroup": "Back"
+    },
+    {
+        "Name": "Neutral-Grip Lat Pulldown",
         "MuscleGroup": "Back"
     },
     {
@@ -60,7 +80,27 @@
         "MuscleGroup": "Biceps"
     },
     {
+        "Name": "EZ-Bar Curl",
+        "MuscleGroup": "Biceps"
+    },
+    {
+        "Name": "Barbell Bench Press",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Incline Bench Press",
+        "MuscleGroup": "Chest"
+    },
+    {
         "Name": "Incline Dumbbell Press",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Dumbbell Bench Press",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Dumbbell Floor Press",
         "MuscleGroup": "Chest"
     },
     {
@@ -76,6 +116,14 @@
         "MuscleGroup": "Chest"
     },
     {
+        "Name": "Incline Push-Up",
+        "MuscleGroup": "Chest"
+    },
+    {
+        "Name": "Wall Push-Up",
+        "MuscleGroup": "Chest"
+    },
+    {
         "Name": "Chest Dip",
         "MuscleGroup": "Chest"
     },
@@ -88,84 +136,12 @@
         "MuscleGroup": "Chest"
     },
     {
-        "Name": "Leg Press",
-        "MuscleGroup": "Legs"
+        "Name": "Pec Deck Fly",
+        "MuscleGroup": "Chest"
     },
     {
-        "Name": "Romanian Deadlift",
-        "MuscleGroup": "Legs"
-    },
-    {
-        "Name": "Leg Extension",
-        "MuscleGroup": "Legs"
-    },
-    {
-        "Name": "Calf Raise",
-        "MuscleGroup": "Legs"
-    },
-    {
-        "Name": "Front Squat",
-        "MuscleGroup": "Legs"
-    },
-    {
-        "Name": "Overhead Press",
-        "MuscleGroup": "Shoulders"
-    },
-    {
-        "Name": "Lateral Raise",
-        "MuscleGroup": "Shoulders"
-    },
-    {
-        "Name": "Front Raise",
-        "MuscleGroup": "Shoulders"
-    },
-    {
-        "Name": "Face Pulls",
-        "MuscleGroup": "Shoulders"
-    },
-    {
-        "Name": "Dumbbell Shoulder Press",
-        "MuscleGroup": "Shoulders"
-    },
-    {
-        "Name": "Arnold Press",
-        "MuscleGroup": "Shoulders"
-    },
-    {
-        "Name": "Cable Lateral Raise",
-        "MuscleGroup": "Shoulders"
-    },
-    {
-        "Name": "Reverse Pec Deck Fly",
-        "MuscleGroup": "Shoulders"
-    },
-    {
-        "Name": "Close-Grip Bench Press",
-        "MuscleGroup": "Triceps"
-    },
-    {
-        "Name": "Skull Crushers",
-        "MuscleGroup": "Triceps"
-    },
-    {
-        "Name": "Overhead Triceps Extension",
-        "MuscleGroup": "Triceps"
-    },
-    {
-        "Name": "Cable Triceps Pushdown",
-        "MuscleGroup": "Triceps"
-    },
-    {
-        "Name": "Diamond Push-Ups",
-        "MuscleGroup": "Triceps"
-    },
-    {
-        "Name": "Dumbbell Kickback",
-        "MuscleGroup": "Triceps"
-    },
-    {
-        "Name": "Single-Arm Cable Triceps Extension",
-        "MuscleGroup": "Triceps"
+        "Name": "Machine Incline Press",
+        "MuscleGroup": "Chest"
     },
     {
         "Name": "Crunches",
@@ -200,6 +176,38 @@
         "MuscleGroup": "Abs"
     },
     {
+        "Name": "Leg Press",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Romanian Deadlift",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Dumbbell Romanian Deadlift",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Leg Extension",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Calf Raise",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Seated Calf Raise",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Standing Calf Raise",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Front Squat",
+        "MuscleGroup": "Legs"
+    },
+    {
         "Name": "Goblet Squat",
         "MuscleGroup": "Legs"
     },
@@ -221,10 +229,6 @@
     },
     {
         "Name": "Bulgarian Split Squat",
-        "MuscleGroup": "Legs"
-    },
-    {
-        "Name": "Rear-Foot Elevated Split Squat",
         "MuscleGroup": "Legs"
     },
     {
@@ -252,64 +256,60 @@
         "MuscleGroup": "Legs"
     },
     {
-        "Name": "Chest-Supported Row",
-        "MuscleGroup": "Back"
+        "Name": "Bodyweight Squat",
+        "MuscleGroup": "Legs"
     },
     {
-        "Name": "Seated Cable Row",
-        "MuscleGroup": "Back"
+        "Name": "Reverse Lunge",
+        "MuscleGroup": "Legs"
     },
     {
-        "Name": "Resistance Band Row",
-        "MuscleGroup": "Back"
+        "Name": "Supported Split Squat",
+        "MuscleGroup": "Legs"
     },
     {
-        "Name": "Assisted Pull-Up",
-        "MuscleGroup": "Back"
+        "Name": "Single-Leg Balance Hold",
+        "MuscleGroup": "Legs"
     },
     {
-        "Name": "Weighted Pull-Up",
-        "MuscleGroup": "Back"
+        "Name": "Tandem Stance Hold",
+        "MuscleGroup": "Legs"
     },
     {
-        "Name": "Neutral-Grip Lat Pulldown",
-        "MuscleGroup": "Back"
+        "Name": "Heel-to-Toe Walk",
+        "MuscleGroup": "Legs"
     },
     {
-        "Name": "Barbell Bench Press",
-        "MuscleGroup": "Chest"
+        "Name": "Sit-to-Stand",
+        "MuscleGroup": "Legs"
     },
     {
-        "Name": "Incline Bench Press",
-        "MuscleGroup": "Chest"
+        "Name": "Overhead Press",
+        "MuscleGroup": "Shoulders"
     },
     {
-        "Name": "Dumbbell Bench Press",
-        "MuscleGroup": "Chest"
+        "Name": "Lateral Raise",
+        "MuscleGroup": "Shoulders"
     },
     {
-        "Name": "Dumbbell Floor Press",
-        "MuscleGroup": "Chest"
+        "Name": "Front Raise",
+        "MuscleGroup": "Shoulders"
     },
     {
-        "Name": "Incline Push-Up",
-        "MuscleGroup": "Chest"
+        "Name": "Dumbbell Shoulder Press",
+        "MuscleGroup": "Shoulders"
     },
     {
-        "Name": "Wall Push-Up",
-        "MuscleGroup": "Chest"
+        "Name": "Arnold Press",
+        "MuscleGroup": "Shoulders"
     },
     {
-        "Name": "Pec Deck Fly",
-        "MuscleGroup": "Chest"
+        "Name": "Cable Lateral Raise",
+        "MuscleGroup": "Shoulders"
     },
     {
-        "Name": "Machine Incline Press",
-        "MuscleGroup": "Chest"
-    },
-    {
-        "Name": "Chest Press Machine",
-        "MuscleGroup": "Chest"
+        "Name": "Reverse Pec Deck Fly",
+        "MuscleGroup": "Shoulders"
     },
     {
         "Name": "Seated Dumbbell Shoulder Press",
@@ -344,11 +344,31 @@
         "MuscleGroup": "Shoulders"
     },
     {
-        "Name": "EZ-Bar Curl",
-        "MuscleGroup": "Biceps"
+        "Name": "Close-Grip Bench Press",
+        "MuscleGroup": "Triceps"
     },
     {
-        "Name": "Dips",
+        "Name": "Skull Crushers",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Overhead Triceps Extension",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Cable Triceps Pushdown",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Diamond Push-Ups",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Dumbbell Kickback",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Single-Arm Cable Triceps Extension",
         "MuscleGroup": "Triceps"
     },
     {
@@ -378,34 +398,6 @@
     {
         "Name": "Hip Hinge Drill",
         "MuscleGroup": "Core"
-    },
-    {
-        "Name": "Bodyweight Squat",
-        "MuscleGroup": "Legs"
-    },
-    {
-        "Name": "Reverse Lunge",
-        "MuscleGroup": "Legs"
-    },
-    {
-        "Name": "Supported Split Squat",
-        "MuscleGroup": "Legs"
-    },
-    {
-        "Name": "Single-Leg Balance Hold",
-        "MuscleGroup": "Legs"
-    },
-    {
-        "Name": "Tandem Stance Hold",
-        "MuscleGroup": "Legs"
-    },
-    {
-        "Name": "Heel-to-Toe Walk",
-        "MuscleGroup": "Legs"
-    },
-    {
-        "Name": "Elevated Push-Up",
-        "MuscleGroup": "Chest"
     },
     {
         "Name": "Plank Knee Drive",

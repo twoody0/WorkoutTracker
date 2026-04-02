@@ -177,6 +177,20 @@ public class WorkoutScheduleServiceTests
     }
 
     [TestMethod]
+    public void GetSuggestedNextPlan_ProgressesIntoHighVolumeMuscleBuildingOptions()
+    {
+        var currentPlan = new WorkoutPlan("Push/Pull/Legs Hypertrophy", "Plan", category: "Muscle Building");
+        var nextPlan = new WorkoutPlan("Arnold Split Mass Builder", "Plan", category: "Muscle Building");
+        var service = CreateServiceWithPlans(currentPlan, nextPlan);
+
+        service.AddPlanToWeeklySchedule(currentPlan);
+
+        var suggestion = service.GetSuggestedNextPlan();
+
+        Assert.AreSame(nextPlan, suggestion);
+    }
+
+    [TestMethod]
     public void WorkoutScheduleService_RestoresSavedActivePlanState()
     {
         var tempFilePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}-active-plan.json");
