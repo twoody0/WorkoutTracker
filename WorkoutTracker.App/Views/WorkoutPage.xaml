@@ -25,27 +25,28 @@
                             </Border.Triggers>
                             <VerticalStackLayout Spacing="4">
                                            <Grid ColumnDefinitions="*,Auto"
-                                                 ColumnSpacing="6">
-                                                  <HorizontalStackLayout Spacing="4"
-                                                                         VerticalOptions="Center">
-                                                         <Label Text="{Binding Workout.Name}"
-                                                                FontAttributes="Bold"
-                                                                Margin="0"
-                                                                VerticalOptions="Center"
-                                                                LineBreakMode="WordWrap"/>
-                                                  </HorizontalStackLayout>
-                                                  <Button Grid.Column="1"
-                                                          Text="{Binding ActionButtonText}"
-                                                          Command="{Binding Source={x:Reference Page}, Path=BindingContext.UseRecommendedWorkoutCommand}"
-                                                   CommandParameter="{Binding .}"
-                                                  Padding="10,0"
-                                                  MinimumHeightRequest="28"
-                                                  HeightRequest="28"
-                                                  VerticalOptions="Center"
-                                                  BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}"
-                                                  TextColor="White"
-                                                  CornerRadius="8"
-                                                  IsVisible="{Binding ShowUseButton}"/>
+                                                 ColumnSpacing="8">
+                                                  <Label Grid.Column="0"
+                                                         Text="{Binding Workout.Name}"
+                                                         FontAttributes="Bold"
+                                                         Margin="0"
+                                                         VerticalOptions="Center"
+                                                         HorizontalOptions="Fill"
+                                                         LineBreakMode="WordWrap"
+                                                         MaxLines="2"/>
+                                                   <Button Grid.Column="1"
+                                                           Text="{Binding ActionButtonText}"
+                                                           Command="{Binding Source={x:Reference Page}, Path=BindingContext.UseRecommendedWorkoutCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                   Padding="8,0"
+                                                   MinimumHeightRequest="26"
+                                                   HeightRequest="26"
+                                                   FontSize="12"
+                                                   VerticalOptions="Start"
+                                                   BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}"
+                                                   TextColor="White"
+                                                   CornerRadius="8"
+                                                   IsVisible="{Binding ShowUseButton}"/>
                                    </Grid>
                                    <Grid ColumnDefinitions="Auto,Auto,Auto"
                                          ColumnSpacing="16"
