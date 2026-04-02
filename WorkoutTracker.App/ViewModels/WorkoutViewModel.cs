@@ -227,10 +227,43 @@ public class WorkoutViewModel : BaseViewModel
     public string PlannedRepRangeSummary => HasPlannedRepRange ? $"Reps: {_plannedMinReps}-{_plannedMaxReps}" : string.Empty;
     public string CurrentRepsSummary => HasPlannedRepRange ? $"Reps: {_plannedMinReps}-{_plannedMaxReps}" : $"Reps: {Reps}";
     public string RepsLabel => "Reps";
+    public bool CanEditPlannedTargets => _selectedRecommendation != null && _workoutScheduleService.ActivePlan is { IsCustom: true };
+    public bool ShowReadOnlyPlannedTargets => !CanEditPlannedTargets;
     public bool HasPlannedTargetRpe => _plannedTargetRpe.HasValue && _plannedTargetRpe.Value > 0;
     public string PlannedTargetRpeSummary => HasPlannedTargetRpe ? $"RPE: {_plannedTargetRpe.GetValueOrDefault():0.#}" : string.Empty;
     public bool HasPlannedTargetRest => !string.IsNullOrWhiteSpace(_plannedTargetRestRange);
     public string PlannedTargetRestSummary => HasPlannedTargetRest ? $"Rest: {_plannedTargetRestRange}" : string.Empty;
+    public bool ShowQuickEditTargetRpe => HasPlannedTargetRpe || CanEditPlannedTargets;
+    public bool ShowQuickEditTargetRest => HasPlannedTargetRest || CanEditPlannedTargets;
+    public bool ShowQuickEditTargetsColumn => ShowQuickEditTargetRpe || ShowQuickEditTargetRest;
+    public string PlannedTargetRpeValue => HasPlannedTargetRpe ? _plannedTargetRpe.GetValueOrDefault().ToString("0.#") : string.Empty;
+    public string PlannedTargetRestValue => _plannedTargetRestRange;
+    public string PlannedTargetRpeInput
+    {
+        get => PlannedTargetRpeValue;
+        set
+        {
+            var trimmed = value?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(trimmed))
+            {
+                ApplyPlannedTargetRpe(null);
+                return;
+            }
+
+            if (!double.TryParse(trimmed, out var parsedRpe))
+            {
+                return;
+            }
+
+            ApplyPlannedTargetRpe(Math.Clamp(parsedRpe, 0, 10));
+        }
+    }
+
+    public string PlannedTargetRestInput
+    {
+        get => PlannedTargetRestValue;
+        set => ApplyPlannedTargetRest(value);
+    }
     public bool ShowPlanRpeInfo => HasRecommendedPlanWorkouts && RecommendedPlanWorkouts.Any(workout => workout.HasTargetRpe);
     public bool ShowRpeHelp
     {
@@ -1116,6 +1149,11 @@ public class WorkoutViewModel : BaseViewModel
         OnPropertyChanged(nameof(QuickEditExerciseName));
         NotifyExerciseImageStateChanged();
         OnPropertyChanged(nameof(CanEditSelectedMuscleGroup));
+        OnPropertyChanged(nameof(CanEditPlannedTargets));
+        OnPropertyChanged(nameof(ShowReadOnlyPlannedTargets));
+        OnPropertyChanged(nameof(ShowQuickEditTargetRpe));
+        OnPropertyChanged(nameof(ShowQuickEditTargetRest));
+        OnPropertyChanged(nameof(ShowQuickEditTargetsColumn));
     }
 
     private void OpenManualWorkoutEntry()
@@ -1338,10 +1376,19 @@ public class WorkoutViewModel : BaseViewModel
         OnPropertyChanged(nameof(PlannedRepRangeSummary));
         OnPropertyChanged(nameof(CurrentRepsSummary));
         OnPropertyChanged(nameof(RepsLabel));
+        OnPropertyChanged(nameof(CanEditPlannedTargets));
+        OnPropertyChanged(nameof(ShowReadOnlyPlannedTargets));
         OnPropertyChanged(nameof(HasPlannedTargetRpe));
         OnPropertyChanged(nameof(PlannedTargetRpeSummary));
+        OnPropertyChanged(nameof(PlannedTargetRpeValue));
+        OnPropertyChanged(nameof(PlannedTargetRpeInput));
         OnPropertyChanged(nameof(HasPlannedTargetRest));
         OnPropertyChanged(nameof(PlannedTargetRestSummary));
+        OnPropertyChanged(nameof(PlannedTargetRestValue));
+        OnPropertyChanged(nameof(PlannedTargetRestInput));
+        OnPropertyChanged(nameof(ShowQuickEditTargetRpe));
+        OnPropertyChanged(nameof(ShowQuickEditTargetRest));
+        OnPropertyChanged(nameof(ShowQuickEditTargetsColumn));
         OnPropertyChanged(nameof(HasBodyWeight));
         OnPropertyChanged(nameof(IsBodyweightExercise));
         OnPropertyChanged(nameof(IsPerSideDumbbellExercise));
@@ -1513,6 +1560,10 @@ public class WorkoutViewModel : BaseViewModel
         _plannedTargetRpe = targetRpe.HasValue && targetRpe.Value > 0 ? targetRpe.Value : null;
         OnPropertyChanged(nameof(HasPlannedTargetRpe));
         OnPropertyChanged(nameof(PlannedTargetRpeSummary));
+        OnPropertyChanged(nameof(PlannedTargetRpeValue));
+        OnPropertyChanged(nameof(PlannedTargetRpeInput));
+        OnPropertyChanged(nameof(ShowQuickEditTargetRpe));
+        OnPropertyChanged(nameof(ShowQuickEditTargetsColumn));
     }
 
     private void ClearPlannedTargetRpe()
@@ -1525,6 +1576,10 @@ public class WorkoutViewModel : BaseViewModel
         _plannedTargetRestRange = targetRestRange?.Trim() ?? string.Empty;
         OnPropertyChanged(nameof(HasPlannedTargetRest));
         OnPropertyChanged(nameof(PlannedTargetRestSummary));
+        OnPropertyChanged(nameof(PlannedTargetRestValue));
+        OnPropertyChanged(nameof(PlannedTargetRestInput));
+        OnPropertyChanged(nameof(ShowQuickEditTargetRest));
+        OnPropertyChanged(nameof(ShowQuickEditTargetsColumn));
     }
 
     private void ClearPlannedTargetRest()
