@@ -24,8 +24,12 @@
                                     <Setter Property="IsVisible" Value="True"/>
                                 </DataTrigger>
                             </StackLayout.Triggers>
-                            <Label Text="{Binding Weight, StringFormat='Weight: {0}'}" />
-                            <Label Text="{Binding RepDisplay, StringFormat='Reps: {0}'}" />
+                            <Label Text="{Binding Weight, StringFormat='Weight: {0}'}"
+                                   IsVisible="{Binding HasWeightTarget}" />
+                            <Label Text="{Binding RepDisplay, StringFormat='Reps: {0}'}"
+                                   IsVisible="{Binding HasRepTarget}" />
+                            <Label Text="{Binding DurationValueDisplay, StringFormat='Time: {0}'}"
+                                   IsVisible="{Binding HasTimedTarget}" />
                             <Label Text="{Binding Sets, StringFormat='Sets: {0}'}" />
                             <Label Text="{Binding EstimatedOneRepMax, StringFormat='Estimated 1RM: {0:N0}'}"
                                    IsVisible="{Binding HasEstimatedOneRepMax}" />
@@ -40,7 +44,7 @@
                                     <Setter Property="IsVisible" Value="True"/>
                                 </DataTrigger>
                             </StackLayout.Triggers>
-                            <Label Text="{Binding DurationMinutes, StringFormat='Time: {0} min'}"
+                            <Label Text="{Binding DurationValueDisplay, StringFormat='Time: {0}'}"
                                    IsVisible="{Binding HasDuration}" />
                             <Label Text="{Binding DistanceMiles, StringFormat='Distance: {0:0.##} mi'}"
                                     IsVisible="{Binding HasDistance}" />

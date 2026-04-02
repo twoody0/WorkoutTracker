@@ -65,15 +65,15 @@
                                                FontSize="12"
                                                TextColor="Gray"
                                                IsVisible="{Binding ShowDetails}" />
-                                        <Label Text="{Binding Sets, StringFormat='Sets: {0}'}"
-                                               FontSize="12"
-                                               TextColor="Gray"
-                                               IsVisible="{Binding ShowWeightLiftingDetails}" />
-                                        <Label Text="{Binding RepDisplay, StringFormat='Reps: {0}'}"
-                                               FontSize="12"
-                                               TextColor="Gray"
-                                               IsVisible="{Binding ShowWeightLiftingDetails}" />
-                                         <Label Text="{Binding DurationMinutes, StringFormat='Time: {0} min'}"
+                                         <Label Text="{Binding Sets, StringFormat='Sets: {0}'}"
+                                                FontSize="12"
+                                                TextColor="Gray"
+                                                IsVisible="{Binding ShowWeightLiftingDetails}" />
+                                         <Label Text="{Binding RepDisplay, StringFormat='Reps: {0}'}"
+                                                FontSize="12"
+                                                TextColor="Gray"
+                                                IsVisible="{Binding HasRepTarget}" />
+                                         <Label Text="{Binding DurationValueDisplay, StringFormat='Time: {0}'}"
                                                 FontSize="12"
                                                 TextColor="Gray"
                                                 IsVisible="{Binding HasDuration}" />
@@ -219,15 +219,41 @@
 
                         <VerticalStackLayout Grid.Column="1"
                                              Spacing="6">
-                            <Label Text="Reps"
-                                   FontAttributes="Bold"
-                                   FontSize="14" />
-                            <Entry Placeholder="Reps: 10"
-                                   Text="{Binding Reps}"
-                                   TextChanged="RepsEntry_TextChanged"
+                            <Label Text="{Binding StrengthTargetLabel}"
+                                    FontAttributes="Bold"
+                                    FontSize="14" />
+                            <Entry Placeholder="Target"
+                                   Text="{Binding StrengthTargetValue}"
+                                   TextChanged="StrengthTargetEntry_TextChanged"
                                    Keyboard="Numeric" />
                         </VerticalStackLayout>
                     </Grid>
+
+                    <Border IsVisible="{Binding ShowTimedStrengthCountdown}"
+                            Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 16"
+                            BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#101720}"
+                            Padding="14">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Countdown"
+                                   FontAttributes="Bold"
+                                   FontSize="15"
+                                   TextColor="{AppThemeBinding Light=#155E52, Dark=#8EE7D2}" />
+                            <Label Text="{Binding TimedStrengthCountdownDisplay}"
+                                   FontSize="30"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="Center"
+                                   HorizontalOptions="Center"
+                                   TextColor="{AppThemeBinding Light=#0F172A, Dark=#E2E8F0}" />
+                            <Button Text="{Binding TimedStrengthStartButtonText}"
+                                    Command="{Binding StartTimedStrengthCountdownCommand}"
+                                    IsEnabled="{Binding CanStartTimedStrengthCountdown}"
+                                    BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}"
+                                    TextColor="White"
+                                    CornerRadius="12" />
+                        </VerticalStackLayout>
+                    </Border>
 
                      <VerticalStackLayout Spacing="6"
                                           IsVisible="{Binding IsCardio}">

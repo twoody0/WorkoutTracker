@@ -10,6 +10,7 @@ public static class InputSanitizer
     public const int MaxReps = 100;
     public const int MaxSets = 20;
     public const int MaxDurationMinutes = 480;
+    public const int MaxTimedStrengthSeconds = 600;
     public const double MaxDistanceMiles = 100;
     public const int MaxSteps = 50000;
     public const double MaxResistanceAdjustment = 300;
@@ -19,8 +20,13 @@ public static class InputSanitizer
     public static string SanitizeName(string? value, int maxLength = MaxExerciseNameLength) =>
         NormalizeText(value, maxLength);
 
-    public static string SanitizeMuscleGroup(string? value, int maxLength = MaxMuscleGroupLength) =>
-        NormalizeText(value, maxLength);
+    public static string SanitizeMuscleGroup(string? value, int maxLength = MaxMuscleGroupLength)
+    {
+        var normalized = NormalizeText(value, maxLength);
+        return string.Equals(normalized, "Abs", StringComparison.OrdinalIgnoreCase)
+            ? "Core"
+            : normalized;
+    }
 
     public static string SanitizePositiveIntegerText(string? value, int maxValue)
     {

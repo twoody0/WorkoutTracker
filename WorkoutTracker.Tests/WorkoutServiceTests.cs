@@ -19,6 +19,35 @@ public class WorkoutServiceTests
     }
 
     [TestMethod]
+    public void TimedStrengthWorkout_UsesTimeWithoutRepDisplay()
+    {
+        var workout = new Workout("Plank", 0, 0, 3, "Core", DayOfWeek.Monday, DateTime.Today, WorkoutType.WeightLifting, "Studio")
+        {
+            DurationSeconds = 30
+        };
+
+        Assert.IsTrue(workout.HasTimedTarget);
+        Assert.IsFalse(workout.HasRepTarget);
+        Assert.AreEqual(string.Empty, workout.RepDisplay);
+        Assert.AreEqual("30 sec", workout.DurationValueDisplay);
+        Assert.IsFalse(workout.HasEstimatedOneRepMax);
+    }
+
+    [TestMethod]
+    public void LegacyTimedStrengthWorkout_ConvertsMinutesToSecondsForDisplay()
+    {
+        var workout = new Workout("Plank", 0, 0, 3, "Core", DayOfWeek.Monday, DateTime.Today, WorkoutType.WeightLifting, "Studio")
+        {
+            DurationMinutes = 1
+        };
+
+        Assert.IsTrue(workout.HasTimedTarget);
+        Assert.AreEqual(60, workout.DurationSeconds);
+        Assert.AreEqual(60, workout.TimedTargetSeconds);
+        Assert.AreEqual("60 sec", workout.DurationValueDisplay);
+    }
+
+    [TestMethod]
     public async Task AddWorkout_StoresWorkoutInSQLite()
     {
         var tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));

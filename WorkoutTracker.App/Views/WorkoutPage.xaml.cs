@@ -39,12 +39,14 @@ public partial class WorkoutPage : ContentPage
         {
             await vm.EnsureWorkoutHistoryFreshAsync();
             vm.EnsurePlanRecommendationsFresh();
-            if (vm.SelectedRecommendationItem == null)
+            if (vm.SelectedRecommendationItem == null && !vm.IsManualWorkoutEntryActive)
             {
                 EnsureDefaultRecommendationSelected();
             }
         }
 
+        AttachEntryCompletedHandlers(this);
+        AttachNumericEntryFocusHandlers(this);
         UpdateRecommendationsHeight();
     }
 
@@ -59,7 +61,21 @@ public partial class WorkoutPage : ContentPage
         if (BindingContext is WorkoutViewModel vm)
         {
             vm.IsNameFieldFocused = true;
+            var clearedExistingSelection = vm.BeginExerciseNameEdit();
             await vm.UpdateExerciseSuggestionsAsync(showAllForCurrentGroup: true);
+            await ScrollExerciseSuggestionsIntoViewAsync();
+
+            if (clearedExistingSelection &&
+                sender is Entry entry &&
+                !OperatingSystem.IsMacCatalyst())
+            {
+                await Task.Delay(50);
+
+                if (entry.IsFocused)
+                {
+                    await entry.HideKeyboardAsync();
+                }
+            }
         }
     }
 
@@ -76,8 +92,38 @@ public partial class WorkoutPage : ContentPage
     {
         if (BindingContext is WorkoutViewModel vm)
         {
+            vm.CommitStandardWeightInput();
             vm.CommitBodyweightWeightInput();
         }
+    }
+
+    private void WeightEntry_Focused(object sender, FocusEventArgs e)
+    {
+        if (BindingContext is WorkoutViewModel vm)
+        {
+            vm.BeginStandardWeightEdit();
+        }
+    }
+
+    private void NumericEntry_Focused(object? sender, FocusEventArgs e)
+    {
+        if (sender is Entry entry)
+        {
+            SelectEntryText(entry);
+        }
+    }
+
+    private void OnAnyEntryCompleted(object? sender, EventArgs e)
+    {
+        if (sender is Entry entry)
+        {
+            entry.Unfocus();
+        }
+    }
+
+    private void Entry_Completed(object sender, EventArgs e)
+    {
+        OnAnyEntryCompleted(sender, e);
     }
 
     private void WeightEntry_TextChanged(object sender, TextChangedEventArgs e)
@@ -100,7 +146,10 @@ public partial class WorkoutPage : ContentPage
 
     private void RepsEntry_TextChanged(object sender, TextChangedEventArgs e)
     {
-        ClampEntryText(sender, e.NewTextValue, InputSanitizer.MaxReps, isDecimal: false);
+        var maxValue = BindingContext is WorkoutViewModel vm && vm.UsesTimedStrengthTarget
+            ? InputSanitizer.MaxTimedStrengthSeconds
+            : InputSanitizer.MaxReps;
+        ClampEntryText(sender, e.NewTextValue, maxValue, isDecimal: false);
     }
 
     private void SetsEntry_TextChanged(object sender, TextChangedEventArgs e)
@@ -108,13 +157,20 @@ public partial class WorkoutPage : ContentPage
         ClampEntryText(sender, e.NewTextValue, InputSanitizer.MaxSets, isDecimal: false);
     }
 
-    private void OnExerciseSelected(object sender, SelectionChangedEventArgs e)
+    private async void OnExerciseSelected(object sender, SelectionChangedEventArgs e)
     {
         if (e.CurrentSelection?.FirstOrDefault() is WeightliftingExercise exercise &&
             BindingContext is WorkoutViewModel vm)
         {
             vm.SelectExerciseCommand.Execute(exercise);
             ExerciseEntry?.Unfocus();
+
+            if (!OperatingSystem.IsMacCatalyst() &&
+                ExerciseEntry != null &&
+                ExerciseEntry.IsVisible)
+            {
+                await ExerciseEntry.HideKeyboardAsync();
+            }
         }
 
         ((CollectionView)sender).SelectedItem = null;
@@ -248,6 +304,74 @@ public partial class WorkoutPage : ContentPage
     }
 #endif
 
+    private void AttachEntryCompletedHandlers(IVisualTreeElement element)
+    {
+        if (element is Entry entry)
+        {
+            entry.Completed -= OnAnyEntryCompleted;
+            entry.Completed += OnAnyEntryCompleted;
+        }
+
+        foreach (var child in element.GetVisualChildren())
+        {
+            AttachEntryCompletedHandlers(child);
+        }
+    }
+
+    private void AttachNumericEntryFocusHandlers(IVisualTreeElement element)
+    {
+        if (element is Entry entry && entry.Keyboard == Keyboard.Numeric)
+        {
+            entry.Focused -= NumericEntry_Focused;
+            entry.Focused += NumericEntry_Focused;
+        }
+
+        foreach (var child in element.GetVisualChildren())
+        {
+            AttachNumericEntryFocusHandlers(child);
+        }
+    }
+
+    private static void SelectEntryText(Entry entry)
+    {
+        if (string.IsNullOrEmpty(entry.Text))
+        {
+            return;
+        }
+
+        entry.Dispatcher.Dispatch(() =>
+        {
+            if (!entry.IsFocused || string.IsNullOrEmpty(entry.Text))
+            {
+                return;
+            }
+
+            entry.CursorPosition = 0;
+            entry.SelectionLength = entry.Text.Length;
+        });
+    }
+
+    private async Task ScrollExerciseSuggestionsIntoViewAsync()
+    {
+        if (PageScrollView == null ||
+            ExerciseSuggestionsPanel == null ||
+            !ExerciseSuggestionsPanel.IsVisible)
+        {
+            return;
+        }
+
+        await Task.Delay(150);
+
+        if (PageScrollView == null ||
+            ExerciseSuggestionsPanel == null ||
+            !ExerciseSuggestionsPanel.IsVisible)
+        {
+            return;
+        }
+
+        await PageScrollView.ScrollToAsync(ExerciseSuggestionsPanel, ScrollToPosition.Center, true);
+    }
+
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (sender is not WorkoutViewModel vm)
@@ -285,6 +409,24 @@ public partial class WorkoutPage : ContentPage
                     await Task.Delay(50);
                     await PageScrollView.ScrollToAsync(ManualWorkoutEditorSection, ScrollToPosition.Start, true);
                 }
+            });
+            return;
+        }
+
+        if (e.PropertyName == nameof(WorkoutViewModel.SelectedMuscleGroup) &&
+            vm.IsManualWorkoutEntryActive &&
+            vm.CanEditExerciseName)
+        {
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                await Task.Delay(125);
+
+                if (ExerciseEntry == null || !ExerciseEntry.IsEnabled || !ExerciseEntry.IsVisible)
+                {
+                    return;
+                }
+
+                ExerciseEntry.Focus();
             });
         }
     }

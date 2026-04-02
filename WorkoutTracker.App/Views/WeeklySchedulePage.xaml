@@ -131,13 +131,15 @@
                                                                    TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}" />
                                                             <Label Text="{Binding RepDisplay, StringFormat='Reps: {0}'}"
                                                                    FontSize="13"
-                                                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}" />
+                                                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
+                                                                   IsVisible="{Binding HasRepTarget}" />
                                                         </VerticalStackLayout>
                                                         <VerticalStackLayout Grid.Column="1"
                                                                              Spacing="1">
                                                             <Label Text="{Binding Weight, StringFormat='Weight: {0}'}"
                                                                    FontSize="13"
-                                                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}" />
+                                                                   TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
+                                                                   IsVisible="{Binding HasWeightTarget}" />
                                                             <Label Text="{Binding MuscleGroup, StringFormat='Focus: {0}'}"
                                                                    FontSize="13"
                                                                    TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}" />
@@ -155,7 +157,7 @@
                                                         </VerticalStackLayout>
                                                     </Grid>
 
-                                                    <Label Text="{Binding DurationMinutes, StringFormat='Time goal: {0} min'}"
+                                                    <Label Text="{Binding DurationValueDisplay, StringFormat='Time goal: {0}'}"
                                                            FontSize="13"
                                                            IsVisible="{Binding HasDuration}" />
                                                     <Label Text="{Binding DistanceMiles, StringFormat='Distance goal: {0:0.##} mi'}"

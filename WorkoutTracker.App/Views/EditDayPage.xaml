@@ -149,14 +149,24 @@
                                                          Spacing="6">
                                         <Label Text="Reps"
                                                FontSize="12"
-                                               TextColor="{AppThemeBinding Light=#607084, Dark=#98A8BC}" />
+                                               TextColor="{AppThemeBinding Light=#607084, Dark=#98A8BC}"
+                                               IsVisible="{Binding HasTimedTarget, Converter={StaticResource InverseBoolConverter}}" />
+                                        <Label Text="Seconds"
+                                               FontSize="12"
+                                               TextColor="{AppThemeBinding Light=#607084, Dark=#98A8BC}"
+                                               IsVisible="{Binding HasTimedTarget}" />
                                         <Border Stroke="{AppThemeBinding Light=#D9E1EB, Dark=#334050}"
                                                 BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#1A2230}"
                                                 StrokeShape="RoundRectangle 16"
                                                 Padding="12,6">
                                             <Entry Text="{Binding Reps, Mode=TwoWay}"
                                                    Keyboard="Numeric"
-                                                   HorizontalTextAlignment="Center" />
+                                                   HorizontalTextAlignment="Center"
+                                                   IsVisible="{Binding HasTimedTarget, Converter={StaticResource InverseBoolConverter}}" />
+                                            <Entry Text="{Binding DurationSeconds, Mode=TwoWay}"
+                                                   Keyboard="Numeric"
+                                                   HorizontalTextAlignment="Center"
+                                                   IsVisible="{Binding HasTimedTarget}" />
                                         </Border>
                                     </VerticalStackLayout>
                                 </Grid>

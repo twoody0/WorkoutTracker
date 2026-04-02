@@ -15,6 +15,7 @@
             <converters:BoolToFontAttributesConverter x:Key="BoolToFontAttributesConverter" />
             <converters:IsWeightLiftingConverter x:Key="IsWeightLiftingConverter" />
             <converters:IsCardioConverter x:Key="IsCardioConverter" />
+            <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

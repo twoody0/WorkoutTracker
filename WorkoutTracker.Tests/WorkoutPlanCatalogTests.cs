@@ -73,6 +73,19 @@ public class WorkoutPlanCatalogTests
     }
 
     [TestMethod]
+    public void ExerciseCatalog_UsesCoreInsteadOfAbsMuscleGroup()
+    {
+        var exercises = LoadExerciseCatalog();
+        var absEntries = exercises
+            .Where(exercise => string.Equals(exercise.MuscleGroup, "Abs", StringComparison.OrdinalIgnoreCase))
+            .Select(exercise => exercise.Name)
+            .ToList();
+
+        Assert.AreEqual(0, absEntries.Count, $"Exercise catalog still uses 'Abs': {string.Join(", ", absEntries)}");
+        Assert.IsTrue(exercises.Any(exercise => string.Equals(exercise.MuscleGroup, "Core", StringComparison.OrdinalIgnoreCase)));
+    }
+
+    [TestMethod]
     public void WorkoutPlanService_IncludesHighVolumeUpperBodyOptions()
     {
         var tempDatabasePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}-high-volume-plans.db");
@@ -92,6 +105,35 @@ public class WorkoutPlanCatalogTests
             Assert.IsTrue(GetWeightLiftingCountForDay(arnoldPlan, DayOfWeek.Tuesday) >= 8);
             Assert.IsTrue(GetWeightLiftingCountForDay(classicSplit, DayOfWeek.Monday) >= 7);
             Assert.IsTrue(GetWeightLiftingCountForDay(classicSplit, DayOfWeek.Thursday) >= 8);
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (File.Exists(tempDatabasePath))
+            {
+                File.Delete(tempDatabasePath);
+            }
+        }
+    }
+
+    [TestMethod]
+    public void WorkoutPlanService_UsesTimedTargetsForHoldAndCarryExercises()
+    {
+        var tempDatabasePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}-timed-strength-plans.db");
+
+        try
+        {
+            var service = new WorkoutPlanService(tempDatabasePath);
+            var timedSupportWorkouts = service.GetWorkoutPlans()
+                .Where(plan => !plan.IsCustom)
+                .SelectMany(plan => plan.Workouts)
+                .Where(workout => workout.Type == WorkoutType.WeightLifting && Workout.PrefersTimedTarget(workout.Name))
+                .ToList();
+
+            Assert.IsTrue(timedSupportWorkouts.Count > 0, "Expected at least one hold/carry workout in the built-in plans.");
+            Assert.IsTrue(
+                timedSupportWorkouts.All(workout => workout.DurationSeconds > 0 && workout.Reps == 0 && !workout.HasRepTarget),
+                "Expected all built-in hold/carry workouts to use timed targets instead of reps.");
         }
         finally
         {

@@ -17,12 +17,15 @@ public sealed class DashboardWorkoutHistoryItem
     public DateTime StartTime => Workout.StartTime;
     public string MuscleGroup => Workout.MuscleGroup;
     public int Sets => Workout.Sets;
-    public string RepDisplay => Workout.Reps > 0 ? Workout.Reps.ToString(CultureInfo.InvariantCulture) : Workout.RepDisplay;
+    public string RepDisplay => Workout.RepDisplay;
     public double Weight => Workout.Weight;
     public int DurationMinutes => Workout.DurationMinutes;
+    public string DurationValueDisplay => Workout.DurationValueDisplay;
     public double DistanceMiles => Workout.DistanceMiles;
     public int Steps => Workout.Steps;
     public WorkoutType Type => Workout.Type;
+    public bool HasRepTarget => Workout.HasRepTarget;
+    public bool HasWeightTarget => Workout.HasWeightTarget;
     public bool HasDuration => Workout.HasDuration;
     public bool HasDistance => Workout.HasDistance;
     public bool HasSteps => Workout.HasSteps;
@@ -588,7 +591,9 @@ public class DashboardViewModel : BaseViewModel
                         Workouts = items,
                         WorkoutCount = items.Count,
                         HasWeightlifting = orderedWorkouts.Any(workout =>
-                            workout.Type == WorkoutType.WeightLifting && workout.Reps > 0 && workout.Sets > 0),
+                            workout.Type == WorkoutType.WeightLifting &&
+                            workout.Sets > 0 &&
+                            (workout.HasRepTarget || workout.HasTimedTarget)),
                         HasCardio = orderedWorkouts.Any(workout =>
                             workout.Type == WorkoutType.Cardio && (workout.DurationMinutes > 0 || workout.DistanceMiles > 0 || workout.Steps > 0)),
                         TotalWeightLifted = totalWeightLifted,
@@ -805,6 +810,11 @@ public class DashboardViewModel : BaseViewModel
         if (workout.Type != WorkoutType.WeightLifting || workout.Sets <= 0)
         {
             return 0;
+        }
+
+        if (workout.HasTimedTarget)
+        {
+            return Math.Max(1, (int)Math.Ceiling((workout.TimedTargetSeconds * Math.Max(1, workout.Sets)) / 60d));
         }
 
         return Math.Max(5, workout.Sets * 3);

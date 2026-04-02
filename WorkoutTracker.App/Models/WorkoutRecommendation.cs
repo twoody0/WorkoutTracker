@@ -17,9 +17,10 @@ public class WorkoutRecommendation : INotifyPropertyChanged
     public bool IsCardio => Workout.Type == WorkoutType.Cardio;
     public string WeightDisplayPrefix { get; init; } = "Weight";
     public string WeightDisplayValue { get; init; } = string.Empty;
-    public string WeightDisplayText => string.IsNullOrWhiteSpace(WeightDisplayValue)
-        ? WeightDisplayPrefix
-        : $"{WeightDisplayPrefix}: {WeightDisplayValue}";
+    public bool HasWeightDisplay => !string.IsNullOrWhiteSpace(WeightDisplayValue);
+    public string WeightDisplayText => HasWeightDisplay
+        ? $"{WeightDisplayPrefix}: {WeightDisplayValue}"
+        : string.Empty;
     public string WeightHelperText { get; init; } = string.Empty;
     public string RepDisplayText { get; init; } = string.Empty;
     public string DurationDisplayText { get; init; } = string.Empty;
@@ -64,6 +65,7 @@ public class WorkoutRecommendation : INotifyPropertyChanged
         : string.Empty;
     public bool HasLastUsedWeight => LastUsedWeight.HasValue;
     public bool HasWeightHelperText => !string.IsNullOrWhiteSpace(WeightHelperText);
+    public bool HasRepDisplay => !string.IsNullOrWhiteSpace(RepDisplayText);
     public bool HasDuration => !string.IsNullOrWhiteSpace(DurationDisplayText);
     public bool HasDistance => !string.IsNullOrWhiteSpace(DistanceDisplayText);
     public bool HasTargetRpe => !string.IsNullOrWhiteSpace(TargetRpeText);

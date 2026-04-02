@@ -531,11 +531,11 @@
                                    IsVisible="{Binding Type, Converter={StaticResource IsWeightLiftingConverter}}" />
                             <Label Text="{Binding RepDisplay, StringFormat='Reps: {0}'}"
                                    FontSize="13"
-                                   IsVisible="{Binding Type, Converter={StaticResource IsWeightLiftingConverter}}" />
+                                   IsVisible="{Binding HasRepTarget}" />
                             <Label Text="{Binding Weight, StringFormat='Weight: {0} lbs'}"
                                    FontSize="13"
-                                   IsVisible="{Binding Type, Converter={StaticResource IsWeightLiftingConverter}}" />
-                            <Label Text="{Binding DurationMinutes, StringFormat='Time: {0} min'}"
+                                   IsVisible="{Binding HasWeightTarget}" />
+                            <Label Text="{Binding DurationValueDisplay, StringFormat='Time: {0}'}"
                                    FontSize="13"
                                    IsVisible="{Binding HasDuration}" />
                             <Label Text="{Binding DistanceMiles, StringFormat='Distance: {0:0.##} mi'}"

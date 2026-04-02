@@ -18,7 +18,9 @@ public class RecommendedWorkoutOption : INotifyPropertyChanged
     public string RepDisplay => Workout.RepDisplay;
     public int Steps => Workout.Steps;
     public int DurationMinutes => Workout.DurationMinutes;
+    public string DurationValueDisplay => Workout.DurationValueDisplay;
     public double DistanceMiles => Workout.DistanceMiles;
+    public bool HasRepTarget => Workout.HasRepTarget;
     public bool HasSteps => Workout.HasSteps;
     public bool HasDuration => Workout.HasDuration;
     public bool HasDistance => Workout.HasDistance;

@@ -163,7 +163,12 @@
 
                                                                         <StackLayout IsVisible="{Binding Workout.Type, Converter={StaticResource IsWeightLiftingConverter}}">
                                                                             <Label Text="{Binding Workout.Sets, StringFormat='Sets: {0}'}" FontSize="14" />
-                                                                            <Label Text="{Binding Workout.RepDisplay, StringFormat='Reps: {0}'}" FontSize="14" />
+                                                                            <Label Text="{Binding Workout.RepDisplay, StringFormat='Reps: {0}'}"
+                                                                                   FontSize="14"
+                                                                                   IsVisible="{Binding Workout.HasRepTarget}" />
+                                                                            <Label Text="{Binding Workout.DurationValueDisplay, StringFormat='Time: {0}'}"
+                                                                                   FontSize="14"
+                                                                                   IsVisible="{Binding Workout.HasTimedTarget}" />
                                                                             <Label Text="{Binding Workout.TargetRpeDisplay, StringFormat='Target RPE: {0}'}"
                                                                                    FontSize="14"
                                                                                    IsVisible="{Binding Workout.HasTargetRpe}" />
@@ -173,7 +178,7 @@
                                                                         </StackLayout>
 
                                                                         <StackLayout IsVisible="{Binding Workout.Type, Converter={StaticResource IsCardioConverter}}">
-                                                                            <Label Text="{Binding Workout.DurationMinutes, StringFormat='Time: {0} min'}"
+                                                                            <Label Text="{Binding Workout.DurationValueDisplay, StringFormat='Time: {0}'}"
                                                                                    FontSize="14"
                                                                                    IsVisible="{Binding Workout.HasDuration}" />
                                                                             <Label Text="{Binding Workout.DistanceMiles, StringFormat='Distance: {0:0.##} mi'}"

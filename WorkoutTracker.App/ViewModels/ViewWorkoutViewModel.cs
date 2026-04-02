@@ -64,6 +64,7 @@ public class ViewWorkoutViewModel : BaseViewModel
             {
                 Steps = workout.Steps,
                 DurationMinutes = workout.DurationMinutes,
+                DurationSeconds = workout.DurationSeconds,
                 DistanceMiles = workout.DistanceMiles
             };
 

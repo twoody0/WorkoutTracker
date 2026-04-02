@@ -17,6 +17,7 @@ public partial class AddWorkoutPage : ContentPage
             day,
             scheduleService,
             App.Services.GetRequiredService<IWorkoutLibraryService>(),
+            App.Services.GetRequiredService<IWorkoutService>(),
             workouts,
             Navigation);
         BindingContext = ViewModel;
@@ -30,6 +31,7 @@ public partial class AddWorkoutPage : ContentPage
         ViewModel = new AddWorkoutViewModel(
             day,
             App.Services.GetRequiredService<IWorkoutLibraryService>(),
+            App.Services.GetRequiredService<IWorkoutService>(),
             workouts,
             Navigation,
             plan.Workouts.Where(workout => workout.Day == day),
@@ -52,6 +54,14 @@ public partial class AddWorkoutPage : ContentPage
     private void RepsEntry_TextChanged(object sender, TextChangedEventArgs e)
     {
         ClampEntryText(sender, e.NewTextValue, InputSanitizer.MaxReps, isDecimal: false);
+    }
+
+    private void StrengthTargetEntry_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        var maxValue = ViewModel.UsesTimedStrengthTarget
+            ? InputSanitizer.MaxTimedStrengthSeconds
+            : InputSanitizer.MaxReps;
+        ClampEntryText(sender, e.NewTextValue, maxValue, isDecimal: false);
     }
 
     private void SetsEntry_TextChanged(object sender, TextChangedEventArgs e)

@@ -54,7 +54,7 @@ namespace WorkoutTracker.Services
                         StrengthWorkout("Step-Up", 8, 2, "Legs", DayOfWeek.Friday, "Studio"),
                         StrengthWorkout("Push-Up", 8, 2, "Chest", DayOfWeek.Friday),
                         RangeStrengthWorkout("Hammer Curl", 10, 12, 2, "Arms", DayOfWeek.Friday),
-                        StrengthWorkout("Plank", 3, 2, "Core", DayOfWeek.Friday, "Studio")),
+                        TimedStrengthWorkout("Plank", 30, 2, "Core", DayOfWeek.Friday, "Studio")),
                     Week(3,
                         StrengthWorkout("Leg Press", 10, 3, "Legs", DayOfWeek.Monday),
                         StrengthWorkout("Machine Chest Press", 8, 3, "Chest", DayOfWeek.Monday),
@@ -67,7 +67,7 @@ namespace WorkoutTracker.Services
                         StrengthWorkout("Walking Lunge", 10, 2, "Legs", DayOfWeek.Friday),
                         StrengthWorkout("Seated Cable Row", 8, 3, "Back", DayOfWeek.Friday),
                         RangeStrengthWorkout("Push-Up", 8, 10, 2, "Chest", DayOfWeek.Friday),
-                        StrengthWorkout("Farmer Carry", 6, 2, "Core", DayOfWeek.Friday, "Studio")),
+                        TimedStrengthWorkout("Farmer Carry", 40, 2, "Core", DayOfWeek.Friday, "Studio")),
                     Week(4,
                         StrengthWorkout("Goblet Squat", 12, 2, "Legs", DayOfWeek.Monday),
                         StrengthWorkout("Incline Push-Up", 12, 2, "Chest", DayOfWeek.Monday),
@@ -115,7 +115,7 @@ namespace WorkoutTracker.Services
                         StrengthWorkout("Hip Thrust", 8, 4, "Legs", DayOfWeek.Friday, targetRpe: 8, targetRestRange: "1-2 min"),
                         StrengthWorkout("Hamstring Curl", 10, 3, "Legs", DayOfWeek.Friday),
                         RangeStrengthWorkout("EZ-Bar Curl", 8, 10, 2, "Arms", DayOfWeek.Friday),
-                        StrengthWorkout("Plank", 3, 3, "Core", DayOfWeek.Friday, "Studio")),
+                        TimedStrengthWorkout("Plank", 45, 3, "Core", DayOfWeek.Friday, "Studio")),
                     Week(2,
                         RangeStrengthWorkout("Close-Grip Bench Press", 4, 6, 4, "Chest", DayOfWeek.Monday, targetRpe: 8.5, targetRestRange: "2-4 min"),
                         RangeStrengthWorkout("Close-Grip Bench Press", 1, 3, 1, "Chest", DayOfWeek.Monday, targetRpe: 9.5, targetRestRange: "3-5 min"),
@@ -529,7 +529,7 @@ namespace WorkoutTracker.Services
                         StrengthWorkout("Incline Push-Up", 12, 3, "Chest", DayOfWeek.Tuesday, "Studio"),
                         StrengthWorkout("Walking Lunge", 10, 3, "Legs", DayOfWeek.Tuesday),
                         StrengthWorkout("Resistance Band Row", 15, 3, "Back", DayOfWeek.Tuesday, "Studio"),
-                        StrengthWorkout("Farmer Carry", 6, 3, "Core", DayOfWeek.Tuesday, "Studio"),
+                        TimedStrengthWorkout("Farmer Carry", 45, 3, "Core", DayOfWeek.Tuesday, "Studio"),
                         CardioWorkout("Treadmill Intervals", 26, 2.4, "Cardio", DayOfWeek.Thursday),
                         CardioWorkout("Recovery Walk", 30, 1.5, "Cardio", DayOfWeek.Saturday),
                         CardioWorkout("Easy Bike Ride", 22, 4.5, "Cardio", DayOfWeek.Sunday, "Cardio Area")),
@@ -633,8 +633,8 @@ namespace WorkoutTracker.Services
                         StrengthWorkout("Resistance Band Row", 12, 2, "Back", DayOfWeek.Tuesday, "Studio"),
                         StrengthWorkout("Standing Calf Raise", 12, 2, "Legs", DayOfWeek.Tuesday, "Studio"),
                         StrengthWorkout("Step-Up", 8, 2, "Legs", DayOfWeek.Thursday, "Studio"),
-                        StrengthWorkout("Single-Leg Balance Hold", 3, 2, "Legs", DayOfWeek.Thursday, "Studio"),
-                        StrengthWorkout("Farmer Carry", 6, 2, "Core", DayOfWeek.Thursday, "Studio"),
+                        TimedStrengthWorkout("Single-Leg Balance Hold", 30, 2, "Legs", DayOfWeek.Thursday, "Studio"),
+                        TimedStrengthWorkout("Farmer Carry", 40, 2, "Core", DayOfWeek.Thursday, "Studio"),
                         StrengthWorkout("Pallof Press", 8, 2, "Core", DayOfWeek.Thursday, "Studio"),
                         CardioWorkout("Brisk Walk", 25, 1.2, "Cardio", DayOfWeek.Friday, "Outdoor Trail"),
                         CardioWorkout("Easy Bike Ride", 20, 4.0, "Cardio", DayOfWeek.Sunday, "Cardio Area")),
@@ -645,8 +645,8 @@ namespace WorkoutTracker.Services
                         StrengthWorkout("Resistance Band Row", 12, 2, "Back", DayOfWeek.Tuesday, "Studio"),
                         StrengthWorkout("Standing Calf Raise", 12, 2, "Legs", DayOfWeek.Tuesday, "Studio"),
                         StrengthWorkout("Supported Split Squat", 8, 2, "Legs", DayOfWeek.Thursday, "Studio"),
-                        StrengthWorkout("Tandem Stance Hold", 3, 2, "Legs", DayOfWeek.Thursday, "Studio"),
-                        StrengthWorkout("Suitcase Carry", 6, 2, "Core", DayOfWeek.Thursday, "Studio"),
+                        TimedStrengthWorkout("Tandem Stance Hold", 30, 2, "Legs", DayOfWeek.Thursday, "Studio"),
+                        TimedStrengthWorkout("Suitcase Carry", 35, 2, "Core", DayOfWeek.Thursday, "Studio"),
                         StrengthWorkout("Pallof Press", 8, 2, "Core", DayOfWeek.Thursday, "Studio"),
                         CardioWorkout("Brisk Walk", 28, 1.3, "Cardio", DayOfWeek.Friday, "Outdoor Trail"),
                         CardioWorkout("Easy Bike Ride", 22, 4.5, "Cardio", DayOfWeek.Sunday, "Cardio Area")),
@@ -658,7 +658,7 @@ namespace WorkoutTracker.Services
                         StrengthWorkout("Standing Calf Raise", 15, 2, "Legs", DayOfWeek.Tuesday, "Studio"),
                         StrengthWorkout("Sit-to-Stand", 10, 2, "Legs", DayOfWeek.Thursday, "Studio"),
                         StrengthWorkout("Heel-to-Toe Walk", 4, 2, "Legs", DayOfWeek.Thursday, "Studio"),
-                        StrengthWorkout("Farmer Carry", 8, 2, "Core", DayOfWeek.Thursday, "Studio"),
+                        TimedStrengthWorkout("Farmer Carry", 45, 2, "Core", DayOfWeek.Thursday, "Studio"),
                         StrengthWorkout("Pallof Press", 8, 2, "Core", DayOfWeek.Thursday, "Studio"),
                         CardioWorkout("Brisk Walk", 30, 1.4, "Cardio", DayOfWeek.Friday, "Outdoor Trail"),
                         CardioWorkout("Easy Bike Ride", 25, 5.0, "Cardio", DayOfWeek.Sunday, "Cardio Area")),
@@ -669,9 +669,9 @@ namespace WorkoutTracker.Services
                         StrengthWorkout("Resistance Band Row", 12, 2, "Back", DayOfWeek.Tuesday, "Studio"),
                         StrengthWorkout("Standing Calf Raise", 12, 2, "Legs", DayOfWeek.Tuesday, "Studio"),
                         StrengthWorkout("Step-Up", 8, 2, "Legs", DayOfWeek.Thursday, "Studio"),
-                        StrengthWorkout("Tandem Stance Hold", 3, 2, "Legs", DayOfWeek.Thursday, "Studio"),
+                        TimedStrengthWorkout("Tandem Stance Hold", 30, 2, "Legs", DayOfWeek.Thursday, "Studio"),
                         StrengthWorkout("Pallof Press", 8, 2, "Core", DayOfWeek.Thursday, "Studio"),
-                        StrengthWorkout("Suitcase Carry", 6, 2, "Core", DayOfWeek.Thursday, "Studio"),
+                        TimedStrengthWorkout("Suitcase Carry", 40, 2, "Core", DayOfWeek.Thursday, "Studio"),
                         CardioWorkout("Brisk Walk", 24, 1.1, "Cardio", DayOfWeek.Friday, "Outdoor Trail"),
                         CardioWorkout("Easy Bike Ride", 18, 3.8, "Cardio", DayOfWeek.Sunday, "Cardio Area"))),
                 IsCustom = false
@@ -718,6 +718,14 @@ namespace WorkoutTracker.Services
                 TargetRestRange = targetRestRange
             };
 
+        private static Workout TimedStrengthWorkout(string name, int durationSeconds, int sets, string muscleGroup, DayOfWeek day, string gymLocation = "", double? targetRpe = null, string targetRestRange = "")
+            => new(name, 0, 0, sets, muscleGroup, day, DateTime.Now, WorkoutType.WeightLifting, gymLocation)
+            {
+                DurationSeconds = durationSeconds,
+                TargetRpe = targetRpe,
+                TargetRestRange = targetRestRange
+            };
+
         private static Workout CardioWorkout(string name, int durationMinutes, double distanceMiles, string muscleGroup, DayOfWeek day, string gymLocation = "", int steps = 0)
             => new(name, 0, 0, 0, muscleGroup, day, DateTime.Now, WorkoutType.Cardio, gymLocation)
             {
@@ -760,6 +768,11 @@ namespace WorkoutTracker.Services
             }
 
             var lowerName = workout.Name.ToLowerInvariant();
+            if (workout.HasTimedTarget)
+            {
+                return ApplyWeekPhaseAdjustment(lowerName.Contains("carry") ? 7 : 6.5, workout.PlanWeekNumber);
+            }
+
             if (IsLowIntensitySupportLift(lowerName))
             {
                 return ApplyWeekPhaseAdjustment(6.5, workout.PlanWeekNumber);
@@ -814,6 +827,11 @@ namespace WorkoutTracker.Services
             }
 
             var lowerName = workout.Name.ToLowerInvariant();
+            if (workout.HasTimedTarget)
+            {
+                return lowerName.Contains("carry") ? "1-2 min" : "45-60 sec";
+            }
+
             if (IsLowIntensitySupportLift(lowerName))
             {
                 return "1 min";
@@ -909,6 +927,7 @@ namespace WorkoutTracker.Services
             => lowerName.Contains("balance hold") ||
                lowerName.Contains("tandem stance") ||
                lowerName.Contains("heel-to-toe") ||
+               lowerName.Contains("plank") ||
                lowerName.Contains("bird dog") ||
                lowerName.Contains("dead bug") ||
                lowerName.Contains("pallof") ||
@@ -979,7 +998,7 @@ namespace WorkoutTracker.Services
                 """
                 SELECT p.Name, p.Description, p.Category, p.DurationInWeeks, p.IsCustom,
                        w.Name, w.MuscleGroup, w.GymLocation, w.Weight, w.Reps, w.Sets, w.MinReps, w.MaxReps, w.TargetRpe, w.TargetRestRange,
-                       w.StartTime, w.EndTime, w.Steps, w.DurationMinutes, w.DistanceMiles,
+                       w.StartTime, w.EndTime, w.Steps, w.DurationMinutes, w.DurationSeconds, w.DistanceMiles,
                        w.Type, w.Day, w.PlanWeekNumber, w.IsWarmup
                 FROM CustomWorkoutPlans p
                 LEFT JOIN CustomWorkoutPlanWorkouts w ON w.PlanName = p.Name
@@ -1063,13 +1082,13 @@ namespace WorkoutTracker.Services
             command.CommandText = tableName == "CustomWorkoutPlanWorkouts"
                 ? $"""
                    INSERT INTO {tableName}
-                   (PlanName, Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber, IsWarmup)
-                   VALUES ($planName, $name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $minReps, $maxReps, $targetRpe, $targetRestRange, $startTime, $endTime, $steps, $durationMinutes, $distanceMiles, $type, $day, $planWeekNumber, $isWarmup);
+                   (PlanName, Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DurationSeconds, DistanceMiles, Type, Day, PlanWeekNumber, IsWarmup)
+                   VALUES ($planName, $name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $minReps, $maxReps, $targetRpe, $targetRestRange, $startTime, $endTime, $steps, $durationMinutes, $durationSeconds, $distanceMiles, $type, $day, $planWeekNumber, $isWarmup);
                    """
                 : $"""
                    INSERT INTO {tableName}
-                   (Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber, IsWarmup)
-                   VALUES ($name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $minReps, $maxReps, $targetRpe, $targetRestRange, $startTime, $endTime, $steps, $durationMinutes, $distanceMiles, $type, $day, $planWeekNumber, $isWarmup);
+                   (Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DurationSeconds, DistanceMiles, Type, Day, PlanWeekNumber, IsWarmup)
+                   VALUES ($name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $minReps, $maxReps, $targetRpe, $targetRestRange, $startTime, $endTime, $steps, $durationMinutes, $durationSeconds, $distanceMiles, $type, $day, $planWeekNumber, $isWarmup);
                    """;
 
             if (planName != null)
@@ -1097,6 +1116,7 @@ namespace WorkoutTracker.Services
             command.Parameters.AddWithValue("$endTime", workout.EndTime.ToString("O"));
             command.Parameters.AddWithValue("$steps", workout.Steps);
             command.Parameters.AddWithValue("$durationMinutes", workout.DurationMinutes);
+            command.Parameters.AddWithValue("$durationSeconds", workout.DurationSeconds);
             command.Parameters.AddWithValue("$distanceMiles", workout.DistanceMiles);
             command.Parameters.AddWithValue("$type", (int)workout.Type);
             command.Parameters.AddWithValue("$day", (int)workout.Day);
@@ -1112,9 +1132,9 @@ namespace WorkoutTracker.Services
                 reps: reader.GetInt32(offset + 4),
                 sets: reader.GetInt32(offset + 5),
                 muscleGroup: reader.GetString(offset + 1),
-                day: (DayOfWeek)reader.GetInt32(offset + 16),
+                day: (DayOfWeek)reader.GetInt32(offset + 17),
                 startTime: DateTime.Parse(reader.GetString(offset + 10), null, DateTimeStyles.RoundtripKind),
-                type: (WorkoutType)reader.GetInt32(offset + 15),
+                type: (WorkoutType)reader.GetInt32(offset + 16),
                 gymLocation: reader.GetString(offset + 2))
             {
                 MinReps = reader.IsDBNull(offset + 6) ? null : reader.GetInt32(offset + 6),
@@ -1124,9 +1144,10 @@ namespace WorkoutTracker.Services
                 EndTime = DateTime.Parse(reader.GetString(offset + 11), null, DateTimeStyles.RoundtripKind),
                 Steps = reader.GetInt32(offset + 12),
                 DurationMinutes = reader.GetInt32(offset + 13),
-                DistanceMiles = reader.GetDouble(offset + 14),
-                PlanWeekNumber = reader.IsDBNull(offset + 17) ? null : reader.GetInt32(offset + 17),
-                IsWarmup = !reader.IsDBNull(offset + 18) && reader.GetInt32(offset + 18) != 0
+                DurationSeconds = reader.IsDBNull(offset + 14) ? 0 : reader.GetInt32(offset + 14),
+                DistanceMiles = reader.GetDouble(offset + 15),
+                PlanWeekNumber = reader.IsDBNull(offset + 18) ? null : reader.GetInt32(offset + 18),
+                IsWarmup = !reader.IsDBNull(offset + 19) && reader.GetInt32(offset + 19) != 0
             };
         }
     }
