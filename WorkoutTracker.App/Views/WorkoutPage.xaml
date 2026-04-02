@@ -24,29 +24,19 @@
                                    </DataTrigger>
                             </Border.Triggers>
                             <VerticalStackLayout Spacing="4">
-                                    <Grid ColumnDefinitions="*,Auto"
-                                          ColumnSpacing="6">
-                                           <HorizontalStackLayout Spacing="4"
-                                                                  VerticalOptions="Center">
-                                                  <Label Text="{Binding Workout.Name}"
-                                                         FontAttributes="Bold"
-                                                         Margin="0"
-                                                         VerticalOptions="Center"
-                                                         LineBreakMode="WordWrap"/>
-                                                   <ImageButton Source="info.png"
-                                                                HeightRequest="16"
-                                                                WidthRequest="16"
-                                                                MinimumHeightRequest="16"
-                                                                MinimumWidthRequest="16"
-                                                                Padding="0"
-                                                                BackgroundColor="Transparent"
+                                           <Grid ColumnDefinitions="*,Auto"
+                                                 ColumnSpacing="6">
+                                                  <HorizontalStackLayout Spacing="4"
+                                                                         VerticalOptions="Center">
+                                                         <Label Text="{Binding Workout.Name}"
+                                                                FontAttributes="Bold"
+                                                                Margin="0"
                                                                 VerticalOptions="Center"
-                                                                IsVisible="{Binding ShowSelectedState}"
-                                                                Clicked="OnExerciseImageClicked"/>
-                                           </HorizontalStackLayout>
-                                           <Button Grid.Column="1"
-                                                   Text="{Binding ActionButtonText}"
-                                                   Command="{Binding Source={x:Reference Page}, Path=BindingContext.UseRecommendedWorkoutCommand}"
+                                                                LineBreakMode="WordWrap"/>
+                                                  </HorizontalStackLayout>
+                                                  <Button Grid.Column="1"
+                                                          Text="{Binding ActionButtonText}"
+                                                          Command="{Binding Source={x:Reference Page}, Path=BindingContext.UseRecommendedWorkoutCommand}"
                                                    CommandParameter="{Binding .}"
                                                   Padding="10,0"
                                                   MinimumHeightRequest="28"
