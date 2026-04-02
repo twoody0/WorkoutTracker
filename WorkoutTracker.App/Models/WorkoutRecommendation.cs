@@ -6,6 +6,8 @@ namespace WorkoutTracker.Models;
 public class WorkoutRecommendation : INotifyPropertyChanged
 {
     private bool _isSelected;
+    private int _remainingSets;
+    private int _plannedSets;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -24,6 +26,42 @@ public class WorkoutRecommendation : INotifyPropertyChanged
     public string DistanceDisplayText { get; init; } = string.Empty;
     public string TargetRpeText { get; init; } = string.Empty;
     public string TargetRestText { get; init; } = string.Empty;
+    public int RemainingSets
+    {
+        get => _remainingSets;
+        set
+        {
+            if (_remainingSets == value)
+            {
+                return;
+            }
+
+            _remainingSets = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(RemainingSetsText));
+        }
+    }
+
+    public int PlannedSets
+    {
+        get => _plannedSets;
+        set
+        {
+            if (_plannedSets == value)
+            {
+                return;
+            }
+
+            _plannedSets = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasRemainingSets));
+            OnPropertyChanged(nameof(RemainingSetsText));
+        }
+    }
+    public bool HasRemainingSets => IsWeightLifting && PlannedSets > 0;
+    public string RemainingSetsText => HasRemainingSets
+        ? $"{RemainingSets}/{PlannedSets} sets left"
+        : string.Empty;
     public bool HasLastUsedWeight => LastUsedWeight.HasValue;
     public bool HasWeightHelperText => !string.IsNullOrWhiteSpace(WeightHelperText);
     public bool HasDuration => !string.IsNullOrWhiteSpace(DurationDisplayText);

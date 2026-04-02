@@ -78,6 +78,7 @@ public class WorkoutViewModel : BaseViewModel
     private string _durationMinutesText = string.Empty;
     private string _distanceMilesText = string.Empty;
     private string _stepsText = string.Empty;
+    private string _activeSets = "1";
     private bool _hasLoadedTemplate;
     private bool _isQuickAddMode;
     private bool _isAdvancedFieldsVisible = true;
@@ -346,6 +347,20 @@ public class WorkoutViewModel : BaseViewModel
             return $"Total saved load: {totalLoad:0.#}";
         }
     }
+    public bool CanDecreaseWeight
+    {
+        get
+        {
+            if (ShowResistanceAdjustment)
+            {
+                return double.TryParse(Weight, out var currentDisplayedWeight)
+                    ? currentDisplayedWeight > 0
+                    : (_bodyWeightService.GetBodyWeight() ?? 0) > 0;
+            }
+
+            return double.TryParse(Weight, out var parsedWeight) && parsedWeight > 0;
+        }
+    }
     public bool CanAddWorkout
     {
         get
@@ -384,11 +399,137 @@ public class WorkoutViewModel : BaseViewModel
         }
     }
     public bool CanSaveWarmupSet => !IsManualCardio && CanAddWorkout;
+    public bool CanToggleWarmupSet => !IsManualCardio;
     public bool IsWarmupSetSelected
     {
         get => _isWarmupSetSelected;
-        set => SetProperty(ref _isWarmupSetSelected, value);
+        set
+        {
+            if (SetProperty(ref _isWarmupSetSelected, value))
+            {
+                if (value)
+                {
+                    ActiveSets = "1";
+                }
+
+                OnPropertyChanged(nameof(RemainingSetsAfterCurrentSave));
+                OnPropertyChanged(nameof(IsCompletingSelectedPlanExercise));
+                OnPropertyChanged(nameof(QuickSetProgressText));
+                OnPropertyChanged(nameof(PlannedSetsInput));
+                OnPropertyChanged(nameof(CanDecreaseSets));
+                OnPropertyChanged(nameof(CanIncreaseSets));
+                OnPropertyChanged(nameof(CanDecreaseActiveSets));
+                OnPropertyChanged(nameof(CanIncreaseActiveSets));
+            }
+        }
     }
+    public string ActiveSets
+    {
+        get => _activeSets;
+        set
+        {
+            var sanitized = InputSanitizer.SanitizePositiveIntegerText(value, MaxSelectableSets);
+            if (SetProperty(ref _activeSets, sanitized))
+            {
+                NotifyActiveSetProgressStateChanged();
+            }
+        }
+    }
+    public string PlannedSetsInput
+    {
+        get
+        {
+            if (IsWarmupSetSelected)
+            {
+                return "1";
+            }
+
+            return (_selectedRecommendation?.Workout.Sets ?? (int.TryParse(Sets, out var parsedSets) ? parsedSets : 1)).ToString();
+        }
+        set
+        {
+            if (IsWarmupSetSelected)
+            {
+                return;
+            }
+
+            var sanitized = InputSanitizer.SanitizePositiveIntegerText(value, InputSanitizer.MaxSets);
+            if (!int.TryParse(sanitized, out var parsedSets))
+            {
+                parsedSets = 1;
+            }
+
+            if (_selectedRecommendation?.IsWeightLifting == true)
+            {
+                var completedSets = GetCompletedPlanWorkoutSetCount(_selectedRecommendation.Workout);
+                parsedSets = Math.Clamp(parsedSets, Math.Max(1, completedSets), InputSanitizer.MaxSets);
+
+                if (_selectedRecommendation.Workout.Sets != parsedSets)
+                {
+                    _selectedRecommendation.Workout.Sets = parsedSets;
+                    _selectedRecommendation.PlannedSets = parsedSets;
+                    _selectedRecommendation.RemainingSets = Math.Max(0, parsedSets - completedSets);
+                    if (int.TryParse(ActiveSets, out var activeSets) && activeSets > MaxSelectableSets)
+                    {
+                        ActiveSets = MaxSelectableSets.ToString();
+                    }
+                    NotifyTargetSetStateChanged();
+                    NotifyActiveSetProgressStateChanged();
+                }
+
+                return;
+            }
+
+            Sets = parsedSets.ToString();
+        }
+    }
+    public int MaxSelectableSets => GetMaxSelectableSets();
+    public bool CanDecreaseSets => !IsWarmupSetSelected && int.TryParse(PlannedSetsInput, out var currentSets) && currentSets > 1;
+    public bool CanIncreaseSets => !IsWarmupSetSelected && (!int.TryParse(PlannedSetsInput, out var currentSets) ? 0 : currentSets) < InputSanitizer.MaxSets;
+    public bool CanDecreaseActiveSets => !IsWarmupSetSelected && int.TryParse(ActiveSets, out var currentSets) && currentSets > 1;
+    public bool CanIncreaseActiveSets => !IsWarmupSetSelected && (!int.TryParse(ActiveSets, out var currentSets) ? 0 : currentSets) < MaxSelectableSets;
+    public bool ShowQuickSetProgress => _selectedRecommendation?.IsWeightLifting == true;
+    public int RemainingSetsAfterCurrentSave
+    {
+        get
+        {
+            if (_selectedRecommendation?.IsWeightLifting != true)
+            {
+                return 0;
+            }
+
+            var remainingSets = Math.Max(0, _selectedRecommendation.RemainingSets);
+            if (IsWarmupSetSelected)
+            {
+                return remainingSets;
+            }
+
+            var selectedSets = int.TryParse(ActiveSets, out var parsedSets) ? parsedSets : 1;
+            return Math.Max(0, remainingSets - Math.Clamp(selectedSets, 1, Math.Max(1, remainingSets)));
+        }
+    }
+    public bool IsCompletingSelectedPlanExercise => ShowQuickSetProgress && !IsWarmupSetSelected && RemainingSetsAfterCurrentSave == 0;
+    public string QuickSetProgressText
+    {
+        get
+        {
+            if (_selectedRecommendation?.IsWeightLifting != true)
+            {
+                return string.Empty;
+            }
+
+            var remainingSets = Math.Max(0, _selectedRecommendation.RemainingSets);
+            if (IsWarmupSetSelected)
+            {
+                return $"Warmup set only. {remainingSets} sets will still be left after this save";
+            }
+
+            return RemainingSetsAfterCurrentSave == 0
+                ? $"0 sets left after this save"
+                : $"{RemainingSetsAfterCurrentSave} of {remainingSets} sets left after this save";
+        }
+    }
+    public string CurrentSetSummary => $"Sets: {PlannedSetsInput}";
     public string BaseBodyWeightSummary => HasBodyWeight
         ? $"Base body weight: {_bodyWeightService.GetBodyWeight():N0} lb"
         : "Set your body weight in Profile to auto-fill bodyweight lifts.";
@@ -595,6 +736,7 @@ public class WorkoutViewModel : BaseViewModel
                 OnPropertyChanged(nameof(EffectiveLoadSummary));
                 OnPropertyChanged(nameof(WeightTotalPreviewText));
                 OnPropertyChanged(nameof(ShowWeightTotalPreview));
+                OnPropertyChanged(nameof(CanDecreaseWeight));
                 SyncSelectedRecommendationState();
                 OnPropertyChanged(nameof(CanAddWorkout));
                 OnPropertyChanged(nameof(CanSaveWarmupSet));
@@ -612,11 +754,13 @@ public class WorkoutViewModel : BaseViewModel
             {
                 SyncSelectedRecommendationState();
                 OnPropertyChanged(nameof(CurrentRepsSummary));
+                OnPropertyChanged(nameof(CanDecreaseReps));
                 OnPropertyChanged(nameof(CanAddWorkout));
                 OnPropertyChanged(nameof(CanSaveWarmupSet));
             }
         }
     }
+    public bool CanDecreaseReps => int.TryParse(Reps, out var reps) && reps > 1;
 
     public string Sets
     {
@@ -629,6 +773,7 @@ public class WorkoutViewModel : BaseViewModel
                 SyncSelectedRecommendationState();
                 OnPropertyChanged(nameof(CanAddWorkout));
                 OnPropertyChanged(nameof(CanSaveWarmupSet));
+                NotifyTargetSetStateChanged();
             }
         }
     }
@@ -697,9 +842,12 @@ public class WorkoutViewModel : BaseViewModel
 
     public ICommand IncreaseSetsCommand => new Command(() => AdjustSets(1));
     public ICommand DecreaseSetsCommand => new Command(() => AdjustSets(-1));
+    public ICommand IncreaseActiveSetsCommand => new Command(() => AdjustActiveSets(1));
+    public ICommand DecreaseActiveSetsCommand => new Command(() => AdjustActiveSets(-1));
     public ICommand IncreaseRepsCommand => new Command(() => AdjustReps(1));
     public ICommand DecreaseRepsCommand => new Command(() => AdjustReps(-1));
     public ICommand ToggleRpeHelpCommand => new Command(() => ShowRpeHelp = !ShowRpeHelp);
+    public ICommand ToggleWarmupSetCommand => new Command(() => IsWarmupSetSelected = !IsWarmupSetSelected);
 
     #endregion
 
@@ -835,7 +983,10 @@ public class WorkoutViewModel : BaseViewModel
 
         double.TryParse(Weight, out double parsedWeight);
         int.TryParse(Reps, out int parsedReps);
-        int.TryParse(Sets, out int parsedSets);
+        var setsToSave = _selectedRecommendation != null && IsQuickAddMode
+            ? ActiveSets
+            : Sets;
+        int.TryParse(setsToSave, out int parsedSets);
 
         if (parsedReps <= 0)
         {
@@ -896,10 +1047,9 @@ public class WorkoutViewModel : BaseViewModel
         _workoutHistory.Add(workout);
         HasWorkouts = true;
 
-        RefreshPlanRecommendations();
-
         if (workout.Type == WorkoutType.Cardio)
         {
+            RefreshPlanRecommendations();
             Name = string.Empty;
             ExerciseSearchQuery = string.Empty;
             DurationMinutesText = string.Empty;
@@ -907,6 +1057,23 @@ public class WorkoutViewModel : BaseViewModel
             StepsText = string.Empty;
             return;
         }
+
+        var isPartialActivePlanSave =
+            selectedRecommendation is { IsWeightLifting: true } &&
+            !workout.IsWarmup &&
+            IsQuickAddMode &&
+            IsTemplateMatch(selectedRecommendation.Workout, workout) &&
+            selectedRecommendation.RemainingSets > workout.Sets;
+
+        if (isPartialActivePlanSave)
+        {
+            selectedRecommendation!.RemainingSets = Math.Max(0, selectedRecommendation.RemainingSets - workout.Sets);
+            ActiveSets = "1";
+            NotifyActiveSetProgressStateChanged();
+            return;
+        }
+
+        RefreshPlanRecommendations();
 
         if (workout.IsWarmup && restoreRecommendationAfterSave && selectedRecommendation != null)
         {
@@ -999,10 +1166,10 @@ public class WorkoutViewModel : BaseViewModel
     private void ApplyWorkoutTemplate(WorkoutRecommendation recommendation, bool collapseForQuickAdd)
     {
         SetSelectedRecommendation(recommendation);
-        ApplyWorkoutTemplate(recommendation.Workout, recommendation.LastUsedWeight, collapseForQuickAdd);
+        ApplyWorkoutTemplate(recommendation.Workout, recommendation.LastUsedWeight, collapseForQuickAdd, recommendation.RemainingSets);
     }
 
-    private void ApplyWorkoutTemplate(Workout workout, double? historicalWeight, bool collapseForQuickAdd)
+    private void ApplyWorkoutTemplate(Workout workout, double? historicalWeight, bool collapseForQuickAdd, int? remainingPlannedSets = null)
     {
         _isApplyingRecommendation = true;
         IsManualCardio = workout.Type == WorkoutType.Cardio;
@@ -1017,7 +1184,21 @@ public class WorkoutViewModel : BaseViewModel
         ApplyPlannedTargetRpe(workout.TargetRpe);
         ApplyPlannedTargetRest(workout.TargetRestRange);
         Reps = GetDefaultRepsForWorkout(workout).ToString();
-        Sets = workout.Sets.ToString();
+        var defaultSets = workout.Sets;
+        if (workout.Type == WorkoutType.WeightLifting && collapseForQuickAdd)
+        {
+            defaultSets = 1;
+        }
+
+        if (remainingPlannedSets.HasValue && remainingPlannedSets.Value > 0)
+        {
+            defaultSets = workout.Type == WorkoutType.WeightLifting && collapseForQuickAdd
+                ? 1
+                : remainingPlannedSets.Value;
+        }
+
+        Sets = Math.Clamp(defaultSets, 1, Math.Max(1, workout.Sets)).ToString();
+        ActiveSets = "1";
         DurationMinutesText = workout.DurationMinutes > 0 ? workout.DurationMinutes.ToString() : string.Empty;
         DistanceMilesText = workout.DistanceMiles > 0 ? workout.DistanceMiles.ToString("0.##") : string.Empty;
         StepsText = workout.Steps > 0 ? workout.Steps.ToString() : string.Empty;
@@ -1038,21 +1219,31 @@ public class WorkoutViewModel : BaseViewModel
         var hasActivePlanNow = _workoutScheduleService.ActivePlan != null;
         _hadActivePlanOnLastRefresh = hasActivePlanNow;
 
+        SetSelectedRecommendation(null);
         RecommendedPlanWorkouts.Clear();
-        _selectedRecommendation = null;
 
         var todaysPlannedWorkouts = _workoutScheduleService.GetActivePlanWorkoutsForDay(DateTime.Today.DayOfWeek)
             .ToList();
-        var completedPlanWorkoutCounts = BuildCompletedPlanWorkoutCounts(todaysPlannedWorkouts);
+        var completedPlanWorkoutSets = BuildCompletedPlanWorkoutSets(todaysPlannedWorkouts);
 
         _hasScheduledPlanWorkoutsToday = todaysPlannedWorkouts.Count > 0;
 
         foreach (var workout in todaysPlannedWorkouts)
         {
             var workoutKey = GetWorkoutKey(workout);
-            if (completedPlanWorkoutCounts.TryGetValue(workoutKey, out var completedCount) && completedCount > 0)
+            var completedSetsForWorkout = 0;
+            if (completedPlanWorkoutSets.TryGetValue(workoutKey, out var completedSetCount) && completedSetCount > 0)
             {
-                completedPlanWorkoutCounts[workoutKey] = completedCount - 1;
+                completedSetsForWorkout = Math.Min(completedSetCount, Math.Max(0, workout.Sets));
+                completedPlanWorkoutSets[workoutKey] = completedSetCount - completedSetsForWorkout;
+            }
+
+            var remainingSets = workout.Type == WorkoutType.WeightLifting
+                ? Math.Max(0, workout.Sets - completedSetsForWorkout)
+                : 0;
+
+            if (workout.Type == WorkoutType.WeightLifting && remainingSets <= 0)
+            {
                 continue;
             }
 
@@ -1069,7 +1260,9 @@ public class WorkoutViewModel : BaseViewModel
                 TargetRestText = workout.HasTargetRestRange ? $"Rest: {workout.TargetRestRange}" : string.Empty,
                 WeightDisplayPrefix = GetRecommendationWeightPrefix(),
                 WeightDisplayValue = GetRecommendationWeightValue(workout, lastUsedWeight),
-                WeightHelperText = GetRecommendationWeightHelperText(workout.Name)
+                WeightHelperText = GetRecommendationWeightHelperText(workout.Name),
+                PlannedSets = workout.Sets,
+                RemainingSets = remainingSets
             });
         }
 
@@ -1114,7 +1307,7 @@ public class WorkoutViewModel : BaseViewModel
         }
     }
 
-    private Dictionary<string, int> BuildCompletedPlanWorkoutCounts(IEnumerable<Workout> todaysPlannedWorkouts)
+    private Dictionary<string, int> BuildCompletedPlanWorkoutSets(IEnumerable<Workout> todaysPlannedWorkouts)
     {
         var plannedWorkoutKeys = todaysPlannedWorkouts
             .Select(GetWorkoutKey)
@@ -1126,7 +1319,19 @@ public class WorkoutViewModel : BaseViewModel
                 !workout.IsWarmup &&
                 plannedWorkoutKeys.Contains(GetWorkoutKey(workout)))
             .GroupBy(GetWorkoutKey, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
+            .ToDictionary(group => group.Key, group => group.Sum(workout => Math.Max(1, workout.Sets)), StringComparer.OrdinalIgnoreCase);
+    }
+
+    private int GetCompletedPlanWorkoutSetCount(Workout workout)
+    {
+        var workoutKey = GetWorkoutKey(workout);
+
+        return _workoutHistory
+            .Where(historyWorkout =>
+                historyWorkout.StartTime.Date == DateTime.Today &&
+                !historyWorkout.IsWarmup &&
+                string.Equals(GetWorkoutKey(historyWorkout), workoutKey, StringComparison.OrdinalIgnoreCase))
+            .Sum(historyWorkout => Math.Max(1, historyWorkout.Sets));
     }
 
     private void SyncSelectedRecommendationState()
@@ -1187,6 +1392,8 @@ public class WorkoutViewModel : BaseViewModel
         _selectedRecommendation = recommendation;
         OnPropertyChanged(nameof(SelectedRecommendationItem));
         OnPropertyChanged(nameof(QuickAddWeightSummaryText));
+        OnPropertyChanged(nameof(CurrentSetSummary));
+        OnPropertyChanged(nameof(PlannedSetsInput));
         OnPropertyChanged(nameof(QuickEditExerciseName));
         NotifyExerciseImageStateChanged();
         OnPropertyChanged(nameof(CanEditSelectedMuscleGroup));
@@ -1195,6 +1402,8 @@ public class WorkoutViewModel : BaseViewModel
         OnPropertyChanged(nameof(ShowQuickEditTargetRpe));
         OnPropertyChanged(nameof(ShowQuickEditTargetRest));
         OnPropertyChanged(nameof(ShowQuickEditTargetsColumn));
+        NotifyTargetSetStateChanged();
+        NotifyActiveSetProgressStateChanged();
     }
 
     private void OpenManualWorkoutEntry()
@@ -1212,6 +1421,7 @@ public class WorkoutViewModel : BaseViewModel
         ResistanceAdjustment = string.Empty;
         Reps = "1";
         Sets = "1";
+        ActiveSets = "1";
         DurationMinutesText = string.Empty;
         DistanceMilesText = string.Empty;
         StepsText = string.Empty;
@@ -1542,9 +1752,50 @@ public class WorkoutViewModel : BaseViewModel
     public void AdjustSets(int delta)
     {
         var currentSets = 0;
-        int.TryParse(Sets, out currentSets);
-        currentSets = Math.Clamp(currentSets + delta, 1, InputSanitizer.MaxSets);
-        Sets = currentSets.ToString();
+        int.TryParse(PlannedSetsInput, out currentSets);
+        var completedSets = _selectedRecommendation?.IsWeightLifting == true
+            ? GetCompletedPlanWorkoutSetCount(_selectedRecommendation.Workout)
+            : 0;
+        currentSets = Math.Clamp(currentSets + delta, Math.Max(1, completedSets), InputSanitizer.MaxSets);
+        PlannedSetsInput = currentSets.ToString();
+    }
+
+    public void AdjustActiveSets(int delta)
+    {
+        var currentSets = 0;
+        int.TryParse(ActiveSets, out currentSets);
+        currentSets = Math.Clamp(currentSets + delta, 1, GetMaxSelectableSets());
+        ActiveSets = currentSets.ToString();
+    }
+
+    private int GetMaxSelectableSets()
+    {
+        if (_selectedRecommendation?.IsWeightLifting == true && _selectedRecommendation.RemainingSets > 0)
+        {
+            return _selectedRecommendation.RemainingSets;
+        }
+
+        return InputSanitizer.MaxSets;
+    }
+
+    private void NotifyTargetSetStateChanged()
+    {
+        OnPropertyChanged(nameof(PlannedSetsInput));
+        OnPropertyChanged(nameof(CurrentSetSummary));
+        OnPropertyChanged(nameof(CanDecreaseSets));
+        OnPropertyChanged(nameof(CanIncreaseSets));
+        OnPropertyChanged(nameof(MaxSelectableSets));
+    }
+
+    private void NotifyActiveSetProgressStateChanged()
+    {
+        OnPropertyChanged(nameof(MaxSelectableSets));
+        OnPropertyChanged(nameof(CanDecreaseActiveSets));
+        OnPropertyChanged(nameof(CanIncreaseActiveSets));
+        OnPropertyChanged(nameof(ShowQuickSetProgress));
+        OnPropertyChanged(nameof(RemainingSetsAfterCurrentSave));
+        OnPropertyChanged(nameof(IsCompletingSelectedPlanExercise));
+        OnPropertyChanged(nameof(QuickSetProgressText));
     }
 
     public void AdjustBodyweightDisplayedWeight(double delta)

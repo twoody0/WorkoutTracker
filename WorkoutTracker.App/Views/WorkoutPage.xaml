@@ -61,17 +61,17 @@
                                          ColumnSpacing="16"
                                          HorizontalOptions="Start"
                                          IsVisible="{Binding ShowStrengthDetails}">
-                                          <VerticalStackLayout Grid.Column="0"
-                                                               Spacing="1">
-                                                 <Label Text="{Binding Workout.Sets, StringFormat='Sets: {0}'}"
-                                                        FontSize="12"
-                                                        TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
-                                                        LineBreakMode="TailTruncation"/>
-                                                 <Label Text="{Binding RepDisplayText}"
-                                                        FontSize="12"
-                                                        TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
-                                                        LineBreakMode="TailTruncation"/>
-                                          </VerticalStackLayout>
+                                           <VerticalStackLayout Grid.Column="0"
+                                                                Spacing="1">
+                                                  <Label Text="{Binding Workout.Sets, StringFormat='Sets: {0}'}"
+                                                         FontSize="12"
+                                                         TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
+                                                         LineBreakMode="TailTruncation"/>
+                                                  <Label Text="{Binding RepDisplayText}"
+                                                         FontSize="12"
+                                                         TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
+                                                         LineBreakMode="TailTruncation"/>
+                                           </VerticalStackLayout>
                                           <VerticalStackLayout Grid.Column="1"
                                                                Spacing="1">
                                                  <Label Text="{Binding WeightDisplayText}"
@@ -276,11 +276,11 @@
                                          ColumnSpacing="12"
                                          HorizontalOptions="Start"
                                          IsVisible="{Binding ShowQuickAddReadOnlySummary}">
-                                          <VerticalStackLayout Grid.Column="0"
-                                                               Spacing="1">
-                                                 <Label Text="{Binding Sets, StringFormat='Sets: {0}'}"
-                                                        FontSize="12"
-                                                        TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"/>
+                                           <VerticalStackLayout Grid.Column="0"
+                                                                Spacing="1">
+                                                  <Label Text="{Binding CurrentSetSummary}"
+                                                         FontSize="12"
+                                                         TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"/>
                                                  <Label Text="{Binding CurrentRepsSummary}"
                                                         FontSize="12"
                                                         TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"/>
@@ -335,35 +335,37 @@
                                                          <Grid ColumnDefinitions="20,*,20"
                                                                ColumnSpacing="4"
                                                                HorizontalOptions="Fill">
-                                                                <Button Text="-"
-                                                                        Padding="0"
-                                                                        HeightRequest="20"
-                                                                        WidthRequest="20"
-                                                                        MinimumHeightRequest="20"
-                                                                        MinimumWidthRequest="20"
-                                                                        FontSize="11"
-                                                                        Command="{Binding DecreaseSetsCommand}"/>
-                                                                 <Entry Grid.Column="1"
-                                                                        Text="{Binding Sets}"
-                                                                        Placeholder="0"
-                                                                        Keyboard="Numeric"
-                                                                        FontSize="12"
-                                                                        HorizontalTextAlignment="Center"
+                                                                 <Button Text="-"
+                                                                         Padding="0"
+                                                                         HeightRequest="20"
+                                                                         WidthRequest="20"
+                                                                         MinimumHeightRequest="20"
+                                                                         MinimumWidthRequest="20"
+                                                                         FontSize="11"
+                                                                         IsEnabled="{Binding CanDecreaseSets}"
+                                                                         Command="{Binding DecreaseSetsCommand}"/>
+                                                                   <Entry Grid.Column="1"
+                                                                          Text="{Binding PlannedSetsInput}"
+                                                                          Placeholder="0"
+                                                                         Keyboard="Numeric"
+                                                                         FontSize="12"
+                                                                         HorizontalTextAlignment="Center"
                                                                         TextChanged="SetsEntry_TextChanged"
                                                                         MinimumWidthRequest="24"/>
-                                                                <Button Grid.Column="2"
-                                                                        Text="+"
-                                                                        Padding="0"
-                                                                        HeightRequest="20"
-                                                                        WidthRequest="20"
-                                                                        MinimumHeightRequest="20"
-                                                                        MinimumWidthRequest="20"
-                                                                        FontSize="11"
-                                                                        Command="{Binding IncreaseSetsCommand}"/>
-                                                        </Grid>
-                                                  </VerticalStackLayout>
-                                                   <VerticalStackLayout Grid.Row="1"
-                                                                        Spacing="2">
+                                                                 <Button Grid.Column="2"
+                                                                         Text="+"
+                                                                         Padding="0"
+                                                                         HeightRequest="20"
+                                                                         WidthRequest="20"
+                                                                         MinimumHeightRequest="20"
+                                                                         MinimumWidthRequest="20"
+                                                                         FontSize="11"
+                                                                         IsEnabled="{Binding CanIncreaseSets}"
+                                                                         Command="{Binding IncreaseSetsCommand}"/>
+                                                         </Grid>
+                                                   </VerticalStackLayout>
+                                                    <VerticalStackLayout Grid.Row="1"
+                                                                         Spacing="2">
                                                          <Grid ColumnDefinitions="20,*,20"
                                                                ColumnSpacing="4"
                                                                HorizontalOptions="Fill">
@@ -401,9 +403,24 @@
                                                                         MinimumWidthRequest="20"
                                                                         FontSize="11"
                                                                         Command="{Binding IncreaseRepsCommand}"/>
-                                                        </Grid>
-                                                  </VerticalStackLayout>
-                                           </Grid>
+                                                         </Grid>
+                                                   </VerticalStackLayout>
+                                                   <Label Grid.Row="2"
+                                                          Text="{Binding QuickSetProgressText}"
+                                                          FontSize="11"
+                                                          HorizontalTextAlignment="Center"
+                                                          TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
+                                                          IsVisible="{Binding ShowQuickSetProgress}">
+                                                          <Label.Triggers>
+                                                                 <DataTrigger TargetType="Label"
+                                                                              Binding="{Binding IsCompletingSelectedPlanExercise}"
+                                                                              Value="True">
+                                                                        <Setter Property="TextColor"
+                                                                                Value="{AppThemeBinding Light=#DC2626, Dark=#F87171}"/>
+                                                                 </DataTrigger>
+                                                          </Label.Triggers>
+                                                   </Label>
+                                            </Grid>
                                             <Grid Grid.Column="1"
                                                   RowDefinitions="Auto,Auto,Auto"
                                                   RowSpacing="4"
@@ -461,17 +478,18 @@
                                                                ColumnSpacing="2"
                                                                HorizontalOptions="Fill"
                                                                IsVisible="{Binding ShowResistanceAdjustment}">
-                                                                <Button Text="-"
-                                                                        WidthRequest="20"
-                                                                        HeightRequest="20"
-                                                                        MinimumHeightRequest="20"
-                                                                        MinimumWidthRequest="20"
-                                                                        Padding="0"
-                                                                        FontSize="11"
-                                                                        CommandParameter="-5"
-                                                                       Clicked="BodyweightWeightAdjust_Clicked"
-                                                                       Pressed="BodyweightWeightAdjust_Pressed"
-                                                                       Released="BodyweightWeightAdjust_Released"/>
+                                                                 <Button Text="-"
+                                                                         WidthRequest="20"
+                                                                         HeightRequest="20"
+                                                                         MinimumHeightRequest="20"
+                                                                         MinimumWidthRequest="20"
+                                                                         Padding="0"
+                                                                         FontSize="11"
+                                                                         IsEnabled="{Binding CanDecreaseWeight}"
+                                                                         CommandParameter="-5"
+                                                                        Clicked="BodyweightWeightAdjust_Clicked"
+                                                                        Pressed="BodyweightWeightAdjust_Pressed"
+                                                                        Released="BodyweightWeightAdjust_Released"/>
                                                                  <Entry Grid.Column="1"
                                                                         Text="{Binding Weight}"
                                                                         Placeholder="{Binding WeightPlaceholder}"
@@ -677,42 +695,47 @@
 
                      <VerticalStackLayout Spacing="2"
                                           IsVisible="{Binding ShowQuickAddStandaloneWeightEditor}">
-                             <Grid ColumnDefinitions="*,*"
-                                   ColumnSpacing="12"
-                                   IsVisible="{Binding ShowStandardWeightInput}">
+                             <Grid ColumnDefinitions="*,*,*"
+                                    ColumnSpacing="12"
+                                    IsVisible="{Binding ShowStandardWeightInput}">
                                     <VerticalStackLayout Grid.Column="0"
                                                          Spacing="2">
-                                           <Grid ColumnDefinitions="24,64,24"
-                                                 ColumnSpacing="4"
-                                                 HorizontalOptions="Center">
-                                                  <Label Grid.Column="1"
-                                                         Text="{Binding WeightLabel}"
-                                                         FontAttributes="Bold"
-                                                         HorizontalTextAlignment="Center"/>
-                                           </Grid>
-                                           <Grid ColumnDefinitions="24,64,24"
-                                                 ColumnSpacing="4"
-                                                 HorizontalOptions="Center">
-                                                  <Button Text="-"
-                                                          WidthRequest="24"
-                                                          HeightRequest="24"
-                                                          MinimumHeightRequest="24"
-                                                         MinimumWidthRequest="24"
-                                                         Padding="0"
-                                                         FontSize="11"
-                                                         CommandParameter="-5"
-                                                         Clicked="StandardWeightAdjust_Clicked"
-                                                         Pressed="StandardWeightAdjust_Pressed"
-                                                         Released="StandardWeightAdjust_Released"/>
-                                                   <Entry x:Name="WeightEntry"
-                                                          Grid.Column="1"
-                                                          Placeholder="{Binding WeightPlaceholder}"
-                                                          Keyboard="Numeric"
-                                                          Text="{Binding Weight}"
-                                                          TextChanged="WeightEntry_TextChanged"
-                                                          Unfocused="WeightEntry_Unfocused"
-                                                          HorizontalTextAlignment="Center"
-                                                          WidthRequest="64"/>
+                                           <Grid ColumnDefinitions="24,*,24"
+                                                  ColumnSpacing="4"
+                                                  HorizontalOptions="Fill">
+                                                    <Label Grid.Column="1"
+                                                            Text="{Binding WeightLabel}"
+                                                            FontAttributes="Bold"
+                                                            FontSize="11"
+                                                            LineBreakMode="NoWrap"
+                                                            MaxLines="1"
+                                                            HorizontalOptions="Center"
+                                                            HorizontalTextAlignment="Center"/>
+                                             </Grid>
+                                           <Grid ColumnDefinitions="24,*,24"
+                                                  ColumnSpacing="4"
+                                                  HorizontalOptions="Fill">
+                                                    <Button Text="-"
+                                                            WidthRequest="24"
+                                                            HeightRequest="24"
+                                                           MinimumHeightRequest="24"
+                                                          MinimumWidthRequest="24"
+                                                          Padding="0"
+                                                          FontSize="11"
+                                                          IsEnabled="{Binding CanDecreaseWeight}"
+                                                          CommandParameter="-5"
+                                                          Clicked="StandardWeightAdjust_Clicked"
+                                                          Pressed="StandardWeightAdjust_Pressed"
+                                                          Released="StandardWeightAdjust_Released"/>
+                                                    <Entry x:Name="WeightEntry"
+                                                           Grid.Column="1"
+                                                           Placeholder="{Binding WeightPlaceholder}"
+                                                           Keyboard="Numeric"
+                                                           Text="{Binding Weight}"
+                                                           TextChanged="WeightEntry_TextChanged"
+                                                           Unfocused="WeightEntry_Unfocused"
+                                                           HorizontalTextAlignment="Center"
+                                                           HorizontalOptions="Fill"/>
                                                   <Button Grid.Column="2"
                                                           Text="+"
                                                           WidthRequest="24"
@@ -730,47 +753,111 @@
 
                                     <VerticalStackLayout Grid.Column="1"
                                                          Spacing="2">
-                                           <Grid ColumnDefinitions="24,64,24"
-                                                 ColumnSpacing="4"
-                                                 HorizontalOptions="Center">
-                                                  <Label Grid.Column="1"
-                                                         Text="{Binding RepsLabel}"
-                                                         FontAttributes="Bold"
-                                                         HorizontalTextAlignment="Center"/>
-                                           </Grid>
-                                           <Grid ColumnDefinitions="24,64,24"
-                                                 ColumnSpacing="4"
-                                                 HorizontalOptions="Center">
-                                                  <Button Text="-"
-                                                          WidthRequest="24"
-                                                          HeightRequest="24"
-                                                          MinimumHeightRequest="24"
-                                                         MinimumWidthRequest="24"
-                                                         Padding="0"
-                                                         FontSize="11"
-                                                         Command="{Binding DecreaseRepsCommand}"/>
-                                                   <Entry Grid.Column="1"
-                                                          Text="{Binding Reps}"
-                                                          Keyboard="Numeric"
-                                                          TextChanged="RepsEntry_TextChanged"
-                                                          HorizontalTextAlignment="Center"
-                                                          WidthRequest="64"/>
+                                           <Grid ColumnDefinitions="24,*,24"
+                                                  ColumnSpacing="4"
+                                                  HorizontalOptions="Fill">
+                                                    <Label Grid.Column="1"
+                                                            Text="{Binding RepsLabel}"
+                                                            FontAttributes="Bold"
+                                                            FontSize="11"
+                                                            LineBreakMode="NoWrap"
+                                                            MaxLines="1"
+                                                            HorizontalOptions="Center"
+                                                            HorizontalTextAlignment="Center"/>
+                                             </Grid>
+                                           <Grid ColumnDefinitions="24,*,24"
+                                                  ColumnSpacing="4"
+                                                  HorizontalOptions="Fill">
+                                                    <Button Text="-"
+                                                            WidthRequest="24"
+                                                            HeightRequest="24"
+                                                           MinimumHeightRequest="24"
+                                                          MinimumWidthRequest="24"
+                                                          Padding="0"
+                                                          FontSize="11"
+                                                          IsEnabled="{Binding CanDecreaseReps}"
+                                                          Command="{Binding DecreaseRepsCommand}"/>
+                                                    <Entry Grid.Column="1"
+                                                           Text="{Binding Reps}"
+                                                           Keyboard="Numeric"
+                                                           TextChanged="RepsEntry_TextChanged"
+                                                           HorizontalTextAlignment="Center"
+                                                           HorizontalOptions="Fill"/>
                                                   <Button Grid.Column="2"
                                                           Text="+"
                                                           WidthRequest="24"
                                                           HeightRequest="24"
-                                                         MinimumHeightRequest="24"
-                                                         MinimumWidthRequest="24"
-                                                         Padding="0"
-                                                         FontSize="11"
-                                                         Command="{Binding IncreaseRepsCommand}"/>
-                                          </Grid>
-                                   </VerticalStackLayout>
-                            </Grid>
-                            <Label Text="{Binding WeightHelperText}"
-                                   FontSize="11"
-                                   TextColor="Gray"
-                                   IsVisible="{Binding HasWeightHelperText}"/>
+                                                          MinimumHeightRequest="24"
+                                                          MinimumWidthRequest="24"
+                                                          Padding="0"
+                                                          FontSize="11"
+                                                          Command="{Binding IncreaseRepsCommand}"/>
+                                           </Grid>
+                                    </VerticalStackLayout>
+
+                                    <VerticalStackLayout Grid.Column="2"
+                                                         Spacing="2">
+                                           <Grid ColumnDefinitions="24,*,24"
+                                                  ColumnSpacing="4"
+                                                  HorizontalOptions="Fill">
+                                                    <Label Grid.Column="1"
+                                                           Text="Sets"
+                                                           FontAttributes="Bold"
+                                                           FontSize="11"
+                                                           LineBreakMode="NoWrap"
+                                                           MaxLines="1"
+                                                           HorizontalOptions="Center"
+                                                           HorizontalTextAlignment="Center"/>
+                                            </Grid>
+                                           <Grid ColumnDefinitions="24,*,24"
+                                                 ColumnSpacing="4"
+                                                 HorizontalOptions="Fill">
+                                                    <Button Text="-"
+                                                            WidthRequest="24"
+                                                            HeightRequest="24"
+                                                           MinimumHeightRequest="24"
+                                                           MinimumWidthRequest="24"
+                                                           Padding="0"
+                                                           FontSize="11"
+                                                           IsEnabled="{Binding CanDecreaseActiveSets}"
+                                                           Command="{Binding DecreaseActiveSetsCommand}"/>
+                                                    <Entry Grid.Column="1"
+                                                           Text="{Binding ActiveSets}"
+                                                           Keyboard="Numeric"
+                                                           TextChanged="SetsEntry_TextChanged"
+                                                           HorizontalTextAlignment="Center"
+                                                           HorizontalOptions="Fill"/>
+                                                  <Button Grid.Column="2"
+                                                          Text="+"
+                                                          WidthRequest="24"
+                                                          HeightRequest="24"
+                                                          MinimumHeightRequest="24"
+                                                          MinimumWidthRequest="24"
+                                                          Padding="0"
+                                                          FontSize="11"
+                                                          IsEnabled="{Binding CanIncreaseActiveSets}"
+                                                          Command="{Binding IncreaseActiveSetsCommand}"/>
+                                           </Grid>
+                                    </VerticalStackLayout>
+                             </Grid>
+                             <Label Text="{Binding QuickSetProgressText}"
+                                    FontSize="11"
+                                    HorizontalTextAlignment="Center"
+                                    TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
+                                    IsVisible="{Binding ShowQuickSetProgress}">
+                                    <Label.Triggers>
+                                           <DataTrigger TargetType="Label"
+                                                        Binding="{Binding IsCompletingSelectedPlanExercise}"
+                                                        Value="True">
+                                                  <Setter Property="TextColor"
+                                                          Value="{AppThemeBinding Light=#DC2626, Dark=#F87171}"/>
+                                           </DataTrigger>
+                                    </Label.Triggers>
+                             </Label>
+                             <Label Text="{Binding WeightHelperText}"
+                                    FontSize="11"
+                                    TextColor="Gray"
+                                    IsVisible="{Binding HasWeightHelperText}"/>
                             <Label Text="{Binding WeightTotalPreviewText}"
                                    FontSize="11"
                                    TextColor="Gray"
@@ -912,44 +999,48 @@
                             <VerticalStackLayout Spacing="10"
                                                  HorizontalOptions="Center"
                                                  IsVisible="{Binding ShowStrengthFields}">
-                                   <Grid ColumnDefinitions="Auto,Auto,Auto"
-                                         ColumnSpacing="18"
-                                         HorizontalOptions="Center"
+                                   <Grid ColumnDefinitions="*,*,*"
+                                         ColumnSpacing="12"
+                                         HorizontalOptions="Fill"
                                          IsVisible="{Binding ShowStandardWeightInput}">
-                                          <VerticalStackLayout Grid.Column="0"
-                                                               Spacing="2"
-                                                               HorizontalOptions="Center"
-                                                               IsVisible="{Binding ShowManualStandaloneWeightEditor}">
-                                                 <Grid ColumnDefinitions="24,46,24"
+                                           <VerticalStackLayout Grid.Column="0"
+                                                                Spacing="2"
+                                                                HorizontalOptions="Center"
+                                                                IsVisible="{Binding ShowManualStandaloneWeightEditor}">
+                                                 <Grid ColumnDefinitions="24,*,24"
                                                        ColumnSpacing="4">
-                                                         <Label Grid.Column="1"
-                                                                Text="{Binding WeightLabel}"
-                                                                FontAttributes="Bold"
-                                                                FontSize="12"
-                                                                LineBreakMode="NoWrap"
-                                                                MaxLines="1"
-                                                                HorizontalTextAlignment="Center"/>
-                                                 </Grid>
-                            <Grid ColumnDefinitions="24,60,24"
-                                  ColumnSpacing="4">
-                                                        <Button Text="-"
-                                                                WidthRequest="24"
-                                                                HeightRequest="24"
-                                                                MinimumHeightRequest="24"
-                                                                MinimumWidthRequest="24"
-                                                                Padding="0"
-                                                                FontSize="11"
-                                                                CommandParameter="-5"
-                                                                Clicked="StandardWeightAdjust_Clicked"
-                                                                Pressed="StandardWeightAdjust_Pressed"
-                                                                Released="StandardWeightAdjust_Released"/>
-                                                         <Entry Grid.Column="1"
-                                                                Placeholder="{Binding WeightPlaceholder}"
-                                                                Keyboard="Numeric"
-                                                                Text="{Binding Weight}"
-                                                                TextChanged="WeightEntry_TextChanged"
-                                                                Unfocused="WeightEntry_Unfocused"
-                                                                HorizontalTextAlignment="Center"/>
+                                                            <Label Grid.Column="1"
+                                                                   Text="{Binding WeightLabel}"
+                                                                  FontAttributes="Bold"
+                                                                  FontSize="11"
+                                                                  LineBreakMode="NoWrap"
+                                                                  MaxLines="1"
+                                                                  HorizontalOptions="Center"
+                                                                  HorizontalTextAlignment="Center"/>
+                                                  </Grid>
+                            <Grid ColumnDefinitions="24,*,24"
+                                  ColumnSpacing="4"
+                                  HorizontalOptions="Fill">
+                                                          <Button Text="-"
+                                                                  WidthRequest="24"
+                                                                 HeightRequest="24"
+                                                                 MinimumHeightRequest="24"
+                                                                 MinimumWidthRequest="24"
+                                                                 Padding="0"
+                                                                 FontSize="11"
+                                                                 IsEnabled="{Binding CanDecreaseWeight}"
+                                                                 CommandParameter="-5"
+                                                                 Clicked="StandardWeightAdjust_Clicked"
+                                                                 Pressed="StandardWeightAdjust_Pressed"
+                                                                 Released="StandardWeightAdjust_Released"/>
+                                                          <Entry Grid.Column="1"
+                                                                 Placeholder="{Binding WeightPlaceholder}"
+                                                                 Keyboard="Numeric"
+                                                                 Text="{Binding Weight}"
+                                                                 TextChanged="WeightEntry_TextChanged"
+                                                                 Unfocused="WeightEntry_Unfocused"
+                                                                 HorizontalTextAlignment="Center"
+                                                                 HorizontalOptions="Fill"/>
                                                         <Button Grid.Column="2"
                                                                 Text="+"
                                                                 WidthRequest="24"
@@ -965,35 +1056,41 @@
                                                  </Grid>
                                           </VerticalStackLayout>
 
-                                          <VerticalStackLayout Grid.Column="1"
-                                                               Spacing="2"
-                                                               HorizontalOptions="Center">
-                                                 <Grid ColumnDefinitions="22,46,22"
+                                           <VerticalStackLayout Grid.Column="1"
+                                                                Spacing="2"
+                                                                HorizontalOptions="Center">
+                                                 <Grid ColumnDefinitions="22,*,22"
                                                        ColumnSpacing="4"
-                                                       HorizontalOptions="Center">
-                                                        <Label Grid.Column="1"
-                                                               Text="{Binding RepsLabel}"
-                                                               FontAttributes="Bold"
-                                                               HorizontalTextAlignment="Center"/>
-                                                 </Grid>
-                                                 <Grid ColumnDefinitions="22,46,22"
+                                                       HorizontalOptions="Fill">
+                                                          <Label Grid.Column="1"
+                                                                 Text="{Binding RepsLabel}"
+                                                                 FontAttributes="Bold"
+                                                                 FontSize="11"
+                                                                 LineBreakMode="NoWrap"
+                                                                 MaxLines="1"
+                                                                 HorizontalOptions="Center"
+                                                                 HorizontalTextAlignment="Center"/>
+                                                  </Grid>
+                                                 <Grid ColumnDefinitions="22,*,22"
                                                        ColumnSpacing="4"
-                                                       HorizontalOptions="Center">
-                                                        <Button Text="-"
-                                                                Padding="0"
-                                                                HeightRequest="24"
-                                                                WidthRequest="22"
-                                                                MinimumHeightRequest="24"
-                                                                MinimumWidthRequest="22"
-                                                                FontSize="11"
-                                                                Command="{Binding DecreaseRepsCommand}"/>
-                                                        <Entry x:Name="RepsEntry"
-                                                               Grid.Column="1"
-                                                               Placeholder="1"
-                                                               Keyboard="Numeric"
-                                                               HorizontalTextAlignment="Center"
-                                                               TextChanged="RepsEntry_TextChanged"
-                                                               Text="{Binding Reps}"/>
+                                                       HorizontalOptions="Fill">
+                                                          <Button Text="-"
+                                                                  Padding="0"
+                                                                 HeightRequest="24"
+                                                                 WidthRequest="22"
+                                                                 MinimumHeightRequest="24"
+                                                                 MinimumWidthRequest="22"
+                                                                 FontSize="11"
+                                                                 IsEnabled="{Binding CanDecreaseReps}"
+                                                                 Command="{Binding DecreaseRepsCommand}"/>
+                                                         <Entry x:Name="RepsEntry"
+                                                                Grid.Column="1"
+                                                                Placeholder="1"
+                                                                Keyboard="Numeric"
+                                                                HorizontalTextAlignment="Center"
+                                                                TextChanged="RepsEntry_TextChanged"
+                                                                Text="{Binding Reps}"
+                                                                HorizontalOptions="Fill"/>
                                                         <Button Grid.Column="2"
                                                                 Text="+"
                                                                 Padding="0"
@@ -1006,46 +1103,67 @@
                                                  </Grid>
                                           </VerticalStackLayout>
 
-                                          <VerticalStackLayout Grid.Column="2"
-                                                               Spacing="2"
-                                                               HorizontalOptions="Center">
-                                                 <Grid ColumnDefinitions="22,46,22"
+                                           <VerticalStackLayout Grid.Column="2"
+                                                                Spacing="2"
+                                                                HorizontalOptions="Center">
+                                                 <Grid ColumnDefinitions="22,*,22"
                                                        ColumnSpacing="4"
-                                                       HorizontalOptions="Center">
-                                                        <Label Grid.Column="1"
-                                                               Text="Sets"
-                                                               FontAttributes="Bold"
-                                                               HorizontalTextAlignment="Center"/>
-                                                 </Grid>
-                                                 <Grid ColumnDefinitions="22,46,22"
+                                                       HorizontalOptions="Fill">
+                                                          <Label Grid.Column="1"
+                                                                 Text="Sets"
+                                                                 FontAttributes="Bold"
+                                                                 FontSize="11"
+                                                                 LineBreakMode="NoWrap"
+                                                                 MaxLines="1"
+                                                                 HorizontalOptions="Center"
+                                                                 HorizontalTextAlignment="Center"/>
+                                                  </Grid>
+                                                 <Grid ColumnDefinitions="22,*,22"
                                                        ColumnSpacing="4"
-                                                       HorizontalOptions="Center">
-                                                        <Button Text="-"
-                                                                Padding="0"
-                                                                HeightRequest="24"
-                                                                WidthRequest="22"
-                                                                MinimumHeightRequest="24"
-                                                                MinimumWidthRequest="22"
-                                                                FontSize="11"
-                                                                Command="{Binding DecreaseSetsCommand}"/>
-                                                        <Entry x:Name="SetsEntry"
-                                                               Grid.Column="1"
-                                                               Placeholder="1"
-                                                               Keyboard="Numeric"
-                                                               HorizontalTextAlignment="Center"
-                                                               TextChanged="SetsEntry_TextChanged"
-                                                               Text="{Binding Sets}"/>
-                                                        <Button Grid.Column="2"
-                                                                Text="+"
-                                                                Padding="0"
-                                                                HeightRequest="24"
-                                                                WidthRequest="22"
-                                                                MinimumHeightRequest="24"
-                                                                MinimumWidthRequest="22"
-                                                                FontSize="11"
-                                                                Command="{Binding IncreaseSetsCommand}"/>
+                                                       HorizontalOptions="Fill">
+                                                           <Button Text="-"
+                                                                   Padding="0"
+                                                                  HeightRequest="24"
+                                                                  WidthRequest="22"
+                                                                  MinimumHeightRequest="24"
+                                                                  MinimumWidthRequest="22"
+                                                                  FontSize="11"
+                                                                  IsEnabled="{Binding CanDecreaseSets}"
+                                                                  Command="{Binding DecreaseSetsCommand}"/>
+                                                           <Entry x:Name="SetsEntry"
+                                                                  Grid.Column="1"
+                                                                  Placeholder="1"
+                                                                 Keyboard="Numeric"
+                                                                 HorizontalTextAlignment="Center"
+                                                                 TextChanged="SetsEntry_TextChanged"
+                                                                 Text="{Binding PlannedSetsInput}"
+                                                                 HorizontalOptions="Fill"/>
+                                                         <Button Grid.Column="2"
+                                                                 Text="+"
+                                                                 Padding="0"
+                                                                 HeightRequest="24"
+                                                                 WidthRequest="22"
+                                                                 MinimumHeightRequest="24"
+                                                                 MinimumWidthRequest="22"
+                                                                 FontSize="11"
+                                                                 IsEnabled="{Binding CanIncreaseSets}"
+                                                                 Command="{Binding IncreaseSetsCommand}"/>
                                                  </Grid>
-                                          </VerticalStackLayout>
+                                                 <Label Text="{Binding QuickSetProgressText}"
+                                                        FontSize="11"
+                                                        HorizontalTextAlignment="Center"
+                                                        TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
+                                                        IsVisible="{Binding ShowQuickSetProgress}">
+                                                        <Label.Triggers>
+                                                               <DataTrigger TargetType="Label"
+                                                                            Binding="{Binding IsCompletingSelectedPlanExercise}"
+                                                                            Value="True">
+                                                                      <Setter Property="TextColor"
+                                                                              Value="{AppThemeBinding Light=#DC2626, Dark=#F87171}"/>
+                                                               </DataTrigger>
+                                                        </Label.Triggers>
+                                                 </Label>
+                                           </VerticalStackLayout>
                                    </Grid>
 
                                    <Grid ColumnDefinitions="Auto,Auto"
@@ -1066,14 +1184,15 @@
                                                  <Grid ColumnDefinitions="22,46,22"
                                                        ColumnSpacing="4"
                                                        HorizontalOptions="Center">
-                                                        <Button Text="-"
-                                                                Padding="0"
-                                                                HeightRequest="24"
-                                                                WidthRequest="22"
-                                                                MinimumHeightRequest="24"
-                                                                MinimumWidthRequest="22"
-                                                                FontSize="11"
-                                                                Command="{Binding DecreaseRepsCommand}"/>
+                                                         <Button Text="-"
+                                                                 Padding="0"
+                                                                 HeightRequest="24"
+                                                                 WidthRequest="22"
+                                                                 MinimumHeightRequest="24"
+                                                                 MinimumWidthRequest="22"
+                                                                 FontSize="11"
+                                                                 IsEnabled="{Binding CanDecreaseReps}"
+                                                                 Command="{Binding DecreaseRepsCommand}"/>
                                                         <Entry Grid.Column="1"
                                                                Placeholder="1"
                                                                Keyboard="Numeric"
@@ -1226,8 +1345,11 @@
                             <HorizontalStackLayout Spacing="8"
                                                    HorizontalOptions="Center"
                                                    IsVisible="{Binding ShowStrengthFields}">
-                                   <CheckBox IsChecked="{Binding IsWarmupSetSelected}"
-                                             IsEnabled="{Binding CanSaveWarmupSet}"
+                                   <HorizontalStackLayout.GestureRecognizers>
+                                          <TapGestureRecognizer Command="{Binding ToggleWarmupSetCommand}"/>
+                                   </HorizontalStackLayout.GestureRecognizers>
+                                   <CheckBox IsChecked="{Binding IsWarmupSetSelected, Mode=TwoWay}"
+                                             IsEnabled="{Binding CanToggleWarmupSet}"
                                              VerticalOptions="Center"/>
                                    <Label Text="Warmup Set"
                                           VerticalOptions="Center"
