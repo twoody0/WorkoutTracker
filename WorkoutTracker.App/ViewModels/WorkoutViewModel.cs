@@ -302,7 +302,7 @@ public class WorkoutViewModel : BaseViewModel
         ? Name
         : _selectedRecommendation?.Workout.Name ?? string.Empty;
     public bool HasSelectedExerciseInfo => ExerciseInfoCatalog.HasInfo(QuickEditExerciseName);
-    public bool ShowQuickEditExerciseInfo => HasSelectedExerciseInfo && _selectedRecommendation == null;
+    public bool ShowQuickEditExerciseInfo => HasSelectedExerciseInfo;
     public bool HasSelectedExerciseImage => ExerciseImageCatalog.HasImage(QuickEditExerciseName);
     public string SelectedExerciseImageSource => ExerciseImageCatalog.GetImageSource(QuickEditExerciseName);
     public string QuickAddWeightSummaryText

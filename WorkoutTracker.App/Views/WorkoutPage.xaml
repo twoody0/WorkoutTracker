@@ -187,16 +187,6 @@
                                                  FontAttributes="Bold"
                                                  FontSize="18"
                                                  VerticalOptions="Center"/>
-                                          <ImageButton Source="info.png"
-                                                       HeightRequest="20"
-                                                       WidthRequest="20"
-                                                       MinimumHeightRequest="14"
-                                                       MinimumWidthRequest="14"
-                                                       Padding="0"
-                                                       BackgroundColor="Transparent"
-                                                       VerticalOptions="Center"
-                                                       Command="{Binding ToggleRpeHelpCommand}"
-                                                       IsVisible="{Binding ShowPlanRpeInfo}"/>
                                    </HorizontalStackLayout>
 
                                    <Border Stroke="{AppThemeBinding Light=#D8E0EB, Dark=#2B3544}"
@@ -246,30 +236,31 @@
                              Margin="0,0,0,10">
                             <Grid RowDefinitions="Auto,Auto"
                                           RowSpacing="4">
-                                    <Grid Grid.Row="0"
-                                          ColumnDefinitions="*,Auto"
-                                          ColumnSpacing="8">
-                                           <Label Text="{Binding QuickEditExerciseName}"
-                                                  FontAttributes="Bold"
-                                                  FontSize="16"
-                                                  VerticalOptions="Center"
-                                                  IsVisible="{Binding ShowQuickAddReadOnlySummary}"/>
-                                           <Entry Text="{Binding Name}"
-                                                  FontAttributes="Bold"
-                                                  FontSize="16"
-                                                  VerticalOptions="Center"
-                                                  IsVisible="{Binding ShowQuickAddInlineEditors}"/>
-                                           <ImageButton Grid.Column="1"
-                                                        Source="info.png"
-                                                        HeightRequest="14"
-                                                        WidthRequest="14"
-                                                        MinimumHeightRequest="14"
-                                                        MinimumWidthRequest="14"
-                                                        Padding="0"
-                                                        BackgroundColor="Transparent"
-                                                        VerticalOptions="Center"
-                                                        IsVisible="{Binding ShowQuickEditExerciseInfo}"
-                                                        Clicked="OnSelectedExerciseImageClicked"/>
+                                    <Grid Grid.Row="0">
+                                           <HorizontalStackLayout Spacing="8"
+                                                                  VerticalOptions="Center">
+                                                  <Label Text="{Binding QuickEditExerciseName}"
+                                                         FontAttributes="Bold"
+                                                         FontSize="16"
+                                                         VerticalOptions="Center"
+                                                         IsVisible="{Binding ShowQuickAddReadOnlySummary}"/>
+                                                  <Entry Text="{Binding Name}"
+                                                         FontAttributes="Bold"
+                                                         FontSize="16"
+                                                         VerticalOptions="Center"
+                                                         HorizontalOptions="FillAndExpand"
+                                                         IsVisible="{Binding ShowQuickAddInlineEditors}"/>
+                                                  <ImageButton Source="info.png"
+                                                               HeightRequest="18"
+                                                               WidthRequest="18"
+                                                               MinimumHeightRequest="18"
+                                                               MinimumWidthRequest="18"
+                                                               Padding="0"
+                                                               BackgroundColor="Transparent"
+                                                               VerticalOptions="Center"
+                                                               IsVisible="{Binding ShowQuickEditExerciseInfo}"
+                                                               Clicked="OnSelectedExerciseImageClicked"/>
+                                           </HorizontalStackLayout>
                                     </Grid>
                                    <Grid Grid.Row="1"
                                          ColumnDefinitions="Auto,Auto,Auto"
@@ -405,22 +396,7 @@
                                                                         Command="{Binding IncreaseRepsCommand}"/>
                                                          </Grid>
                                                    </VerticalStackLayout>
-                                                   <Label Grid.Row="2"
-                                                          Text="{Binding QuickSetProgressText}"
-                                                          FontSize="11"
-                                                          HorizontalTextAlignment="Center"
-                                                          TextColor="{AppThemeBinding Light=#6A7686, Dark=#9BABBE}"
-                                                          IsVisible="{Binding ShowQuickSetProgress}">
-                                                          <Label.Triggers>
-                                                                 <DataTrigger TargetType="Label"
-                                                                              Binding="{Binding IsCompletingSelectedPlanExercise}"
-                                                                              Value="True">
-                                                                        <Setter Property="TextColor"
-                                                                                Value="{AppThemeBinding Light=#DC2626, Dark=#F87171}"/>
-                                                                 </DataTrigger>
-                                                          </Label.Triggers>
-                                                   </Label>
-                                            </Grid>
+                                             </Grid>
                                             <Grid Grid.Column="1"
                                                   RowDefinitions="Auto,Auto,Auto"
                                                   RowSpacing="4"
