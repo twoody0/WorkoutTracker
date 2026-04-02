@@ -177,6 +177,20 @@ public class WorkoutScheduleServiceTests
     }
 
     [TestMethod]
+    public void GetSuggestedNextPlan_ProgressesAtHomeStrengthIntoGymStrengthBuilder()
+    {
+        var currentPlan = new WorkoutPlan("At-Home Strength Builder", "Plan", category: "At-Home Strength");
+        var nextPlan = new WorkoutPlan("Upper/Lower Strength Builder", "Plan", category: "Strength Progression");
+        var service = CreateServiceWithPlans(currentPlan, nextPlan);
+
+        service.AddPlanToWeeklySchedule(currentPlan);
+
+        var suggestion = service.GetSuggestedNextPlan();
+
+        Assert.AreSame(nextPlan, suggestion);
+    }
+
+    [TestMethod]
     public void GetSuggestedNextPlan_ProgressesIntoHighVolumeMuscleBuildingOptions()
     {
         var currentPlan = new WorkoutPlan("Push/Pull/Legs Hypertrophy", "Plan", category: "Muscle Building");

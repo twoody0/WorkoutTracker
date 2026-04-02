@@ -7,24 +7,28 @@ public static class ExerciseInfoCatalog
     private static readonly Dictionary<string, string> Aliases = new(StringComparer.OrdinalIgnoreCase)
     {
         ["Barbell Row"] = "Bent-Over Row",
+        ["Chest Dip"] = "Dip",
         ["Cable Chest Fly"] = "Cable Crossover",
         ["Chest Press Machine"] = "Machine Chest Press",
-        ["Dips"] = "Chest Dip",
+        ["Dips"] = "Dip",
+        ["Assisted Pull-Up"] = "Pull-Up",
         ["Elevated Push-Up"] = "Incline Push-Up",
         ["Face Pulls"] = "Face Pull",
-        ["Rear-Foot Elevated Split Squat"] = "Bulgarian Split Squat"
+        ["Rear-Foot Elevated Split Squat"] = "Bulgarian Split Squat",
+        ["Weighted Pull-Up"] = "Pull-Up"
     };
 
     private static readonly Dictionary<string, ExerciseInfo> ExactInfoMap = new(StringComparer.OrdinalIgnoreCase)
     {
         ["Ab Rollout"] = Create("Builds the abs and teaches you to resist arching through the lower back.", "Start tall on the knees with the wheel under your shoulders.", "Roll forward while keeping the ribs down and hips tucked slightly.", "Stop when your trunk starts to lose position, then pull back to the start."),
         ["Arnold Press"] = Create("Works the shoulders through a long range of motion with help from the triceps.", "Start with the dumbbells in front of your shoulders and palms facing you.", "Rotate the palms out as you press overhead.", "Lower the dumbbells under control and rotate back to the start."),
-        ["Assisted Pull-Up"] = Create("Trains the lats, upper back, and biceps with support from the machine or band.", "Set up with a full grip and a tall chest.", "Pull by driving the elbows down toward your sides.", "Lower to a full stretch without dropping or swinging."),
+        ["Band Pull-Apart"] = Create("Builds the rear shoulders and upper back with a simple band movement.", "Stand tall and hold the band at about shoulder height with soft elbows.", "Pull the hands apart by opening through the upper back instead of shrugging.", "Return slowly until the band loses tension without letting the ribs flare."),
         ["Back Squat"] = Create("Builds the quads, glutes, and trunk strength.", "Set the bar across the upper back, brace, and plant the feet firmly.", "Sit down and slightly back while keeping the whole foot on the floor.", "Drive up through the midfoot and stand tall without letting the chest collapse."),
         ["Barbell Bench Press"] = Create("Works the chest, front shoulders, and triceps.", "Lie on the bench with eyes under the bar and feet planted.", "Lower the bar to the lower chest with the wrists stacked over the forearms.", "Press the bar straight up until the elbows are straight but not slammed."),
         ["Barbell Curl"] = Create("Directly trains the biceps and forearms.", "Stand tall with the bar at arm's length and elbows close to your sides.", "Curl the bar without leaning back or swinging the hips.", "Lower the bar slowly until the arms are straight again."),
         ["Bent-Over Row"] = Create("Targets the lats, upper back, and biceps while challenging your hinge position.", "Hinge at the hips and brace until your torso is steady.", "Row the weight toward the lower ribs or upper stomach.", "Lower it back down without changing your torso angle."),
         ["Bird Dog"] = Create("Builds trunk control and teaches you to move the limbs without losing spinal position.", "Start on hands and knees with the spine neutral.", "Reach one arm and the opposite leg long while keeping the hips level.", "Return slowly and switch sides without rocking."),
+        ["Bodyweight Good Morning"] = Create("Builds the hamstrings and glutes while teaching a clean hip hinge.", "Stand tall with the feet around hip width and brace lightly.", "Push the hips back with a soft knee bend while keeping the spine long.", "Stand back up by driving the hips forward instead of rounding up."),
         ["Bodyweight Squat"] = Create("Builds basic leg strength and reinforces the squat pattern.", "Stand with the feet around shoulder width and brace lightly.", "Sit down between the knees while keeping the heels on the floor.", "Stand back up by pushing the floor away."),
         ["Box Squat"] = Create("Teaches controlled squat depth and a strong drive out of the bottom.", "Set up the box so you can reach it without losing posture.", "Lower under control until you touch the box lightly.", "Stay braced and drive back up without rocking."),
         ["Bulgarian Split Squat"] = Create("Builds the quads and glutes one side at a time.", "Set the back foot on the bench and keep most of your weight on the front leg.", "Lower straight down until the front leg is well loaded.", "Push through the front foot to stand back up."),
@@ -34,7 +38,7 @@ public static class ExerciseInfoCatalog
         ["Cable Triceps Pushdown"] = Create("Builds the triceps through elbow extension.", "Set the elbows by your sides before starting the rep.", "Press the handle down by straightening the elbows.", "Let the handle rise back up under control without the elbows drifting."),
         ["Cable Woodchopper"] = Create("Trains the abs and obliques through controlled rotation.", "Set the handle high or low and brace before you move.", "Rotate through the trunk while the hips stay mostly still.", "Return slowly to the start instead of letting the cable pull you back."),
         ["Calf Raise"] = Create("Targets the calves through a full ankle range of motion.", "Set the balls of the feet on the platform or floor and stay tall.", "Rise straight up onto the toes.", "Lower slowly into a comfortable stretch."),
-        ["Chest Dip"] = Create("Targets the chest, triceps, and front shoulders.", "Support yourself on the bars and lean forward slightly.", "Lower until the shoulders stay in a strong, comfortable position.", "Press back up without bouncing out of the bottom."),
+        ["Dip"] = Create("Builds the chest, triceps, and front shoulders with your bodyweight on parallel bars or sturdy handles.", "Support yourself on the bars with the shoulders set down and the torso braced.", "Lower under control until the shoulders stay in a strong, comfortable position.", "Press back up smoothly without bouncing out of the bottom or losing tension."),
         ["Chest-Supported Row"] = Create("Builds the upper back and lats without asking the lower back to hold the hinge.", "Set the chest firmly on the pad before you pull.", "Row the handles by driving the elbows back.", "Lower under control and keep the chest on the pad."),
         ["Close-Grip Bench Press"] = Create("Builds the triceps while still training the chest and shoulders.", "Set up like a normal bench press with a slightly narrower grip.", "Lower the bar under control to the lower chest.", "Press back up while keeping the elbows tucked and wrists stacked."),
         ["Concentration Curl"] = Create("Trains the biceps with minimal momentum.", "Brace the elbow against the inner thigh or keep it fixed in place.", "Curl the weight up without moving the shoulder.", "Lower slowly until the arm is straight again."),
@@ -57,6 +61,7 @@ public static class ExerciseInfoCatalog
         ["Front Raise"] = Create("Targets the front delts.", "Stand tall with the ribs down and the weights by your thighs.", "Lift the arms forward with control until shoulder height.", "Lower slowly without swinging."),
         ["Front Squat"] = Create("Builds the quads, glutes, and upper-back posture.", "Set the bar on the front rack and lift the elbows high.", "Sit straight down while keeping the torso tall.", "Drive up through the midfoot and keep the elbows up."),
         ["Goblet Squat"] = Create("Builds the legs while teaching a strong squat pattern.", "Hold the weight close to the chest and brace.", "Lower between the knees while keeping the heels down.", "Stand back up tall without tipping forward."),
+        ["Glute Bridge"] = Create("Builds the glutes and hamstrings with a simple floor-based hip extension.", "Lie on your back with the knees bent and feet flat on the floor.", "Brace lightly and drive through the heels until the hips are fully extended.", "Lower back down under control without arching the lower back."),
         ["Hack Squat"] = Create("Loads the quads heavily with machine support.", "Set the feet where you can stay balanced on the platform.", "Lower the sled under control until your depth stays strong.", "Press the sled away without snapping the knees locked."),
         ["Half-Kneeling Shoulder Press"] = Create("Builds the shoulders while adding a balance and core challenge.", "Set one knee down, squeeze the glute on that side, and brace.", "Press the weight straight overhead without leaning away.", "Lower back to shoulder height with control."),
         ["Hammer Curl"] = Create("Builds the biceps and brachialis with a neutral grip.", "Hold the dumbbells with palms facing each other.", "Curl them up without letting the torso rock.", "Lower slowly until the arms are straight."),
@@ -84,6 +89,7 @@ public static class ExerciseInfoCatalog
         ["Pallof Press"] = Create("Builds anti-rotation core strength.", "Stand sideways to the cable or band and brace before moving.", "Press the handle straight out from the chest without turning.", "Bring it back in slowly while keeping the hips and shoulders square."),
         ["Pause Back Squat"] = Create("Builds squat control and strength out of the bottom position.", "Descend into your normal back squat with good tension.", "Pause briefly at the bottom without relaxing.", "Drive up while keeping the brace and bar path steady."),
         ["Pec Deck Fly"] = Create("Isolates the chest through a guided fly pattern.", "Set the seat so the handles line up with the chest.", "Bring the arms together by squeezing the chest.", "Open back up slowly until you feel a controlled stretch."),
+        ["Pike Push-Up"] = Create("Builds the shoulders and triceps with a bodyweight pressing angle.", "Set up with the hands on the floor and hips lifted so the torso angles down toward the hands.", "Lower the head and shoulders toward the floor by bending the elbows under control.", "Press back up while keeping the hips lifted and the trunk braced."),
         ["Plank"] = Create("Builds the abs, glutes, and shoulder stability.", "Set the elbows or hands under the shoulders and straighten the body.", "Brace the abs and squeeze the glutes so the trunk stays flat.", "Hold that straight line until the set ends."),
         ["Plank Knee Drive"] = Create("Builds the abs while the hips move under a stable torso.", "Set a strong plank position with the shoulders stacked over the hands.", "Drive one knee in without rounding or dropping the trunk.", "Return to plank and switch sides under control."),
         ["Preacher Curl"] = Create("Directly targets the biceps with less chance to cheat.", "Set the upper arm against the pad before you start.", "Curl the weight up without lifting the elbow off the pad.", "Lower slowly until the arm is nearly straight."),
@@ -115,8 +121,7 @@ public static class ExerciseInfoCatalog
         ["Tandem Stance Hold"] = Create("Builds balance by narrowing your base of support.", "Stand with one foot directly in front of the other.", "Brace lightly and keep the posture tall.", "Hold steady and breathe without shifting around."),
         ["Trap Bar Deadlift"] = Create("Builds the glutes, hamstrings, quads, and upper back.", "Stand inside the bar, brace, and pull the slack out of the handles.", "Push through the floor and stand tall while keeping the torso tight.", "Lower with control by hinging back down."),
         ["Walking Lunge"] = Create("Builds the quads, glutes, and balance through repeated steps.", "Step forward with control and plant the foot fully.", "Lower until both knees bend comfortably and the torso stays tall.", "Push through the front foot and move smoothly into the next step."),
-        ["Wall Push-Up"] = Create("A very beginner-friendly press for the chest, shoulders, and triceps.", "Place the hands on the wall at about chest height and step back.", "Lower the chest toward the wall as one piece.", "Press away until the arms are straight."),
-        ["Weighted Pull-Up"] = Create("Builds the lats, upper back, and biceps with extra load.", "Set the added weight securely and hang with a full grip.", "Pull the chest up by driving the elbows down.", "Lower to a full hang under control without swinging.")
+        ["Wall Push-Up"] = Create("A very beginner-friendly press for the chest, shoulders, and triceps.", "Place the hands on the wall at about chest height and step back.", "Lower the chest toward the wall as one piece.", "Press away until the arms are straight.")
     };
 
     public static bool HasInfo(string? exerciseName)

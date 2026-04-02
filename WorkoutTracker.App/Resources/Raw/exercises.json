@@ -36,14 +36,6 @@
         "MuscleGroup": "Back"
     },
     {
-        "Name": "Assisted Pull-Up",
-        "MuscleGroup": "Back"
-    },
-    {
-        "Name": "Weighted Pull-Up",
-        "MuscleGroup": "Back"
-    },
-    {
         "Name": "Neutral-Grip Lat Pulldown",
         "MuscleGroup": "Back"
     },
@@ -81,6 +73,10 @@
     },
     {
         "Name": "EZ-Bar Curl",
+        "MuscleGroup": "Biceps"
+    },
+    {
+        "Name": "Pull-Up",
         "MuscleGroup": "Biceps"
     },
     {
@@ -124,7 +120,7 @@
         "MuscleGroup": "Chest"
     },
     {
-        "Name": "Chest Dip",
+        "Name": "Dip",
         "MuscleGroup": "Chest"
     },
     {
@@ -260,6 +256,14 @@
         "MuscleGroup": "Legs"
     },
     {
+        "Name": "Bodyweight Good Morning",
+        "MuscleGroup": "Legs"
+    },
+    {
+        "Name": "Glute Bridge",
+        "MuscleGroup": "Legs"
+    },
+    {
         "Name": "Reverse Lunge",
         "MuscleGroup": "Legs"
     },
@@ -336,6 +340,14 @@
         "MuscleGroup": "Shoulders"
     },
     {
+        "Name": "Band Pull-Apart",
+        "MuscleGroup": "Shoulders"
+    },
+    {
+        "Name": "Pike Push-Up",
+        "MuscleGroup": "Shoulders"
+    },
+    {
         "Name": "Rear Delt Fly",
         "MuscleGroup": "Shoulders"
     },
@@ -357,6 +369,14 @@
     },
     {
         "Name": "Cable Triceps Pushdown",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Push-Up",
+        "MuscleGroup": "Triceps"
+    },
+    {
+        "Name": "Dip",
         "MuscleGroup": "Triceps"
     },
     {

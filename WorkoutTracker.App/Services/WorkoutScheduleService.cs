@@ -112,6 +112,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         var planProgressionMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             ["Beginner Full Body Foundation"] = "Upper/Lower Strength Builder",
+            ["At-Home Strength Builder"] = "Upper/Lower Strength Builder",
             ["Upper/Lower Strength Builder"] = "Push/Pull/Legs Hypertrophy",
             ["Push/Pull/Legs Hypertrophy"] = "Arnold Split Mass Builder",
             ["Arnold Split Mass Builder"] = "Classic Body Part Split",

@@ -339,7 +339,7 @@ public class WorkoutViewModel : BaseViewModel
     public bool HasBodyWeight => _bodyWeightService.HasBodyWeight();
     public bool IsBodyweightExercise => IsBodyweightExerciseName(Name) || IsBodyweightExerciseName(ExerciseSearchQuery);
     public bool IsPerSideDumbbellExercise => CurrentDumbbellLoadMode != DumbbellLoadMode.None;
-    public bool ShowResistanceAdjustment => IsBodyweightExercise && HasBodyWeight && !IsZeroLoadOnlyExercise(QuickEditExerciseName);
+    public bool ShowResistanceAdjustment => HasBodyWeight && SupportsBodyweightResistanceAdjustment(QuickEditExerciseName);
     public bool ShowNoWeightStrengthInput => ShowStrengthFields && IsZeroLoadOnlyExercise(QuickEditExerciseName);
     public bool ShowStandardWeightInput => !ShowResistanceAdjustment && !ShowNoWeightStrengthInput;
     public bool ShowDumbbellWeightHelper => ShowStandardWeightInput && CurrentDumbbellLoadMode != DumbbellLoadMode.None;
@@ -2368,13 +2368,16 @@ public class WorkoutViewModel : BaseViewModel
                normalized.Contains("chin up") ||
                normalized.Contains("push-up") ||
                normalized.Contains("push up") ||
+               normalized.Contains("band pull-apart") ||
                normalized.Contains("dip") ||
                normalized.Contains("bodyweight") ||
                normalized.Contains("wall push-up") ||
                normalized.Contains("incline push-up") ||
                normalized.Contains("elevated push-up") ||
+               normalized.Contains("pike push-up") ||
                normalized.Contains("step-up") ||
                normalized.Contains("step up") ||
+               normalized.Contains("glute bridge") ||
                normalized.Contains("dead bug") ||
                normalized.Contains("bird dog") ||
                normalized.Contains("sit-to-stand") ||
@@ -2405,7 +2408,12 @@ public class WorkoutViewModel : BaseViewModel
                normalized.Contains("leg raise") ||
                normalized.Contains("hollow hold") ||
                normalized.Contains("mountain climber") ||
+               normalized.Contains("pallof press") ||
+               normalized.Contains("resistance band row") ||
+               normalized.Contains("hip hinge drill") ||
                normalized.Contains("bodyweight squat") ||
+               normalized.Contains("glute bridge") ||
+               normalized.Contains("good morning") ||
                normalized.Contains("air squat") ||
                normalized.Contains("walking lunge") ||
                normalized.Contains("bodyweight lunge") ||
@@ -2432,12 +2440,47 @@ public class WorkoutViewModel : BaseViewModel
                normalized.Contains("flutter kick") ||
                normalized.Contains("hollow hold") ||
                normalized.Contains("mountain climber") ||
+               normalized.Contains("wall push-up") ||
+               normalized.Contains("incline push-up") ||
+               normalized.Contains("elevated push-up") ||
+               normalized.Contains("band pull-apart") ||
+               normalized.Contains("pallof press") ||
+               normalized.Contains("resistance band row") ||
+               normalized.Contains("hip hinge drill") ||
+               normalized.Contains("bodyweight squat") ||
+               normalized.Contains("air squat") ||
+               normalized.Contains("reverse lunge") ||
+               normalized.Contains("walking lunge") ||
+               normalized.Contains("bodyweight lunge") ||
+               normalized.Contains("supported split squat") ||
+               normalized.Contains("step-up") ||
+               normalized.Contains("step up") ||
+               normalized.Contains("sit-to-stand") ||
+               normalized.Contains("sit to stand") ||
+               normalized.Contains("glute bridge") ||
+               normalized.Contains("good morning") ||
+               normalized.Contains("pike push-up") ||
                normalized.Contains("balance hold") ||
                normalized.Contains("stance hold") ||
                normalized.Contains("heel-to-toe walk") ||
                normalized.Contains("heel to toe walk") ||
                normalized.Contains("jumping jack") ||
                normalized.Contains("burpee");
+    }
+
+    private static bool SupportsBodyweightResistanceAdjustment(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return false;
+        }
+
+        var normalized = name.Trim().ToLowerInvariant();
+        return (normalized.Contains("pull-up") ||
+                normalized.Contains("pull up") ||
+                normalized.Contains("chin-up") ||
+                normalized.Contains("chin up") ||
+                normalized.Contains("dip"));
     }
 
     private DumbbellLoadMode CurrentDumbbellLoadMode => GetDumbbellLoadMode(Name, ExerciseSearchQuery);
