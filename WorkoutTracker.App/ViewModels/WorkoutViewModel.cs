@@ -894,6 +894,16 @@ public class WorkoutViewModel : BaseViewModel
         ApplyWorkoutTemplate(defaultRecommendation, collapseForQuickAdd: true);
     }
 
+    public void RestoreSelectedRecommendation(WorkoutRecommendation? recommendation)
+    {
+        if (recommendation == null || !RecommendedPlanWorkouts.Contains(recommendation))
+        {
+            return;
+        }
+
+        SetSelectedRecommendation(recommendation);
+    }
+
     private async Task CheckForExistingWorkouts()
     {
         await EnsureWorkoutHistoryFreshAsync(force: true);

@@ -39,7 +39,10 @@ public partial class WorkoutPage : ContentPage
         {
             await vm.EnsureWorkoutHistoryFreshAsync();
             vm.EnsurePlanRecommendationsFresh();
-            EnsureDefaultRecommendationSelected();
+            if (vm.SelectedRecommendationItem == null)
+            {
+                EnsureDefaultRecommendationSelected();
+            }
         }
 
         UpdateRecommendationsHeight();
@@ -163,7 +166,13 @@ public partial class WorkoutPage : ContentPage
     {
         if (BindingContext is WorkoutViewModel vm)
         {
+            var selectedRecommendation = vm.SelectedRecommendationItem;
             await ShowExerciseImageAsync(vm.QuickEditExerciseName);
+
+            if (vm.SelectedRecommendationItem == null && !vm.IsManualWorkoutEntryActive)
+            {
+                vm.RestoreSelectedRecommendation(selectedRecommendation);
+            }
         }
     }
 
@@ -283,6 +292,11 @@ public partial class WorkoutPage : ContentPage
     private void EnsureDefaultRecommendationSelected()
     {
         if (BindingContext is not WorkoutViewModel vm)
+        {
+            return;
+        }
+
+        if (vm.SelectedRecommendationItem != null)
         {
             return;
         }
