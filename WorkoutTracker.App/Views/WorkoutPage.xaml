@@ -1217,16 +1217,23 @@
                             </VerticalStackLayout>
                      </VerticalStackLayout>
 
-                     <Button Text="Add Workout"
-                             Clicked="OnAddWorkoutClicked"
-                             IsEnabled="{Binding CanAddWorkout}"
-                             IsVisible="{Binding ShowWorkoutEditor}"
-                             HorizontalOptions="Center"/>
-                     <Button
-                            Text="View Workouts"
-                            Command="{Binding NavigateToViewWorkoutsCommand}"
-                            IsVisible="{Binding HasWorkouts}"
-                            HorizontalOptions="Center"/>
+                     <VerticalStackLayout Spacing="8"
+                                          HorizontalOptions="Center"
+                                          IsVisible="{Binding ShowWorkoutEditor}">
+                            <Button Text="Add Workout"
+                                    Clicked="OnAddWorkoutClicked"
+                                    IsEnabled="{Binding CanAddWorkout}"/>
+                            <HorizontalStackLayout Spacing="8"
+                                                   HorizontalOptions="Center"
+                                                   IsVisible="{Binding ShowStrengthFields}">
+                                   <CheckBox IsChecked="{Binding IsWarmupSetSelected}"
+                                             IsEnabled="{Binding CanSaveWarmupSet}"
+                                             VerticalOptions="Center"/>
+                                   <Label Text="Warmup Set"
+                                          VerticalOptions="Center"
+                                          TextColor="{AppThemeBinding Light=#475569, Dark=#CBD5E1}"/>
+                            </HorizontalStackLayout>
+                     </VerticalStackLayout>
               </VerticalStackLayout>
        </ScrollView>
 </ContentPage>

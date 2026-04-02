@@ -54,6 +54,7 @@ public sealed class WorkoutTrackerDatabase
                 Type INTEGER NOT NULL,
                 Day INTEGER NOT NULL,
                 PlanWeekNumber INTEGER NULL,
+                IsWarmup INTEGER NOT NULL DEFAULT 0,
                 FOREIGN KEY (PlanName) REFERENCES CustomWorkoutPlans(Name) ON DELETE CASCADE
             );
 
@@ -84,7 +85,8 @@ public sealed class WorkoutTrackerDatabase
                 DistanceMiles REAL NOT NULL,
                 Type INTEGER NOT NULL,
                 Day INTEGER NOT NULL,
-                PlanWeekNumber INTEGER NULL
+                PlanWeekNumber INTEGER NULL,
+                IsWarmup INTEGER NOT NULL DEFAULT 0
             );
 
             CREATE TABLE IF NOT EXISTS WorkoutHistory (
@@ -106,7 +108,8 @@ public sealed class WorkoutTrackerDatabase
                 DistanceMiles REAL NOT NULL,
                 Type INTEGER NOT NULL,
                 Day INTEGER NOT NULL,
-                PlanWeekNumber INTEGER NULL
+                PlanWeekNumber INTEGER NULL,
+                IsWarmup INTEGER NOT NULL DEFAULT 0
             );
 
             CREATE TABLE IF NOT EXISTS AppSettings (
@@ -120,14 +123,17 @@ public sealed class WorkoutTrackerDatabase
         EnsureColumnExists(connection, "CustomWorkoutPlanWorkouts", "MaxReps", "INTEGER NULL");
         EnsureColumnExists(connection, "CustomWorkoutPlanWorkouts", "TargetRpe", "REAL NULL");
         EnsureColumnExists(connection, "CustomWorkoutPlanWorkouts", "TargetRestRange", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumnExists(connection, "CustomWorkoutPlanWorkouts", "IsWarmup", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumnExists(connection, "ActivePlanScheduledWorkouts", "MinReps", "INTEGER NULL");
         EnsureColumnExists(connection, "ActivePlanScheduledWorkouts", "MaxReps", "INTEGER NULL");
         EnsureColumnExists(connection, "ActivePlanScheduledWorkouts", "TargetRpe", "REAL NULL");
         EnsureColumnExists(connection, "ActivePlanScheduledWorkouts", "TargetRestRange", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumnExists(connection, "ActivePlanScheduledWorkouts", "IsWarmup", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumnExists(connection, "WorkoutHistory", "MinReps", "INTEGER NULL");
         EnsureColumnExists(connection, "WorkoutHistory", "MaxReps", "INTEGER NULL");
         EnsureColumnExists(connection, "WorkoutHistory", "TargetRpe", "REAL NULL");
         EnsureColumnExists(connection, "WorkoutHistory", "TargetRestRange", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumnExists(connection, "WorkoutHistory", "IsWarmup", "INTEGER NOT NULL DEFAULT 0");
     }
 
     public SqliteConnection CreateConnection()

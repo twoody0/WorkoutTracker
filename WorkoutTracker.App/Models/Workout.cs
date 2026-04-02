@@ -29,6 +29,7 @@ public class Workout
     public WorkoutType Type { get; set; }
     public DayOfWeek Day { get; set; }
     public int? PlanWeekNumber { get; set; }
+    public bool IsWarmup { get; set; }
     public bool HasSteps => Steps > 0;
     public bool HasDuration => DurationMinutes > 0;
     public bool HasDistance => DistanceMiles > 0;

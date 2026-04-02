@@ -170,7 +170,8 @@ public class WorkoutScheduleService : IWorkoutScheduleService
             Steps = workout.Steps,
             DurationMinutes = workout.DurationMinutes,
             DistanceMiles = workout.DistanceMiles,
-            PlanWeekNumber = workout.PlanWeekNumber
+            PlanWeekNumber = workout.PlanWeekNumber,
+            IsWarmup = workout.IsWarmup
         };
     }
 
@@ -264,7 +265,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         using var workoutsCommand = connection.CreateCommand();
         workoutsCommand.CommandText =
             """
-            SELECT Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber
+            SELECT Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber, IsWarmup
             FROM ActivePlanScheduledWorkouts
             ORDER BY Id;
             """;
@@ -410,8 +411,8 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         command.CommandText =
             """
             INSERT INTO ActivePlanScheduledWorkouts
-            (Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber)
-            VALUES ($name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $minReps, $maxReps, $targetRpe, $targetRestRange, $startTime, $endTime, $steps, $durationMinutes, $distanceMiles, $type, $day, $planWeekNumber);
+            (Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber, IsWarmup)
+            VALUES ($name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $minReps, $maxReps, $targetRpe, $targetRestRange, $startTime, $endTime, $steps, $durationMinutes, $distanceMiles, $type, $day, $planWeekNumber, $isWarmup);
             """;
         WorkoutPlanService.AddWorkoutParameters(command, workout);
         command.ExecuteNonQuery();

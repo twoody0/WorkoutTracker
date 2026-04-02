@@ -868,7 +868,7 @@ namespace WorkoutTracker.Services
                 SELECT p.Name, p.Description, p.Category, p.DurationInWeeks, p.IsCustom,
                        w.Name, w.MuscleGroup, w.GymLocation, w.Weight, w.Reps, w.Sets, w.MinReps, w.MaxReps, w.TargetRpe, w.TargetRestRange,
                        w.StartTime, w.EndTime, w.Steps, w.DurationMinutes, w.DistanceMiles,
-                       w.Type, w.Day, w.PlanWeekNumber
+                       w.Type, w.Day, w.PlanWeekNumber, w.IsWarmup
                 FROM CustomWorkoutPlans p
                 LEFT JOIN CustomWorkoutPlanWorkouts w ON w.PlanName = p.Name
                 ORDER BY p.Name, w.Id;
@@ -951,13 +951,13 @@ namespace WorkoutTracker.Services
             command.CommandText = tableName == "CustomWorkoutPlanWorkouts"
                 ? $"""
                    INSERT INTO {tableName}
-                   (PlanName, Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber)
-                   VALUES ($planName, $name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $minReps, $maxReps, $targetRpe, $targetRestRange, $startTime, $endTime, $steps, $durationMinutes, $distanceMiles, $type, $day, $planWeekNumber);
+                   (PlanName, Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber, IsWarmup)
+                   VALUES ($planName, $name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $minReps, $maxReps, $targetRpe, $targetRestRange, $startTime, $endTime, $steps, $durationMinutes, $distanceMiles, $type, $day, $planWeekNumber, $isWarmup);
                    """
                 : $"""
                    INSERT INTO {tableName}
-                   (Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber)
-                   VALUES ($name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $minReps, $maxReps, $targetRpe, $targetRestRange, $startTime, $endTime, $steps, $durationMinutes, $distanceMiles, $type, $day, $planWeekNumber);
+                   (Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber, IsWarmup)
+                   VALUES ($name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $minReps, $maxReps, $targetRpe, $targetRestRange, $startTime, $endTime, $steps, $durationMinutes, $distanceMiles, $type, $day, $planWeekNumber, $isWarmup);
                    """;
 
             if (planName != null)
@@ -989,6 +989,7 @@ namespace WorkoutTracker.Services
             command.Parameters.AddWithValue("$type", (int)workout.Type);
             command.Parameters.AddWithValue("$day", (int)workout.Day);
             command.Parameters.AddWithValue("$planWeekNumber", workout.PlanWeekNumber.HasValue ? workout.PlanWeekNumber.Value : DBNull.Value);
+            command.Parameters.AddWithValue("$isWarmup", workout.IsWarmup ? 1 : 0);
         }
 
         internal static Workout ReadWorkout(SqliteDataReader reader, int offset)
@@ -1012,7 +1013,8 @@ namespace WorkoutTracker.Services
                 Steps = reader.GetInt32(offset + 12),
                 DurationMinutes = reader.GetInt32(offset + 13),
                 DistanceMiles = reader.GetDouble(offset + 14),
-                PlanWeekNumber = reader.IsDBNull(offset + 17) ? null : reader.GetInt32(offset + 17)
+                PlanWeekNumber = reader.IsDBNull(offset + 17) ? null : reader.GetInt32(offset + 17),
+                IsWarmup = !reader.IsDBNull(offset + 18) && reader.GetInt32(offset + 18) != 0
             };
         }
     }

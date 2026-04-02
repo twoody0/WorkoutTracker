@@ -89,6 +89,7 @@ public class WorkoutViewModel : BaseViewModel
     private bool _hasScheduledPlanWorkoutsToday;
     private WorkoutRecommendation? _selectedRecommendation;
     private bool _showRpeHelp;
+    private bool _isWarmupSetSelected;
     private CancellationTokenSource? _exerciseSuggestionDebounceCts;
     private int _exerciseSuggestionRequestVersion;
     private long _lastLoadedWorkoutChangeVersion = -1;
@@ -382,6 +383,12 @@ public class WorkoutViewModel : BaseViewModel
             return parsedWeight > 0 || IsZeroWeightAllowedExercise(Name) || IsZeroWeightAllowedExercise(ExerciseSearchQuery);
         }
     }
+    public bool CanSaveWarmupSet => !IsManualCardio && CanAddWorkout;
+    public bool IsWarmupSetSelected
+    {
+        get => _isWarmupSetSelected;
+        set => SetProperty(ref _isWarmupSetSelected, value);
+    }
     public string BaseBodyWeightSummary => HasBodyWeight
         ? $"Base body weight: {_bodyWeightService.GetBodyWeight():N0} lb"
         : "Set your body weight in Profile to auto-fill bodyweight lifts.";
@@ -479,6 +486,7 @@ public class WorkoutViewModel : BaseViewModel
                 _ = RefreshExerciseOptionsAsync();
                 _ = UpdateExerciseSuggestionsAsync(showAllForCurrentGroup: IsNameFieldFocused);
                 OnPropertyChanged(nameof(CanAddWorkout));
+                OnPropertyChanged(nameof(CanSaveWarmupSet));
             }
         }
     }
@@ -495,6 +503,7 @@ public class WorkoutViewModel : BaseViewModel
                 NotifyBodyweightStateChanged();
                 NotifyExerciseImageStateChanged();
                 OnPropertyChanged(nameof(CanAddWorkout));
+                OnPropertyChanged(nameof(CanSaveWarmupSet));
                 if (!_suppressSuggestionRefresh)
                 {
                     _ = UpdateExerciseSuggestionsAsync();
@@ -523,6 +532,7 @@ public class WorkoutViewModel : BaseViewModel
                 NotifyBodyweightStateChanged();
                 SyncSelectedRecommendationState();
                 OnPropertyChanged(nameof(CanAddWorkout));
+                OnPropertyChanged(nameof(CanSaveWarmupSet));
             }
         }
     }
@@ -536,6 +546,7 @@ public class WorkoutViewModel : BaseViewModel
             if (SetProperty(ref _durationMinutesText, sanitized))
             {
                 OnPropertyChanged(nameof(CanAddWorkout));
+                OnPropertyChanged(nameof(CanSaveWarmupSet));
             }
         }
     }
@@ -549,6 +560,7 @@ public class WorkoutViewModel : BaseViewModel
             if (SetProperty(ref _distanceMilesText, sanitized))
             {
                 OnPropertyChanged(nameof(CanAddWorkout));
+                OnPropertyChanged(nameof(CanSaveWarmupSet));
             }
         }
     }
@@ -562,6 +574,7 @@ public class WorkoutViewModel : BaseViewModel
             if (SetProperty(ref _stepsText, sanitized))
             {
                 OnPropertyChanged(nameof(CanAddWorkout));
+                OnPropertyChanged(nameof(CanSaveWarmupSet));
             }
         }
     }
@@ -584,6 +597,7 @@ public class WorkoutViewModel : BaseViewModel
                 OnPropertyChanged(nameof(ShowWeightTotalPreview));
                 SyncSelectedRecommendationState();
                 OnPropertyChanged(nameof(CanAddWorkout));
+                OnPropertyChanged(nameof(CanSaveWarmupSet));
             }
         }
     }
@@ -599,6 +613,7 @@ public class WorkoutViewModel : BaseViewModel
                 SyncSelectedRecommendationState();
                 OnPropertyChanged(nameof(CurrentRepsSummary));
                 OnPropertyChanged(nameof(CanAddWorkout));
+                OnPropertyChanged(nameof(CanSaveWarmupSet));
             }
         }
     }
@@ -613,6 +628,7 @@ public class WorkoutViewModel : BaseViewModel
             {
                 SyncSelectedRecommendationState();
                 OnPropertyChanged(nameof(CanAddWorkout));
+                OnPropertyChanged(nameof(CanSaveWarmupSet));
             }
         }
     }
@@ -679,10 +695,6 @@ public class WorkoutViewModel : BaseViewModel
         }
     });
 
-    public ICommand NavigateToViewWorkoutsCommand => new Command(async () =>
-    {
-        await Shell.Current.Navigation.PushAsync(App.Services.GetRequiredService<ViewWorkoutPage>());
-    });
     public ICommand IncreaseSetsCommand => new Command(() => AdjustSets(1));
     public ICommand DecreaseSetsCommand => new Command(() => AdjustSets(-1));
     public ICommand IncreaseRepsCommand => new Command(() => AdjustReps(1));
@@ -747,13 +759,22 @@ public class WorkoutViewModel : BaseViewModel
 
     private async Task AddWorkoutAsync()
     {
+        var saved = await SaveCurrentWorkoutAsync(isWarmup: IsWarmupSetSelected);
+        if (saved)
+        {
+            IsWarmupSetSelected = false;
+        }
+    }
+
+    private async Task<bool> SaveCurrentWorkoutAsync(bool isWarmup)
+    {
         Name = Name;
         ExerciseSearchQuery = ExerciseSearchQuery;
 
         if (string.IsNullOrWhiteSpace(Name))
         {
             await ShowError(IsManualCardio ? "Please select a cardio workout." : "Please select an exercise.");
-            return;
+            return false;
         }
 
         if (IsManualCardio)
@@ -765,7 +786,7 @@ public class WorkoutViewModel : BaseViewModel
             if (parsedDurationMinutes <= 0 && parsedDistanceMiles <= 0 && parsedSteps <= 0)
             {
                 await ShowError("Please enter time, distance, or steps for this cardio workout.");
-                return;
+                return false;
             }
 
             var cardioWorkout = new Workout(
@@ -786,25 +807,25 @@ public class WorkoutViewModel : BaseViewModel
             };
 
             await SaveWorkoutAsync(cardioWorkout);
-            return;
+            return true;
         }
 
         if (string.IsNullOrWhiteSpace(SelectedMuscleGroup))
         {
             await ShowError("Please select a muscle group.");
-            return;
+            return false;
         }
 
         if (string.IsNullOrWhiteSpace(Reps))
         {
             await ShowError("Please enter the number of reps.");
-            return;
+            return false;
         }
 
         if (string.IsNullOrWhiteSpace(Sets))
         {
             await ShowError("Please enter the number of sets.");
-            return;
+            return false;
         }
 
         if (string.IsNullOrWhiteSpace(Weight))
@@ -819,13 +840,13 @@ public class WorkoutViewModel : BaseViewModel
         if (parsedReps <= 0)
         {
             await ShowError("Please enter reps greater than 0.");
-            return;
+            return false;
         }
 
         if (parsedSets <= 0)
         {
             await ShowError("Please enter sets greater than 0.");
-            return;
+            return false;
         }
 
         if (ShowResistanceAdjustment)
@@ -836,7 +857,7 @@ public class WorkoutViewModel : BaseViewModel
         else if (parsedWeight <= 0 && !IsZeroWeightAllowedExercise(Name) && !IsZeroWeightAllowedExercise(ExerciseSearchQuery))
         {
             await ShowError("Please enter a weight greater than 0 for this exercise.");
-            return;
+            return false;
         }
 
         if (ShowStandardWeightInput && CurrentDumbbellLoadMode != DumbbellLoadMode.None)
@@ -860,14 +881,17 @@ public class WorkoutViewModel : BaseViewModel
             MaxReps = _plannedMaxReps,
             TargetRpe = _plannedTargetRpe,
             TargetRestRange = _plannedTargetRestRange,
-            PlanWeekNumber = _selectedRecommendation?.Workout.PlanWeekNumber
+            PlanWeekNumber = _selectedRecommendation?.Workout.PlanWeekNumber,
+            IsWarmup = isWarmup
         };
 
-        await SaveWorkoutAsync(strengthWorkout);
+        await SaveWorkoutAsync(strengthWorkout, restoreRecommendationAfterSave: isWarmup && _selectedRecommendation != null);
+        return true;
     }
 
-    private async Task SaveWorkoutAsync(Workout workout)
+    private async Task SaveWorkoutAsync(Workout workout, bool restoreRecommendationAfterSave = false)
     {
+        var selectedRecommendation = _selectedRecommendation;
         await _workoutService.AddWorkout(workout);
         _workoutHistory.Add(workout);
         HasWorkouts = true;
@@ -881,6 +905,21 @@ public class WorkoutViewModel : BaseViewModel
             DurationMinutesText = string.Empty;
             DistanceMilesText = string.Empty;
             StepsText = string.Empty;
+            return;
+        }
+
+        if (workout.IsWarmup && restoreRecommendationAfterSave && selectedRecommendation != null)
+        {
+            var restoredRecommendation = RecommendedPlanWorkouts.FirstOrDefault(recommendation =>
+                IsTemplateMatch(recommendation.Workout, selectedRecommendation.Workout));
+
+            if (restoredRecommendation != null)
+            {
+                ApplyWorkoutTemplate(restoredRecommendation, collapseForQuickAdd: true);
+                return;
+            }
+
+            ApplyWorkoutTemplate(selectedRecommendation.Workout, GetLastUsedWeight(selectedRecommendation.Workout), collapseForQuickAdd: true);
             return;
         }
 
@@ -939,7 +978,8 @@ public class WorkoutViewModel : BaseViewModel
             Steps = workout.Steps,
             DurationMinutes = workout.DurationMinutes,
             DistanceMiles = workout.DistanceMiles,
-            PlanWeekNumber = workout.PlanWeekNumber
+            PlanWeekNumber = workout.PlanWeekNumber,
+            IsWarmup = workout.IsWarmup
         };
     }
 
@@ -1083,6 +1123,7 @@ public class WorkoutViewModel : BaseViewModel
         return _workoutHistory
             .Where(workout =>
                 workout.StartTime.Date == DateTime.Today &&
+                !workout.IsWarmup &&
                 plannedWorkoutKeys.Contains(GetWorkoutKey(workout)))
             .GroupBy(GetWorkoutKey, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
@@ -1245,6 +1286,21 @@ public class WorkoutViewModel : BaseViewModel
             return null;
         }
 
+        var lastWorkingSetWeight = _workoutHistory
+            .Where(historyWorkout => !historyWorkout.IsWarmup)
+            .Where(historyWorkout =>
+                historyWorkout.Type == WorkoutType.WeightLifting &&
+                historyWorkout.Weight > 0 &&
+                string.Equals(historyWorkout.Name, workout.Name, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(historyWorkout => historyWorkout.StartTime)
+            .Select(historyWorkout => (double?)historyWorkout.Weight)
+            .FirstOrDefault();
+
+        if (lastWorkingSetWeight.HasValue)
+        {
+            return lastWorkingSetWeight;
+        }
+
         return _workoutHistory
             .Where(historyWorkout =>
                 historyWorkout.Type == WorkoutType.WeightLifting &&
@@ -1260,6 +1316,21 @@ public class WorkoutViewModel : BaseViewModel
         if (string.IsNullOrWhiteSpace(exerciseName))
         {
             return null;
+        }
+
+        var lastWorkingSetWeight = _workoutHistory
+            .Where(historyWorkout => !historyWorkout.IsWarmup)
+            .Where(historyWorkout =>
+                historyWorkout.Type == WorkoutType.WeightLifting &&
+                historyWorkout.Weight > 0 &&
+                string.Equals(historyWorkout.Name, exerciseName, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(historyWorkout => historyWorkout.StartTime)
+            .Select(historyWorkout => (double?)historyWorkout.Weight)
+            .FirstOrDefault();
+
+        if (lastWorkingSetWeight.HasValue)
+        {
+            return lastWorkingSetWeight;
         }
 
         return _workoutHistory
@@ -1408,6 +1479,7 @@ public class WorkoutViewModel : BaseViewModel
         OnPropertyChanged(nameof(EffectiveLoadSummary));
         OnPropertyChanged(nameof(ResistanceAdjustmentDisplay));
         OnPropertyChanged(nameof(CanAddWorkout));
+        OnPropertyChanged(nameof(CanSaveWarmupSet));
     }
 
     private void NotifyManualWorkoutModeChanged()
@@ -1421,6 +1493,7 @@ public class WorkoutViewModel : BaseViewModel
         OnPropertyChanged(nameof(ShowCardioFields));
         OnPropertyChanged(nameof(ExercisePickerTitle));
         OnPropertyChanged(nameof(CanAddWorkout));
+        OnPropertyChanged(nameof(CanSaveWarmupSet));
     }
 
     private async Task RefreshExerciseOptionsAsync()

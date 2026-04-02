@@ -71,7 +71,7 @@ public class WorkoutService : IWorkoutService
         using var command = connection.CreateCommand();
         command.CommandText =
             """
-            SELECT Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber
+            SELECT Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber, IsWarmup
             FROM WorkoutHistory
             ORDER BY StartTime, Id;
             """;
@@ -106,8 +106,8 @@ public class WorkoutService : IWorkoutService
             command.CommandText =
                 """
                 INSERT INTO WorkoutHistory
-                (Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber)
-                VALUES ($name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $minReps, $maxReps, $targetRpe, $targetRestRange, $startTime, $endTime, $steps, $durationMinutes, $distanceMiles, $type, $day, $planWeekNumber);
+                (Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DistanceMiles, Type, Day, PlanWeekNumber, IsWarmup)
+                VALUES ($name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $minReps, $maxReps, $targetRpe, $targetRestRange, $startTime, $endTime, $steps, $durationMinutes, $distanceMiles, $type, $day, $planWeekNumber, $isWarmup);
                 """;
             WorkoutPlanService.AddWorkoutParameters(command, workout);
             command.ExecuteNonQuery();
