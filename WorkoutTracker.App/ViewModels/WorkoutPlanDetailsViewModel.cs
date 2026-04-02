@@ -236,7 +236,18 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
                 return; // User cancelled
         }
 
-        _scheduleService.AddPlanToWeeklySchedule(SelectedPlan);
+        var alignFirstWorkoutDayToToday = false;
+        if (TryGetFirstWorkoutDay(SelectedPlan, out var firstWorkoutDay) &&
+            firstWorkoutDay != DateTime.Today.DayOfWeek)
+        {
+            alignFirstWorkoutDayToToday = await page.DisplayAlert(
+                "Start Plan Timing",
+                $"'{SelectedPlan.Name}' normally opens on {firstWorkoutDay}, and today is {DateTime.Today:dddd, MMMM d}.\n\nDo you want day 1 of the plan to start today, or keep the plan on its normal weekly schedule?",
+                "Start Day 1 Today",
+                "Keep Schedule");
+        }
+
+        _scheduleService.AddPlanToWeeklySchedule(SelectedPlan, alignFirstWorkoutDayToToday);
 
         // Refresh WorkoutPlansPage
         var parentViewModel = App.Services.GetRequiredService<WorkoutPlanViewModel>();
@@ -256,5 +267,27 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
         // Go forward to WeeklySchedulePage and remove WorkoutPlanDetailsPage
         await Shell.Current.Navigation.PopAsync();
     }
+
+    private static bool TryGetFirstWorkoutDay(WorkoutPlan plan, out DayOfWeek firstWorkoutDay)
+    {
+        var firstDay = plan.GetWorkoutsForWeek(1)
+            .Select(workout => workout.Day)
+            .Distinct()
+            .OrderBy(GetMondayFirstDayIndex)
+            .Cast<DayOfWeek?>()
+            .FirstOrDefault();
+
+        if (!firstDay.HasValue)
+        {
+            firstWorkoutDay = default;
+            return false;
+        }
+
+        firstWorkoutDay = firstDay.Value;
+        return true;
+    }
+
+    private static int GetMondayFirstDayIndex(DayOfWeek day)
+        => day == DayOfWeek.Sunday ? 6 : ((int)day - 1);
 
 }

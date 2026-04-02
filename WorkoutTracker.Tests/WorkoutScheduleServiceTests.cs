@@ -73,6 +73,28 @@ public class WorkoutScheduleServiceTests
     }
 
     [TestMethod]
+    public void AddPlanToWeeklySchedule_AlignsFirstWorkoutDayToToday_WhenRequested()
+    {
+        var service = CreateServiceWithPlans();
+        var plan = new WorkoutPlan("Shifted Plan", "Plan for tests")
+        {
+            Workouts =
+            [
+                new Workout("Day 1 Bench", 185, 8, 4, "Chest", DayOfWeek.Monday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym"),
+                new Workout("Day 2 Row", 135, 10, 3, "Back", DayOfWeek.Wednesday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym")
+            ]
+        };
+
+        service.AddPlanToWeeklySchedule(plan, alignFirstWorkoutDayToToday: true);
+
+        var dayOffset = GetDayOffsetFromMonday(DateTime.Today.DayOfWeek);
+        var shiftedSecondDay = ShiftDayOfWeek(DayOfWeek.Wednesday, dayOffset);
+
+        Assert.AreEqual("Day 1 Bench", service.GetWeeklySchedule()[DateTime.Today.DayOfWeek].Single().Name);
+        Assert.AreEqual("Day 2 Row", service.GetWeeklySchedule()[shiftedSecondDay].Single().Name);
+    }
+
+    [TestMethod]
     public void GetActivePlanWorkoutsForDay_ReturnsPlanWorkoutsForRequestedDay()
     {
         var service = CreateServiceWithPlans();
@@ -93,6 +115,27 @@ public class WorkoutScheduleServiceTests
         Assert.AreEqual("Bench Press", mondayWorkouts[0].Name);
         Assert.AreEqual(DayOfWeek.Monday, mondayWorkouts[0].Day);
         Assert.AreNotSame(plan.Workouts[0], mondayWorkouts[0]);
+    }
+
+    [TestMethod]
+    public void GetActivePlanWorkoutsForDay_UsesShiftedDaysWhenPlanStartsToday()
+    {
+        var service = CreateServiceWithPlans();
+        var plan = new WorkoutPlan("Shifted Plan", "Plan for tests")
+        {
+            Workouts =
+            [
+                new Workout("Day 1 Bench", 185, 8, 4, "Chest", DayOfWeek.Monday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym")
+            ]
+        };
+
+        service.AddPlanToWeeklySchedule(plan, alignFirstWorkoutDayToToday: true);
+
+        var todaysWorkouts = service.GetActivePlanWorkoutsForDay(DateTime.Today.DayOfWeek);
+
+        Assert.AreEqual(1, todaysWorkouts.Count);
+        Assert.AreEqual("Day 1 Bench", todaysWorkouts[0].Name);
+        Assert.AreEqual(DateTime.Today.DayOfWeek, todaysWorkouts[0].Day);
     }
 
     [TestMethod]
@@ -324,6 +367,22 @@ public class WorkoutScheduleServiceTests
         public void SavePlans()
         {
         }
+    }
+
+    private static int GetDayOffsetFromMonday(DayOfWeek day)
+    {
+        var desiredIndex = GetMondayFirstDayIndex(day);
+        var mondayIndex = GetMondayFirstDayIndex(DayOfWeek.Monday);
+        return desiredIndex - mondayIndex;
+    }
+
+    private static int GetMondayFirstDayIndex(DayOfWeek day)
+        => day == DayOfWeek.Sunday ? 6 : ((int)day - 1);
+
+    private static DayOfWeek ShiftDayOfWeek(DayOfWeek day, int offset)
+    {
+        var shiftedIndex = (((int)day + offset) % 7 + 7) % 7;
+        return (DayOfWeek)shiftedIndex;
     }
 
     private static void SetPrivateAutoProperty<T>(object target, string propertyName, T value)

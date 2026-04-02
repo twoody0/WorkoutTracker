@@ -10,6 +10,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
     private readonly WorkoutTrackerDatabase _database;
     private readonly string _legacyScheduleStateFilePath;
     private int? _activePlanScheduleWeekNumber;
+    private int _activePlanDayOffset;
     private int _scheduleVersion;
 
     public WorkoutPlan? ActivePlan { get; private set; }
@@ -42,11 +43,14 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         RestoreState();
     }
 
-    public void AddPlanToWeeklySchedule(WorkoutPlan plan)
+    public void AddPlanToWeeklySchedule(WorkoutPlan plan, bool alignFirstWorkoutDayToToday = false)
     {
         ActivePlan = plan;
         ActivePlanStartedOn = DateTime.Today;
         ActivePlanEndsOn = DateTime.Today.AddDays((plan.DurationInWeeks * 7) - 1);
+        _activePlanDayOffset = alignFirstWorkoutDayToToday
+            ? GetDayOffsetFromFirstWorkoutDay(plan, DateTime.Today.DayOfWeek)
+            : 0;
         PopulateWeeklyScheduleForActivePlanWeek(1);
     }
 
@@ -87,8 +91,8 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         EnsureActivePlanScheduleIsCurrent();
 
         return ActivePlan.GetWorkoutsForWeek(GetPlanWeekNumberForDate(DateTime.Today))
+            .Select(workout => CloneWorkout(workout, _activePlanDayOffset))
             .Where(workout => workout.Day == day)
-            .Select(CloneWorkout)
             .ToList();
     }
 
@@ -99,7 +103,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
             return;
         }
 
-        AddPlanToWeeklySchedule(ActivePlan);
+        AddPlanToWeeklySchedule(ActivePlan, _activePlanDayOffset != 0);
     }
 
     public WorkoutPlan? GetSuggestedNextPlan()
@@ -152,7 +156,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         return $"{ActivePlan.DurationDisplay} plan. {weeksRemaining} week{(weeksRemaining == 1 ? string.Empty : "s")} remaining until {ActivePlanEndsOn.Value:d}.";
     }
 
-    private static Workout CloneWorkout(Workout workout)
+    private static Workout CloneWorkout(Workout workout, int dayOffset = 0)
     {
         return new Workout(
             name: workout.Name,
@@ -160,7 +164,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
             reps: workout.Reps,
             sets: workout.Sets,
             muscleGroup: workout.MuscleGroup,
-            day: workout.Day,
+            day: ShiftDayOfWeek(workout.Day, dayOffset),
             startTime: workout.StartTime,
             type: workout.Type,
             gymLocation: workout.GymLocation)
@@ -212,7 +216,8 @@ public class WorkoutScheduleService : IWorkoutScheduleService
 
         foreach (var workout in ActivePlan.GetWorkoutsForWeek(weekNumber))
         {
-            _weeklySchedule[workout.Day].Add(CloneWorkout(workout));
+            var scheduledWorkout = CloneWorkout(workout, _activePlanDayOffset);
+            _weeklySchedule[scheduledWorkout.Day].Add(scheduledWorkout);
         }
 
         SaveState();
@@ -235,7 +240,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         using var command = connection.CreateCommand();
         command.CommandText =
             """
-            SELECT ActivePlanName, ActivePlanStartedOn, ActivePlanEndsOn, ActivePlanScheduleWeekNumber
+            SELECT ActivePlanName, ActivePlanStartedOn, ActivePlanEndsOn, ActivePlanScheduleWeekNumber, ActivePlanDayOffset
             FROM ActivePlanState
             WHERE Id = 1;
             """;
@@ -260,6 +265,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         ActivePlanStartedOn = DateTime.Parse(reader.GetString(1), null, System.Globalization.DateTimeStyles.RoundtripKind);
         ActivePlanEndsOn = DateTime.Parse(reader.GetString(2), null, System.Globalization.DateTimeStyles.RoundtripKind);
         _activePlanScheduleWeekNumber = reader.GetInt32(3);
+        _activePlanDayOffset = reader.IsDBNull(4) ? 0 : reader.GetInt32(4);
 
         foreach (var day in _weeklySchedule.Keys.ToList())
         {
@@ -306,13 +312,14 @@ public class WorkoutScheduleService : IWorkoutScheduleService
             stateCommand.Transaction = transaction;
             stateCommand.CommandText =
                 """
-                INSERT INTO ActivePlanState (Id, ActivePlanName, ActivePlanStartedOn, ActivePlanEndsOn, ActivePlanScheduleWeekNumber)
-                VALUES (1, $activePlanName, $activePlanStartedOn, $activePlanEndsOn, $activePlanScheduleWeekNumber);
+                INSERT INTO ActivePlanState (Id, ActivePlanName, ActivePlanStartedOn, ActivePlanEndsOn, ActivePlanScheduleWeekNumber, ActivePlanDayOffset)
+                VALUES (1, $activePlanName, $activePlanStartedOn, $activePlanEndsOn, $activePlanScheduleWeekNumber, $activePlanDayOffset);
                 """;
             stateCommand.Parameters.AddWithValue("$activePlanName", ActivePlan.Name);
             stateCommand.Parameters.AddWithValue("$activePlanStartedOn", ActivePlanStartedOn.Value.ToString("O"));
             stateCommand.Parameters.AddWithValue("$activePlanEndsOn", ActivePlanEndsOn.Value.ToString("O"));
             stateCommand.Parameters.AddWithValue("$activePlanScheduleWeekNumber", _activePlanScheduleWeekNumber ?? GetPlanWeekNumberForDate(DateTime.Today));
+            stateCommand.Parameters.AddWithValue("$activePlanDayOffset", _activePlanDayOffset);
             stateCommand.ExecuteNonQuery();
 
             foreach (var workout in _weeklySchedule.SelectMany(entry => entry.Value))
@@ -363,6 +370,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
             ActivePlanStartedOn = state.ActivePlanStartedOn;
             ActivePlanEndsOn = state.ActivePlanEndsOn;
             _activePlanScheduleWeekNumber = state.ActivePlanScheduleWeekNumber;
+            _activePlanDayOffset = 0;
 
             foreach (var day in _weeklySchedule.Keys.ToList())
             {
@@ -381,6 +389,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
             ActivePlanStartedOn = null;
             ActivePlanEndsOn = null;
             _activePlanScheduleWeekNumber = null;
+            _activePlanDayOffset = 0;
             foreach (var day in _weeklySchedule.Keys.ToList())
             {
                 _weeklySchedule[day].Clear();
@@ -430,6 +439,38 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         public int ActivePlanScheduleWeekNumber { get; set; }
         public List<Workout> ScheduledWorkouts { get; set; } = [];
     }
+
+    private static int GetDayOffsetFromFirstWorkoutDay(WorkoutPlan plan, DayOfWeek desiredStartDay)
+    {
+        var firstWorkoutDay = GetFirstWorkoutDay(plan);
+        if (!firstWorkoutDay.HasValue)
+        {
+            return 0;
+        }
+
+        var desiredIndex = GetMondayFirstDayIndex(desiredStartDay);
+        var firstWorkoutIndex = GetMondayFirstDayIndex(firstWorkoutDay.Value);
+        return desiredIndex - firstWorkoutIndex;
+    }
+
+    private static DayOfWeek? GetFirstWorkoutDay(WorkoutPlan plan)
+    {
+        return plan.GetWorkoutsForWeek(1)
+            .Select(workout => workout.Day)
+            .Distinct()
+            .OrderBy(GetMondayFirstDayIndex)
+            .Cast<DayOfWeek?>()
+            .FirstOrDefault();
+    }
+
+    private static int GetMondayFirstDayIndex(DayOfWeek day)
+        => day == DayOfWeek.Sunday ? 6 : ((int)day - 1);
+
+    private static DayOfWeek ShiftDayOfWeek(DayOfWeek day, int offset)
+    {
+        var shiftedIndex = (((int)day + offset) % 7 + 7) % 7;
+        return (DayOfWeek)shiftedIndex;
+    }
 }
 
 public interface IWorkoutScheduleService
@@ -439,7 +480,7 @@ public interface IWorkoutScheduleService
     DateTime? ActivePlanEndsOn { get; }
     bool HasCompletedActivePlan { get; }
     int ScheduleVersion { get; }
-    void AddPlanToWeeklySchedule(WorkoutPlan plan);
+    void AddPlanToWeeklySchedule(WorkoutPlan plan, bool alignFirstWorkoutDayToToday = false);
     void AddWorkoutToDay(DayOfWeek day, Workout workout);
     void RemoveWorkoutFromDay(DayOfWeek day, Workout workout);
     IReadOnlyDictionary<DayOfWeek, List<Workout>> GetWeeklySchedule();

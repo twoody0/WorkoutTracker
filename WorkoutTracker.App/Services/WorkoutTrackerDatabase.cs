@@ -64,7 +64,8 @@ public sealed class WorkoutTrackerDatabase
                 ActivePlanName TEXT NOT NULL,
                 ActivePlanStartedOn TEXT NOT NULL,
                 ActivePlanEndsOn TEXT NOT NULL,
-                ActivePlanScheduleWeekNumber INTEGER NOT NULL
+                ActivePlanScheduleWeekNumber INTEGER NOT NULL,
+                ActivePlanDayOffset INTEGER NOT NULL DEFAULT 0
             );
 
             CREATE TABLE IF NOT EXISTS ActivePlanScheduledWorkouts (
@@ -128,6 +129,7 @@ public sealed class WorkoutTrackerDatabase
         EnsureColumnExists(connection, "CustomWorkoutPlanWorkouts", "TargetRestRange", "TEXT NOT NULL DEFAULT ''");
         EnsureColumnExists(connection, "CustomWorkoutPlanWorkouts", "IsWarmup", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumnExists(connection, "CustomWorkoutPlanWorkouts", "DurationSeconds", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumnExists(connection, "ActivePlanState", "ActivePlanDayOffset", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumnExists(connection, "ActivePlanScheduledWorkouts", "MinReps", "INTEGER NULL");
         EnsureColumnExists(connection, "ActivePlanScheduledWorkouts", "MaxReps", "INTEGER NULL");
         EnsureColumnExists(connection, "ActivePlanScheduledWorkouts", "TargetRpe", "REAL NULL");
