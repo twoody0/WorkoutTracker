@@ -22,6 +22,8 @@ public partial class WorkoutPage : ContentPage
     private bool _hasRepeatedStandardWeightAdjustment;
     private readonly IBodyWeightService _bodyWeightService;
     private bool _hasCheckedForInitialBodyWeight;
+    private bool _isShowingInitialBodyWeightPrompt;
+    private WorkoutViewModel? _pendingInitialBodyWeightViewModel;
 
     public WorkoutPage(WorkoutViewModel vm, IBodyWeightService bodyWeightService)
     {
@@ -41,18 +43,12 @@ public partial class WorkoutPage : ContentPage
 
         if (BindingContext is WorkoutViewModel vm)
         {
+            var shouldShowInitialBodyWeightPrompt = false;
+
             if (!_hasCheckedForInitialBodyWeight && !_bodyWeightService.HasBodyWeight())
             {
                 _hasCheckedForInitialBodyWeight = true;
-                var navigatedToWorkoutPlans = await PromptForBodyWeightAsync(
-                    vm,
-                    "Welcome to Megnor. This is where you can log workouts and start following your plan. If you enter your body weight here, it will save even if you go straight to Workout Plans.",
-                    useCurrentWeightAsInitialValue: false);
-
-                if (navigatedToWorkoutPlans)
-                {
-                    return;
-                }
+                shouldShowInitialBodyWeightPrompt = true;
             }
 
             await vm.EnsureWorkoutHistoryFreshAsync();
@@ -60,6 +56,17 @@ public partial class WorkoutPage : ContentPage
             if (vm.SelectedRecommendationItem == null && !vm.IsManualWorkoutEntryActive)
             {
                 EnsureDefaultRecommendationSelected();
+            }
+
+            if (shouldShowInitialBodyWeightPrompt)
+            {
+                var promptDelay = OperatingSystem.IsAndroid()
+                    ? TimeSpan.FromMilliseconds(900)
+                    : TimeSpan.FromMilliseconds(250);
+
+                Dispatcher.DispatchDelayed(
+                    promptDelay,
+                    () => _ = ShowInitialBodyWeightPromptAsync(vm));
             }
         }
 
@@ -159,6 +166,25 @@ public partial class WorkoutPage : ContentPage
         if (!string.Equals(entry.Text, sanitized, StringComparison.Ordinal))
         {
             entry.Text = sanitized;
+        }
+    }
+
+    private void InitialBodyWeightEntry_TextChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (sender is not Entry entry)
+        {
+            return;
+        }
+
+        var sanitized = InputSanitizer.SanitizePositiveDecimalText(e.NewTextValue, InputSanitizer.MaxBodyWeight);
+        if (!string.Equals(entry.Text, sanitized, StringComparison.Ordinal))
+        {
+            entry.Text = sanitized;
+        }
+
+        if (InitialBodyWeightErrorLabel != null)
+        {
+            InitialBodyWeightErrorLabel.IsVisible = false;
         }
     }
 
@@ -522,46 +548,103 @@ public partial class WorkoutPage : ContentPage
         await Navigation.PushModalAsync(new ExerciseImagePage(exerciseName!.Trim()));
     }
 
-    private async Task<bool> PromptForBodyWeightAsync(
-        WorkoutViewModel vm,
-        string message,
-        bool useCurrentWeightAsInitialValue)
+    private async Task ShowInitialBodyWeightPromptAsync(WorkoutViewModel vm)
     {
-        var initialWeight = useCurrentWeightAsInitialValue
-            ? _bodyWeightService.GetBodyWeight()?.ToString("0.#") ?? string.Empty
-            : string.Empty;
-
-        var result = await BodyWeightPromptPage.ShowAsync(
-            this,
-            "Body Weight",
-            message,
-            initialWeight,
-            workoutPlansButtonText: "Go To Workout Plans");
-
-        if (result == null)
+        if (_isShowingInitialBodyWeightPrompt ||
+            _bodyWeightService.HasBodyWeight() ||
+            BindingContext is not WorkoutViewModel currentVm ||
+            !ReferenceEquals(vm, currentVm))
         {
-            return false;
+            return;
         }
 
-        if (!string.IsNullOrWhiteSpace(result.WeightText))
+        _isShowingInitialBodyWeightPrompt = true;
+        _pendingInitialBodyWeightViewModel = vm;
+        UpdateBackgroundBlur(true);
+
+        if (InitialBodyWeightErrorLabel != null)
         {
-            if (!InputSanitizer.TryParseBodyWeight(result.WeightText, out var bodyWeight))
+            InitialBodyWeightErrorLabel.IsVisible = false;
+        }
+
+        if (InitialBodyWeightEntry != null)
+        {
+            InitialBodyWeightEntry.Text = string.Empty;
+        }
+
+        if (InitialBodyWeightOverlay != null)
+        {
+            InitialBodyWeightOverlay.IsVisible = true;
+        }
+
+        if (!OperatingSystem.IsMacCatalyst() && InitialBodyWeightEntry != null)
+        {
+            await Task.Delay(100);
+            InitialBodyWeightEntry.Focus();
+        }
+    }
+
+    private async void OnInitialBodyWeightCloseClicked(object sender, EventArgs e)
+    {
+        await TryCompleteInitialBodyWeightPromptAsync(navigateToWorkoutPlans: false);
+    }
+
+    private async void OnInitialBodyWeightWorkoutPlansClicked(object sender, EventArgs e)
+    {
+        await TryCompleteInitialBodyWeightPromptAsync(navigateToWorkoutPlans: true);
+    }
+
+    private async Task TryCompleteInitialBodyWeightPromptAsync(bool navigateToWorkoutPlans)
+    {
+        var vm = _pendingInitialBodyWeightViewModel;
+        if (vm == null)
+        {
+            HideInitialBodyWeightPrompt();
+            return;
+        }
+
+        var value = InputSanitizer.SanitizePositiveDecimalText(InitialBodyWeightEntry?.Text, InputSanitizer.MaxBodyWeight);
+        var hasText = !string.IsNullOrWhiteSpace(value);
+
+        if (hasText && !InputSanitizer.TryParseBodyWeight(value, out var bodyWeight))
+        {
+            if (InitialBodyWeightErrorLabel != null)
             {
-                await DisplayAlert("Invalid Weight", "Enter a valid body weight greater than 0.", "OK");
-                return false;
+                InitialBodyWeightErrorLabel.IsVisible = true;
             }
 
-            await _bodyWeightService.SetBodyWeightAsync(bodyWeight);
+            return;
+        }
+
+        if (hasText && InputSanitizer.TryParseBodyWeight(value, out var parsedBodyWeight))
+        {
+            await _bodyWeightService.SetBodyWeightAsync(parsedBodyWeight);
             vm.RefreshBodyweightState();
         }
 
-        if (result.NavigateToWorkoutPlans)
+        HideInitialBodyWeightPrompt();
+
+        if (navigateToWorkoutPlans)
         {
             await Shell.Current.GoToAsync("//workout-plans");
-            return true;
+        }
+    }
+
+    private void HideInitialBodyWeightPrompt()
+    {
+        if (InitialBodyWeightOverlay != null)
+        {
+            InitialBodyWeightOverlay.IsVisible = false;
         }
 
-        return false;
+        if (InitialBodyWeightErrorLabel != null)
+        {
+            InitialBodyWeightErrorLabel.IsVisible = false;
+        }
+
+        _pendingInitialBodyWeightViewModel = null;
+        _isShowingInitialBodyWeightPrompt = false;
+        UpdateBackgroundBlur(false);
     }
 
     private static void ClampEntryText(object sender, string? newTextValue, double maxValue, bool isDecimal)
@@ -704,4 +787,6 @@ public partial class WorkoutPage : ContentPage
         {
         }
     }
+
+    partial void UpdateBackgroundBlur(bool isEnabled);
 }

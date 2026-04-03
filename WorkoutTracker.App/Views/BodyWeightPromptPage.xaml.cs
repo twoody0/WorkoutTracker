@@ -12,9 +12,11 @@ public sealed class BodyWeightPromptResult
 public partial class BodyWeightPromptPage : ContentPage
 {
     private readonly TaskCompletionSource<BodyWeightPromptResult?> _resultSource = new();
+    private readonly Page _parentPage;
 
-    public BodyWeightPromptPage(string title, string message, string initialValue, string? workoutPlansButtonText)
+    public BodyWeightPromptPage(Page parentPage, string title, string message, string initialValue, string? workoutPlansButtonText)
     {
+        _parentPage = parentPage;
         InitializeComponent();
         TitleLabel.Text = title;
         MessageLabel.Text = message;
@@ -30,7 +32,7 @@ public partial class BodyWeightPromptPage : ContentPage
         string initialValue,
         string? workoutPlansButtonText = null)
     {
-        var promptPage = new BodyWeightPromptPage(title, message, initialValue, workoutPlansButtonText);
+        var promptPage = new BodyWeightPromptPage(parent, title, message, initialValue, workoutPlansButtonText);
         await parent.Navigation.PushModalAsync(promptPage);
         return await promptPage._resultSource.Task;
     }
@@ -38,6 +40,7 @@ public partial class BodyWeightPromptPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+        UpdateParentBackgroundBlur(true);
         MainThread.BeginInvokeOnMainThread(async () =>
         {
             await Task.Delay(100);
@@ -71,6 +74,8 @@ public partial class BodyWeightPromptPage : ContentPage
 
     private async Task CloseAsync(BodyWeightPromptResult? result)
     {
+        UpdateParentBackgroundBlur(false);
+
         if (Navigation.ModalStack.LastOrDefault() == this)
         {
             await Navigation.PopModalAsync();
@@ -96,4 +101,11 @@ public partial class BodyWeightPromptPage : ContentPage
             NavigateToWorkoutPlans = navigateToWorkoutPlans
         };
     }
+
+    private void UpdateParentBackgroundBlur(bool isEnabled)
+    {
+        UpdatePageBackgroundBlur(isEnabled);
+    }
+
+    partial void UpdatePageBackgroundBlur(bool isEnabled);
 }

@@ -135,9 +135,11 @@
               </DataTemplate>
        </ContentPage.Resources>
 
-       <ScrollView x:Name="PageScrollView">
-              <VerticalStackLayout Padding="20"
-                            Spacing="5">
+       <Grid>
+              <Grid x:Name="WorkoutContentHost">
+              <ScrollView x:Name="PageScrollView">
+                     <VerticalStackLayout Padding="20"
+                                   Spacing="5">
                      <Label Text="Add a Workout"
                             FontSize="20"
                             HorizontalOptions="Center"/>
@@ -1721,6 +1723,73 @@
                                           TextColor="{AppThemeBinding Light=#475569, Dark=#CBD5E1}"/>
                             </HorizontalStackLayout>
                      </VerticalStackLayout>
-              </VerticalStackLayout>
-       </ScrollView>
+                     </VerticalStackLayout>
+              </ScrollView>
+              </Grid>
+
+              <Grid x:Name="InitialBodyWeightOverlay"
+                    IsVisible="False"
+                    BackgroundColor="#66000000"
+                    InputTransparent="False"
+                    ZIndex="20">
+                     <Grid Padding="24">
+                            <Border MaximumWidthRequest="420"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"
+                                    Stroke="{AppThemeBinding Light=#D6DEE8, Dark=#2A3442}"
+                                    BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
+                                    StrokeShape="RoundRectangle 24"
+                                    Padding="20">
+                                   <VerticalStackLayout Spacing="16">
+                                          <Grid ColumnDefinitions="*,Auto"
+                                                RowDefinitions="Auto,Auto"
+                                                RowSpacing="6">
+                                                 <Label Grid.Row="0"
+                                                        Grid.Column="0"
+                                                        Text="Body Weight"
+                                                        FontSize="22"
+                                                        FontAttributes="Bold" />
+                                                 <Button Grid.Row="0"
+                                                         Grid.Column="1"
+                                                         Text="X"
+                                                         Clicked="OnInitialBodyWeightCloseClicked"
+                                                         Padding="10,2"
+                                                         MinimumWidthRequest="36"
+                                                         MinimumHeightRequest="36"
+                                                         CornerRadius="18"
+                                                         BackgroundColor="{AppThemeBinding Light=#E5EAF1, Dark=#334155}"
+                                                         TextColor="{AppThemeBinding Light=#1F2937, Dark=#FFFFFF}" />
+                                                 <Label Grid.Row="1"
+                                                        Grid.ColumnSpan="2"
+                                                        Text="Welcome to Megnor. This is where you can log workouts and start following your plan. If you enter your body weight here, it will save even if you go straight to Workout Plans."
+                                                        TextColor="{AppThemeBinding Light=#5A6472, Dark=#A4B2C5}" />
+                                          </Grid>
+
+                                          <VerticalStackLayout Spacing="6">
+                                                 <Label Text="Weight"
+                                                        FontAttributes="Bold"
+                                                        FontSize="14" />
+                                                 <Entry x:Name="InitialBodyWeightEntry"
+                                                        Keyboard="Numeric"
+                                                        Placeholder="Weight in lb"
+                                                        ClearButtonVisibility="WhileEditing"
+                                                        TextChanged="InitialBodyWeightEntry_TextChanged"
+                                                        Completed="Entry_Completed"
+                                                        MaxLength="6" />
+                                                 <Label x:Name="InitialBodyWeightErrorLabel"
+                                                        Text="Enter a valid body weight greater than 0."
+                                                        FontSize="12"
+                                                        TextColor="{AppThemeBinding Light=#C24141, Dark=#F4A4A4}"
+                                                        IsVisible="False" />
+                                          </VerticalStackLayout>
+
+                                          <Button Text="Go To Workout Plans"
+                                                  Clicked="OnInitialBodyWeightWorkoutPlansClicked"
+                                                  BackgroundColor="{AppThemeBinding Light=#0F766E, Dark=#14B8A6}"
+                                                  TextColor="White" />
+                                   </VerticalStackLayout>
+                            </Border>
+                     </Grid>
+              </Grid>
+       </Grid>
 </ContentPage>
