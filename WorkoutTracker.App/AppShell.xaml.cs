@@ -37,18 +37,18 @@ public partial class AppShell : Shell
 
         tabBar.Items.Add(new ShellContent
         {
-            Route = "home",
-            Title = "Home",
-            ContentTemplate = new DataTemplate(() => App.Services.GetRequiredService<HomePage>()),
-            Icon = "home.png"
-        });
-
-        tabBar.Items.Add(new ShellContent
-        {
             Route = "add-workout",
             Title = "Add Workout",
             ContentTemplate = new DataTemplate(() => App.Services.GetRequiredService<WorkoutPage>()),
             Icon = "addworkout.png"
+        });
+
+        tabBar.Items.Add(new ShellContent
+        {
+            Route = "heat-map",
+            Title = "Heat Map",
+            ContentTemplate = new DataTemplate(() => App.Services.GetRequiredService<HomePage>()),
+            Icon = "heat_map.png"
         });
 
         if (_appModeService.HasLeaderboard)
@@ -103,8 +103,8 @@ public partial class AppShell : Shell
     {
         var routes = new List<string>
         {
-            "home",
-            "add-workout"
+            "add-workout",
+            "heat-map"
         };
 
         if (_appModeService.HasLeaderboard)

@@ -4,6 +4,7 @@ using System.ComponentModel;
 using WorkoutTracker.Models;
 using WorkoutTracker.ViewModels;
 using WorkoutTracker.Helpers;
+using WorkoutTracker.Services;
 #if ANDROID
 using Android.Views;
 using PlatformView = Android.Views.View;
@@ -19,11 +20,14 @@ public partial class WorkoutPage : ContentPage
     private bool _hasRepeatedBodyweightWeightAdjustment;
     private CancellationTokenSource? _standardWeightAdjustCancellationTokenSource;
     private bool _hasRepeatedStandardWeightAdjustment;
+    private readonly IBodyWeightService _bodyWeightService;
+    private bool _hasCheckedForInitialBodyWeight;
 
-    public WorkoutPage(WorkoutViewModel vm)
+    public WorkoutPage(WorkoutViewModel vm, IBodyWeightService bodyWeightService)
     {
         InitializeComponent();
         BindingContext = vm;
+        _bodyWeightService = bodyWeightService;
         vm.PropertyChanged += OnViewModelPropertyChanged;
         TabSwipeNavigationHelper.Attach(this, "add-workout");
 #if ANDROID
@@ -37,6 +41,20 @@ public partial class WorkoutPage : ContentPage
 
         if (BindingContext is WorkoutViewModel vm)
         {
+            if (!_hasCheckedForInitialBodyWeight && !_bodyWeightService.HasBodyWeight())
+            {
+                _hasCheckedForInitialBodyWeight = true;
+                var navigatedToWorkoutPlans = await PromptForBodyWeightAsync(
+                    vm,
+                    "Welcome to Megnor. This is where you can log workouts and start following your plan. If you enter your body weight here, it will save even if you go straight to Workout Plans.",
+                    useCurrentWeightAsInitialValue: false);
+
+                if (navigatedToWorkoutPlans)
+                {
+                    return;
+                }
+            }
+
             await vm.EnsureWorkoutHistoryFreshAsync();
             vm.EnsurePlanRecommendationsFresh();
             if (vm.SelectedRecommendationItem == null && !vm.IsManualWorkoutEntryActive)
@@ -502,6 +520,48 @@ public partial class WorkoutPage : ContentPage
         }
 
         await Navigation.PushModalAsync(new ExerciseImagePage(exerciseName!.Trim()));
+    }
+
+    private async Task<bool> PromptForBodyWeightAsync(
+        WorkoutViewModel vm,
+        string message,
+        bool useCurrentWeightAsInitialValue)
+    {
+        var initialWeight = useCurrentWeightAsInitialValue
+            ? _bodyWeightService.GetBodyWeight()?.ToString("0.#") ?? string.Empty
+            : string.Empty;
+
+        var result = await BodyWeightPromptPage.ShowAsync(
+            this,
+            "Body Weight",
+            message,
+            initialWeight,
+            workoutPlansButtonText: "Go To Workout Plans");
+
+        if (result == null)
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(result.WeightText))
+        {
+            if (!InputSanitizer.TryParseBodyWeight(result.WeightText, out var bodyWeight))
+            {
+                await DisplayAlert("Invalid Weight", "Enter a valid body weight greater than 0.", "OK");
+                return false;
+            }
+
+            await _bodyWeightService.SetBodyWeightAsync(bodyWeight);
+            vm.RefreshBodyweightState();
+        }
+
+        if (result.NavigateToWorkoutPlans)
+        {
+            await Shell.Current.GoToAsync("//workout-plans");
+            return true;
+        }
+
+        return false;
     }
 
     private static void ClampEntryText(object sender, string? newTextValue, double maxValue, bool isDecimal)

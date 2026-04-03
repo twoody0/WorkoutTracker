@@ -5,8 +5,6 @@ namespace WorkoutTracker.Views;
 
 public partial class HomePage : ContentPage
 {
-    private bool _hasCheckedForInitialBodyWeight;
-
     // Use constructor injection
     public HomePage(HomeViewModel viewModel)
     {
@@ -23,22 +21,13 @@ public partial class HomePage : ContentPage
         }
 
         BindingContext = viewModel;
-        TabSwipeNavigationHelper.Attach(this, "home");
+        TabSwipeNavigationHelper.Attach(this, "heat-map");
     }
     protected override async void OnAppearing()
     {
         base.OnAppearing();
         if (BindingContext is HomeViewModel vm)
         {
-            if (!_hasCheckedForInitialBodyWeight && !vm.HasBodyWeight)
-            {
-                _hasCheckedForInitialBodyWeight = true;
-                await PromptForBodyWeightAsync(
-                    vm,
-                    "Welcome to Megnor. This is where you can log workouts, follow a plan, and keep your progress moving. If you enter your body weight here, it will still save even if you go straight to Workout Plans.",
-                    useCurrentWeightAsInitialValue: false);
-            }
-
             vm.UpdateWelcomeMessage();
             await vm.RefreshHeatMapAsync();
         }

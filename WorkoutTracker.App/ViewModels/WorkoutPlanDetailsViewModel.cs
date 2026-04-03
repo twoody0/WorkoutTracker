@@ -259,13 +259,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
             $"'{SelectedPlan.Name}' is now your active workout plan!",
             "OK");
 
-        var schedulePage = App.Services.GetRequiredService<WeeklySchedulePage>();
-
-        // Replace WorkoutPlanDetailsPage with WeeklySchedulePage
-        Shell.Current.Navigation.InsertPageBefore(schedulePage, Shell.Current.Navigation.NavigationStack[^1]);
-
-        // Go forward to WeeklySchedulePage and remove WorkoutPlanDetailsPage
-        await Shell.Current.Navigation.PopAsync();
+        await Shell.Current.GoToAsync("//add-workout");
     }
 
     private static bool TryGetFirstWorkoutDay(WorkoutPlan plan, out DayOfWeek firstWorkoutDay)

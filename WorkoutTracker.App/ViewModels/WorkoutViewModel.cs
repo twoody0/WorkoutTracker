@@ -1896,6 +1896,11 @@ public class WorkoutViewModel : BaseViewModel
         OnPropertyChanged(nameof(CanSaveWarmupSet));
     }
 
+    public void RefreshBodyweightState()
+    {
+        NotifyBodyweightStateChanged();
+    }
+
     private void NotifyManualWorkoutModeChanged()
     {
         OnPropertyChanged(nameof(ShowQuickAddCard));
