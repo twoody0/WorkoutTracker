@@ -9,6 +9,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
     private readonly IWorkoutPlanService _workoutPlanService;
     private readonly WorkoutTrackerDatabase _database;
     private readonly string _legacyScheduleStateFilePath;
+    private readonly Dictionary<string, string> _activePlanExerciseSubstitutions = new(StringComparer.OrdinalIgnoreCase);
     private int? _activePlanScheduleWeekNumber;
     private int _activePlanDayOffset;
     private int _scheduleVersion;
@@ -48,6 +49,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         ActivePlan = plan;
         ActivePlanStartedOn = DateTime.Today;
         ActivePlanEndsOn = DateTime.Today.AddDays((plan.DurationInWeeks * 7) - 1);
+        _activePlanExerciseSubstitutions.Clear();
         _activePlanDayOffset = alignFirstWorkoutDayToToday
             ? GetDayOffsetFromFirstWorkoutDay(plan, DateTime.Today.DayOfWeek)
             : 0;
@@ -91,9 +93,83 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         EnsureActivePlanScheduleIsCurrent();
 
         return ActivePlan.GetWorkoutsForWeek(GetPlanWeekNumberForDate(DateTime.Today))
-            .Select(workout => CloneWorkout(workout, _activePlanDayOffset))
+            .Select(workout => ApplyActivePlanExerciseSubstitution(CloneWorkout(workout, _activePlanDayOffset)))
             .Where(workout => workout.Day == day)
             .ToList();
+    }
+
+    public IReadOnlyList<Workout> GetActivePlanExerciseOptions()
+    {
+        if (ActivePlan == null)
+        {
+            return [];
+        }
+
+        var uniqueExercises = new Dictionary<string, Workout>(StringComparer.OrdinalIgnoreCase);
+        foreach (var workout in ActivePlan.Workouts.Where(workout => workout.Type == WorkoutType.WeightLifting))
+        {
+            var originalExerciseName = GetOriginalExerciseName(workout);
+            if (uniqueExercises.ContainsKey(originalExerciseName))
+            {
+                continue;
+            }
+
+            uniqueExercises[originalExerciseName] = ApplyActivePlanExerciseSubstitution(CloneWorkout(workout));
+        }
+
+        return uniqueExercises.Values
+            .OrderBy(workout => workout.Name)
+            .ToList();
+    }
+
+    public IReadOnlyList<Workout> GetPlanWorkoutsForPreview(WorkoutPlan plan, int weekNumber)
+    {
+        if (plan == null)
+        {
+            return [];
+        }
+
+        var workouts = plan.GetWorkoutsForWeek(weekNumber)
+            .Select(CloneWorkout)
+            .ToList();
+
+        if (ActivePlan != null &&
+            string.Equals(ActivePlan.Name, plan.Name, StringComparison.OrdinalIgnoreCase))
+        {
+            return workouts
+                .Select(ApplyActivePlanExerciseSubstitution)
+                .ToList();
+        }
+
+        return workouts;
+    }
+
+    public void ReplaceActivePlanExercise(string originalExerciseName, string replacementExerciseName)
+    {
+        if (ActivePlan == null || string.IsNullOrWhiteSpace(originalExerciseName) || string.IsNullOrWhiteSpace(replacementExerciseName))
+        {
+            return;
+        }
+
+        var normalizedOriginal = originalExerciseName.Trim();
+        var normalizedReplacement = replacementExerciseName.Trim();
+
+        if (string.Equals(normalizedOriginal, normalizedReplacement, StringComparison.OrdinalIgnoreCase))
+        {
+            _activePlanExerciseSubstitutions.Remove(normalizedOriginal);
+        }
+        else if (_activePlanExerciseSubstitutions.Any(pair =>
+                     !string.Equals(pair.Key, normalizedOriginal, StringComparison.OrdinalIgnoreCase) &&
+                     string.Equals(pair.Value, normalizedReplacement, StringComparison.OrdinalIgnoreCase)))
+        {
+            return;
+        }
+        else
+        {
+            _activePlanExerciseSubstitutions[normalizedOriginal] = normalizedReplacement;
+        }
+
+        PopulateWeeklyScheduleForActivePlanWeek(_activePlanScheduleWeekNumber ?? GetPlanWeekNumberForDate(DateTime.Today));
     }
 
     public void RestartActivePlan()
@@ -103,7 +179,19 @@ public class WorkoutScheduleService : IWorkoutScheduleService
             return;
         }
 
+        var currentSubstitutions = _activePlanExerciseSubstitutions.ToDictionary(
+            pair => pair.Key,
+            pair => pair.Value,
+            StringComparer.OrdinalIgnoreCase);
+
         AddPlanToWeeklySchedule(ActivePlan, _activePlanDayOffset != 0);
+
+        foreach (var substitution in currentSubstitutions)
+        {
+            _activePlanExerciseSubstitutions[substitution.Key] = substitution.Value;
+        }
+
+        PopulateWeeklyScheduleForActivePlanWeek(1);
     }
 
     public WorkoutPlan? GetSuggestedNextPlan()
@@ -169,6 +257,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
             type: workout.Type,
             gymLocation: workout.GymLocation)
         {
+            PlannedExerciseName = workout.PlannedExerciseName,
             MinReps = workout.MinReps,
             MaxReps = workout.MaxReps,
             TargetRpe = workout.TargetRpe,
@@ -181,6 +270,25 @@ public class WorkoutScheduleService : IWorkoutScheduleService
             PlanWeekNumber = workout.PlanWeekNumber,
             IsWarmup = workout.IsWarmup
         };
+    }
+
+    private Workout ApplyActivePlanExerciseSubstitution(Workout workout)
+    {
+        if (workout.Type != WorkoutType.WeightLifting)
+        {
+            return workout;
+        }
+
+        var originalExerciseName = GetOriginalExerciseName(workout);
+        if (_activePlanExerciseSubstitutions.TryGetValue(originalExerciseName, out var replacementExerciseName) &&
+            !string.IsNullOrWhiteSpace(replacementExerciseName) &&
+            !string.Equals(workout.Name, replacementExerciseName, StringComparison.OrdinalIgnoreCase))
+        {
+            workout.PlannedExerciseName = originalExerciseName;
+            workout.Name = replacementExerciseName.Trim();
+        }
+
+        return workout;
     }
 
     private void EnsureActivePlanScheduleIsCurrent()
@@ -216,7 +324,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
 
         foreach (var workout in ActivePlan.GetWorkoutsForWeek(weekNumber))
         {
-            var scheduledWorkout = CloneWorkout(workout, _activePlanDayOffset);
+            var scheduledWorkout = ApplyActivePlanExerciseSubstitution(CloneWorkout(workout, _activePlanDayOffset));
             _weeklySchedule[scheduledWorkout.Day].Add(scheduledWorkout);
         }
 
@@ -240,7 +348,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         using var command = connection.CreateCommand();
         command.CommandText =
             """
-            SELECT ActivePlanName, ActivePlanStartedOn, ActivePlanEndsOn, ActivePlanScheduleWeekNumber, ActivePlanDayOffset
+            SELECT ActivePlanName, ActivePlanStartedOn, ActivePlanEndsOn, ActivePlanScheduleWeekNumber, ActivePlanDayOffset, ExerciseSubstitutionsJson
             FROM ActivePlanState
             WHERE Id = 1;
             """;
@@ -266,6 +374,23 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         ActivePlanEndsOn = DateTime.Parse(reader.GetString(2), null, System.Globalization.DateTimeStyles.RoundtripKind);
         _activePlanScheduleWeekNumber = reader.GetInt32(3);
         _activePlanDayOffset = reader.IsDBNull(4) ? 0 : reader.GetInt32(4);
+        _activePlanExerciseSubstitutions.Clear();
+
+        var substitutionsJson = reader.IsDBNull(5) ? string.Empty : reader.GetString(5);
+        if (!string.IsNullOrWhiteSpace(substitutionsJson))
+        {
+            var substitutions = JsonSerializer.Deserialize<Dictionary<string, string>>(substitutionsJson);
+            if (substitutions != null)
+            {
+                foreach (var substitution in substitutions)
+                {
+                    if (!string.IsNullOrWhiteSpace(substitution.Key) && !string.IsNullOrWhiteSpace(substitution.Value))
+                    {
+                        _activePlanExerciseSubstitutions[substitution.Key.Trim()] = substitution.Value.Trim();
+                    }
+                }
+            }
+        }
 
         foreach (var day in _weeklySchedule.Keys.ToList())
         {
@@ -275,7 +400,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         using var workoutsCommand = connection.CreateCommand();
         workoutsCommand.CommandText =
             """
-            SELECT Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DurationSeconds, DistanceMiles, Type, Day, PlanWeekNumber, IsWarmup
+            SELECT Name, PlannedExerciseName, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DurationSeconds, DistanceMiles, Type, Day, PlanWeekNumber, IsWarmup
             FROM ActivePlanScheduledWorkouts
             ORDER BY Id;
             """;
@@ -312,14 +437,15 @@ public class WorkoutScheduleService : IWorkoutScheduleService
             stateCommand.Transaction = transaction;
             stateCommand.CommandText =
                 """
-                INSERT INTO ActivePlanState (Id, ActivePlanName, ActivePlanStartedOn, ActivePlanEndsOn, ActivePlanScheduleWeekNumber, ActivePlanDayOffset)
-                VALUES (1, $activePlanName, $activePlanStartedOn, $activePlanEndsOn, $activePlanScheduleWeekNumber, $activePlanDayOffset);
+                INSERT INTO ActivePlanState (Id, ActivePlanName, ActivePlanStartedOn, ActivePlanEndsOn, ActivePlanScheduleWeekNumber, ActivePlanDayOffset, ExerciseSubstitutionsJson)
+                VALUES (1, $activePlanName, $activePlanStartedOn, $activePlanEndsOn, $activePlanScheduleWeekNumber, $activePlanDayOffset, $exerciseSubstitutionsJson);
                 """;
             stateCommand.Parameters.AddWithValue("$activePlanName", ActivePlan.Name);
             stateCommand.Parameters.AddWithValue("$activePlanStartedOn", ActivePlanStartedOn.Value.ToString("O"));
             stateCommand.Parameters.AddWithValue("$activePlanEndsOn", ActivePlanEndsOn.Value.ToString("O"));
             stateCommand.Parameters.AddWithValue("$activePlanScheduleWeekNumber", _activePlanScheduleWeekNumber ?? GetPlanWeekNumberForDate(DateTime.Today));
             stateCommand.Parameters.AddWithValue("$activePlanDayOffset", _activePlanDayOffset);
+            stateCommand.Parameters.AddWithValue("$exerciseSubstitutionsJson", JsonSerializer.Serialize(_activePlanExerciseSubstitutions));
             stateCommand.ExecuteNonQuery();
 
             foreach (var workout in _weeklySchedule.SelectMany(entry => entry.Value))
@@ -424,8 +550,8 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         command.CommandText =
             """
             INSERT INTO ActivePlanScheduledWorkouts
-            (Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DurationSeconds, DistanceMiles, Type, Day, PlanWeekNumber, IsWarmup)
-            VALUES ($name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $minReps, $maxReps, $targetRpe, $targetRestRange, $startTime, $endTime, $steps, $durationMinutes, $durationSeconds, $distanceMiles, $type, $day, $planWeekNumber, $isWarmup);
+            (Name, PlannedExerciseName, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DurationSeconds, DistanceMiles, Type, Day, PlanWeekNumber, IsWarmup)
+            VALUES ($name, $plannedExerciseName, $muscleGroup, $gymLocation, $weight, $reps, $sets, $minReps, $maxReps, $targetRpe, $targetRestRange, $startTime, $endTime, $steps, $durationMinutes, $durationSeconds, $distanceMiles, $type, $day, $planWeekNumber, $isWarmup);
             """;
         WorkoutPlanService.AddWorkoutParameters(command, workout);
         command.ExecuteNonQuery();
@@ -471,6 +597,13 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         var shiftedIndex = (((int)day + offset) % 7 + 7) % 7;
         return (DayOfWeek)shiftedIndex;
     }
+
+    private static string GetOriginalExerciseName(Workout workout)
+    {
+        return string.IsNullOrWhiteSpace(workout.PlannedExerciseName)
+            ? workout.Name
+            : workout.PlannedExerciseName.Trim();
+    }
 }
 
 public interface IWorkoutScheduleService
@@ -485,6 +618,9 @@ public interface IWorkoutScheduleService
     void RemoveWorkoutFromDay(DayOfWeek day, Workout workout);
     IReadOnlyDictionary<DayOfWeek, List<Workout>> GetWeeklySchedule();
     IReadOnlyList<Workout> GetActivePlanWorkoutsForDay(DayOfWeek day);
+    IReadOnlyList<Workout> GetActivePlanExerciseOptions();
+    IReadOnlyList<Workout> GetPlanWorkoutsForPreview(WorkoutPlan plan, int weekNumber);
+    void ReplaceActivePlanExercise(string originalExerciseName, string replacementExerciseName);
     void RestartActivePlan();
     WorkoutPlan? GetSuggestedNextPlan();
     string GetActivePlanTimelineSummary();

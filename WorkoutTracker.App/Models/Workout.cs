@@ -14,6 +14,7 @@ public class Workout
     private int _durationSeconds;
 
     public required string Name { get; set; } = default!;
+    public string PlannedExerciseName { get; set; } = string.Empty;
     public required string MuscleGroup { get; set; } = default!;
     public required string GymLocation { get; set; } = string.Empty;
 

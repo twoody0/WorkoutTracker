@@ -284,6 +284,98 @@ public class WorkoutScheduleServiceTests
     }
 
     [TestMethod]
+    public void ReplaceActivePlanExercise_UpdatesWholePlanAndPersistsSubstitutions()
+    {
+        var tempFilePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}-active-plan.db");
+        var plan = new WorkoutPlan("Substitution Plan", "Plan for persistence", durationInWeeks: 2)
+        {
+            Workouts =
+            [
+                new Workout("Barbell Bench Press", 185, 8, 4, "Chest", DayOfWeek.Monday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym")
+                {
+                    PlanWeekNumber = 1
+                },
+                new Workout("Barbell Bench Press", 190, 6, 4, "Chest", DayOfWeek.Wednesday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym")
+                {
+                    PlanWeekNumber = 2
+                }
+            ]
+        };
+
+        try
+        {
+            var planService = new FakeWorkoutPlanService([plan]);
+            var firstService = new WorkoutScheduleService(planService, tempFilePath);
+            firstService.AddPlanToWeeklySchedule(plan);
+
+            var exerciseOptions = firstService.GetActivePlanExerciseOptions();
+            Assert.AreEqual(1, exerciseOptions.Count);
+            Assert.AreEqual("Barbell Bench Press", exerciseOptions[0].Name);
+
+            firstService.ReplaceActivePlanExercise("Barbell Bench Press", "Dumbbell Bench Press");
+
+            var mondayWorkout = firstService.GetWeeklySchedule()[DayOfWeek.Monday].Single();
+            Assert.AreEqual("Dumbbell Bench Press", mondayWorkout.Name);
+            Assert.AreEqual("Barbell Bench Press", mondayWorkout.PlannedExerciseName);
+
+            var weekTwoPreviewWorkout = firstService.GetPlanWorkoutsForPreview(plan, 2).Single();
+            Assert.AreEqual("Dumbbell Bench Press", weekTwoPreviewWorkout.Name);
+            Assert.AreEqual("Barbell Bench Press", weekTwoPreviewWorkout.PlannedExerciseName);
+
+            var restoredService = new WorkoutScheduleService(planService, tempFilePath);
+
+            var restoredMondayWorkout = restoredService.GetWeeklySchedule()[DayOfWeek.Monday].Single();
+            Assert.AreEqual("Dumbbell Bench Press", restoredMondayWorkout.Name);
+            Assert.AreEqual("Barbell Bench Press", restoredMondayWorkout.PlannedExerciseName);
+
+            var restoredWeekTwoPreviewWorkout = restoredService.GetPlanWorkoutsForPreview(plan, 2).Single();
+            Assert.AreEqual("Dumbbell Bench Press", restoredWeekTwoPreviewWorkout.Name);
+            Assert.AreEqual("Barbell Bench Press", restoredWeekTwoPreviewWorkout.PlannedExerciseName);
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (File.Exists(tempFilePath))
+            {
+                File.Delete(tempFilePath);
+            }
+        }
+    }
+
+    [TestMethod]
+    public void ReplaceActivePlanExercise_PreventsDuplicateAlternativesAndAllowsResetToOriginal()
+    {
+        var plan = new WorkoutPlan("Alternative Rules", "Plan")
+        {
+            Workouts =
+            [
+                new Workout("Barbell Bench Press", 185, 8, 4, "Chest", DayOfWeek.Monday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym"),
+                new Workout("Incline Bench Press", 155, 10, 3, "Chest", DayOfWeek.Wednesday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym")
+            ]
+        };
+        var service = CreateServiceWithPlans(plan);
+
+        service.AddPlanToWeeklySchedule(plan);
+        service.ReplaceActivePlanExercise("Barbell Bench Press", "Dumbbell Bench Press");
+
+        var mondayWorkout = service.GetWeeklySchedule()[DayOfWeek.Monday].Single();
+        Assert.AreEqual("Dumbbell Bench Press", mondayWorkout.Name);
+        Assert.AreEqual("Barbell Bench Press", mondayWorkout.PlannedExerciseName);
+
+        service.ReplaceActivePlanExercise("Incline Bench Press", "Dumbbell Bench Press");
+
+        var wednesdayWorkout = service.GetWeeklySchedule()[DayOfWeek.Wednesday].Single();
+        Assert.AreEqual("Incline Bench Press", wednesdayWorkout.Name);
+        Assert.AreEqual(string.Empty, wednesdayWorkout.PlannedExerciseName);
+
+        service.ReplaceActivePlanExercise("Barbell Bench Press", "Barbell Bench Press");
+
+        mondayWorkout = service.GetWeeklySchedule()[DayOfWeek.Monday].Single();
+        Assert.AreEqual("Barbell Bench Press", mondayWorkout.Name);
+        Assert.AreEqual(string.Empty, mondayWorkout.PlannedExerciseName);
+    }
+
+    [TestMethod]
     public void WorkoutPlanService_LoadsSavedCustomPlans()
     {
         var tempFilePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}-custom-plans.json");

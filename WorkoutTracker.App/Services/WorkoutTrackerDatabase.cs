@@ -37,6 +37,7 @@ public sealed class WorkoutTrackerDatabase
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 PlanName TEXT NOT NULL,
                 Name TEXT NOT NULL,
+                PlannedExerciseName TEXT NOT NULL DEFAULT '',
                 MuscleGroup TEXT NOT NULL,
                 GymLocation TEXT NOT NULL,
                 Weight REAL NOT NULL,
@@ -65,12 +66,14 @@ public sealed class WorkoutTrackerDatabase
                 ActivePlanStartedOn TEXT NOT NULL,
                 ActivePlanEndsOn TEXT NOT NULL,
                 ActivePlanScheduleWeekNumber INTEGER NOT NULL,
-                ActivePlanDayOffset INTEGER NOT NULL DEFAULT 0
+                ActivePlanDayOffset INTEGER NOT NULL DEFAULT 0,
+                ExerciseSubstitutionsJson TEXT NOT NULL DEFAULT ''
             );
 
             CREATE TABLE IF NOT EXISTS ActivePlanScheduledWorkouts (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 Name TEXT NOT NULL,
+                PlannedExerciseName TEXT NOT NULL DEFAULT '',
                 MuscleGroup TEXT NOT NULL,
                 GymLocation TEXT NOT NULL,
                 Weight REAL NOT NULL,
@@ -95,6 +98,7 @@ public sealed class WorkoutTrackerDatabase
             CREATE TABLE IF NOT EXISTS WorkoutHistory (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 Name TEXT NOT NULL,
+                PlannedExerciseName TEXT NOT NULL DEFAULT '',
                 MuscleGroup TEXT NOT NULL,
                 GymLocation TEXT NOT NULL,
                 Weight REAL NOT NULL,
@@ -129,19 +133,23 @@ public sealed class WorkoutTrackerDatabase
         EnsureColumnExists(connection, "CustomWorkoutPlanWorkouts", "TargetRestRange", "TEXT NOT NULL DEFAULT ''");
         EnsureColumnExists(connection, "CustomWorkoutPlanWorkouts", "IsWarmup", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumnExists(connection, "CustomWorkoutPlanWorkouts", "DurationSeconds", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumnExists(connection, "CustomWorkoutPlanWorkouts", "PlannedExerciseName", "TEXT NOT NULL DEFAULT ''");
         EnsureColumnExists(connection, "ActivePlanState", "ActivePlanDayOffset", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumnExists(connection, "ActivePlanState", "ExerciseSubstitutionsJson", "TEXT NOT NULL DEFAULT ''");
         EnsureColumnExists(connection, "ActivePlanScheduledWorkouts", "MinReps", "INTEGER NULL");
         EnsureColumnExists(connection, "ActivePlanScheduledWorkouts", "MaxReps", "INTEGER NULL");
         EnsureColumnExists(connection, "ActivePlanScheduledWorkouts", "TargetRpe", "REAL NULL");
         EnsureColumnExists(connection, "ActivePlanScheduledWorkouts", "TargetRestRange", "TEXT NOT NULL DEFAULT ''");
         EnsureColumnExists(connection, "ActivePlanScheduledWorkouts", "IsWarmup", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumnExists(connection, "ActivePlanScheduledWorkouts", "DurationSeconds", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumnExists(connection, "ActivePlanScheduledWorkouts", "PlannedExerciseName", "TEXT NOT NULL DEFAULT ''");
         EnsureColumnExists(connection, "WorkoutHistory", "MinReps", "INTEGER NULL");
         EnsureColumnExists(connection, "WorkoutHistory", "MaxReps", "INTEGER NULL");
         EnsureColumnExists(connection, "WorkoutHistory", "TargetRpe", "REAL NULL");
         EnsureColumnExists(connection, "WorkoutHistory", "TargetRestRange", "TEXT NOT NULL DEFAULT ''");
         EnsureColumnExists(connection, "WorkoutHistory", "IsWarmup", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumnExists(connection, "WorkoutHistory", "DurationSeconds", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumnExists(connection, "WorkoutHistory", "PlannedExerciseName", "TEXT NOT NULL DEFAULT ''");
     }
 
     public SqliteConnection CreateConnection()

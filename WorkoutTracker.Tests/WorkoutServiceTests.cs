@@ -76,6 +76,38 @@ public class WorkoutServiceTests
     }
 
     [TestMethod]
+    public async Task AddWorkout_PreservesPlannedExerciseName()
+    {
+        var tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDirectory);
+        var databasePath = Path.Combine(tempDirectory, "workouts.db");
+
+        try
+        {
+            var service = new WorkoutService(databasePath);
+            var workout = new Workout("Dumbbell Bench Press", 70, 8, 3, "Chest", DayOfWeek.Monday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym")
+            {
+                PlannedExerciseName = "Barbell Bench Press"
+            };
+
+            await service.AddWorkout(workout);
+            var workouts = (await service.GetWorkouts()).ToList();
+
+            Assert.AreEqual(1, workouts.Count);
+            Assert.AreEqual("Dumbbell Bench Press", workouts[0].Name);
+            Assert.AreEqual("Barbell Bench Press", workouts[0].PlannedExerciseName);
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    [TestMethod]
     public async Task WorkoutService_MigratesLegacyJsonHistoryIntoSQLite()
     {
         var tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));

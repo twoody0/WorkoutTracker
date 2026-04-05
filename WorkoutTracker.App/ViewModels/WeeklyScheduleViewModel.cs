@@ -1,5 +1,6 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
+using WorkoutTracker.Helpers;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 using WorkoutTracker.Views;
@@ -21,6 +22,7 @@ public class WeeklyScheduleViewModel : BaseViewModel
     public ICommand EditDayCommand { get; }
     public ICommand ToggleDayCommand { get; }
     public ICommand ViewPlanPreviewCommand { get; }
+    public ICommand ManageExerciseSubstitutionsCommand { get; }
     public ObservableCollection<WeeklyScheduleDayGroup> WeeklySchedule { get; } = new();
     public string ActivePlanName => _scheduleService.ActivePlan?.Name ?? "No active plan";
     public string ActivePlanTimelineSummary => _scheduleService.GetActivePlanTimelineSummary();
@@ -34,6 +36,7 @@ public class WeeklyScheduleViewModel : BaseViewModel
         EditDayCommand = new Command<DayOfWeek>(EditDay);
         ToggleDayCommand = new Command<WeeklyScheduleDayGroup>(ToggleDay);
         ViewPlanPreviewCommand = new Command(async () => await ViewPlanPreviewAsync());
+        ManageExerciseSubstitutionsCommand = new Command(async () => await ManageExerciseSubstitutionsAsync());
         LoadSchedule();
     }
 
@@ -57,12 +60,17 @@ public class WeeklyScheduleViewModel : BaseViewModel
 
     private async void ChangeWorkoutDay(Workout workout)
     {
-        if (workout == null) return;
+        if (workout == null)
+        {
+            return;
+        }
 
         var days = Enum.GetNames(typeof(DayOfWeek));
         var page = Application.Current?.Windows.FirstOrDefault()?.Page;
         if (page == null)
+        {
             return;
+        }
 
         string selectedDay = await page.DisplayActionSheet(
             "Move Workout To:",
@@ -73,7 +81,7 @@ public class WeeklyScheduleViewModel : BaseViewModel
         if (!string.IsNullOrWhiteSpace(selectedDay) && Enum.TryParse(selectedDay, out DayOfWeek newDay))
         {
             workout.Day = newDay;
-            LoadSchedule(); // Refresh the schedule view
+            LoadSchedule();
             await page.DisplayAlert("Workout Moved", $"{workout.Name} is now scheduled for {newDay}.", "OK");
         }
     }
@@ -141,6 +149,68 @@ public class WeeklyScheduleViewModel : BaseViewModel
             _scheduleService.ActivePlan);
 
         await Shell.Current.Navigation.PushAsync(detailsPage);
+    }
+
+    private async Task ManageExerciseSubstitutionsAsync()
+    {
+        if (!HasActivePlan)
+        {
+            return;
+        }
+
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page == null)
+        {
+            return;
+        }
+
+        var exerciseOptions = _scheduleService.GetActivePlanExerciseOptions();
+        if (exerciseOptions.Count == 0)
+        {
+            await page.DisplayAlert("No Exercises Available", "There are no strength exercises available to replace in the active plan.", "OK");
+            return;
+        }
+
+        var exerciseLabels = exerciseOptions
+            .ToDictionary(GetExerciseSelectionLabel, workout => workout, StringComparer.Ordinal);
+
+        var selectedExerciseLabel = await page.DisplayActionSheet(
+            "Replace Which Exercise?",
+            "Cancel",
+            null,
+            exerciseLabels.Keys.OrderBy(label => label).ToArray());
+
+        if (string.IsNullOrWhiteSpace(selectedExerciseLabel) ||
+            selectedExerciseLabel == "Cancel" ||
+            !exerciseLabels.TryGetValue(selectedExerciseLabel, out var selectedWorkout))
+        {
+            return;
+        }
+
+        var replacementOptions = BuildReplacementOptions(
+            selectedWorkout,
+            GetUnavailableAlternativeNames(GetOriginalExerciseName(selectedWorkout)));
+        if (replacementOptions.Count == 0)
+        {
+            await page.DisplayAlert("No Alternatives Found", $"No alternatives are available yet for {selectedWorkout.Name}.", "OK");
+            return;
+        }
+
+        var selectedReplacementLabel = await page.DisplayActionSheet(
+            $"Replace {selectedWorkout.Name} With",
+            "Cancel",
+            null,
+            replacementOptions.Keys.ToArray());
+
+        if (string.IsNullOrWhiteSpace(selectedReplacementLabel) ||
+            selectedReplacementLabel == "Cancel" ||
+            !replacementOptions.TryGetValue(selectedReplacementLabel, out var replacementExerciseName))
+        {
+            return;
+        }
+
+        _scheduleService.ReplaceActivePlanExercise(GetOriginalExerciseName(selectedWorkout), replacementExerciseName);
+        LoadSchedule();
     }
 
     private async Task PromptForCompletedPlanAsync()
@@ -257,8 +327,59 @@ public class WeeklyScheduleViewModel : BaseViewModel
         return string.Join("|",
             date.ToString("yyyy-MM-dd"),
             workout.Type,
-            workout.Name,
+            GetOriginalExerciseName(workout),
             workout.MuscleGroup);
+    }
+
+    private static string GetExerciseSelectionLabel(Workout workout)
+    {
+        var originalExerciseName = GetOriginalExerciseName(workout);
+        return string.Equals(originalExerciseName, workout.Name, StringComparison.OrdinalIgnoreCase)
+            ? $"{workout.Name} ({workout.MuscleGroup})"
+            : $"{originalExerciseName} -> {workout.Name} ({workout.MuscleGroup})";
+    }
+
+    private static string GetOriginalExerciseName(Workout workout)
+    {
+        return string.IsNullOrWhiteSpace(workout.PlannedExerciseName)
+            ? workout.Name
+            : workout.PlannedExerciseName.Trim();
+    }
+
+    private HashSet<string> GetUnavailableAlternativeNames(string selectedOriginalExerciseName)
+    {
+        return _scheduleService.GetActivePlanExerciseOptions()
+            .Where(workout =>
+            {
+                var originalExerciseName = GetOriginalExerciseName(workout);
+                return !string.Equals(originalExerciseName, workout.Name, StringComparison.OrdinalIgnoreCase) &&
+                       !string.Equals(originalExerciseName, selectedOriginalExerciseName, StringComparison.OrdinalIgnoreCase);
+            })
+            .Select(workout => workout.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static Dictionary<string, string> BuildReplacementOptions(Workout workout, ISet<string> unavailableAlternativeNames)
+    {
+        var options = new Dictionary<string, string>(StringComparer.Ordinal);
+        var originalExerciseName = GetOriginalExerciseName(workout);
+
+        if (!string.Equals(originalExerciseName, workout.Name, StringComparison.OrdinalIgnoreCase))
+        {
+            options[$"Reset to Original: {originalExerciseName}"] = originalExerciseName;
+        }
+
+        foreach (var alternative in ExerciseAlternativeCatalog.GetAlternatives(originalExerciseName, workout.MuscleGroup, workout.Type))
+        {
+            if (unavailableAlternativeNames.Contains(alternative))
+            {
+                continue;
+            }
+
+            options[alternative] = alternative;
+        }
+
+        return options;
     }
 
     private readonly record struct PlanCompletionStats(int CompletedSessions, int ExpectedSessions)

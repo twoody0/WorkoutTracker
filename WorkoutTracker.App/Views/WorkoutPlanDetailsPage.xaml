@@ -89,6 +89,13 @@
                     TextColor="White"
                     CornerRadius="12" />
 
+            <Button Text="Replace Plan Exercise"
+                    Command="{Binding ManageExerciseSubstitutionsCommand}"
+                    IsVisible="{Binding ShowManageExerciseSubstitutionsButton}"
+                    BackgroundColor="{AppThemeBinding Light=#E6EFFC, Dark=#1D324B}"
+                    TextColor="{AppThemeBinding Light=#1D4ED8, Dark=#93C5FD}"
+                    CornerRadius="12" />
+
             <VerticalStackLayout Spacing="12"
                                  BindableLayout.ItemsSource="{Binding WorkoutGroups}">
                 <BindableLayout.ItemTemplate>

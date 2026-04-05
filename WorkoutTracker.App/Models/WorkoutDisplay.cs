@@ -1,4 +1,4 @@
-﻿namespace WorkoutTracker.Models;
+namespace WorkoutTracker.Models;
 
 public class WorkoutDisplay
 {

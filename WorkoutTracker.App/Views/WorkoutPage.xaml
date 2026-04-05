@@ -125,14 +125,14 @@
                                                         LineBreakMode="TailTruncation"/>
                                           </VerticalStackLayout>
                                    </Grid>
-                                    <Label Text="{Binding SelectedText}"
-                                           FontSize="12"
-                                           FontAttributes="Bold"
-                                           TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}"
-                                           IsVisible="{Binding ShowSelectedState}"/>
-                            </VerticalStackLayout>
-                     </Border>
-              </DataTemplate>
+                                     <Label Text="{Binding SelectedText}"
+                                            FontSize="12"
+                                            FontAttributes="Bold"
+                                            TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}"
+                                            IsVisible="{Binding ShowSelectedState}"/>
+                             </VerticalStackLayout>
+                      </Border>
+               </DataTemplate>
        </ContentPage.Resources>
 
        <Grid>

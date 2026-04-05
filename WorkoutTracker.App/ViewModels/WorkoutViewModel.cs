@@ -80,7 +80,6 @@ public class WorkoutViewModel : BaseViewModel
     private string _distanceMilesText = string.Empty;
     private string _stepsText = string.Empty;
     private string _activeSets = "1";
-    private bool _hasLoadedTemplate;
     private bool _isQuickAddMode;
     private bool _isAdvancedFieldsVisible = true;
     private bool _showManualWorkoutEntry;
@@ -98,6 +97,8 @@ public class WorkoutViewModel : BaseViewModel
     private int _exerciseSuggestionRequestVersion;
     private long _lastLoadedWorkoutChangeVersion = -1;
     private string _lastPlanRecommendationSignature = string.Empty;
+    private string _selectedRecommendationAppliedExerciseName = string.Empty;
+    private string _selectedRecommendationPlanReferenceName = string.Empty;
     private int _timedStrengthCountdownRemainingSeconds;
     private bool _isTimedStrengthCountdownRunning;
     private bool _hasTimedStrengthCountdownCompleted;
@@ -131,8 +132,12 @@ public class WorkoutViewModel : BaseViewModel
         // Preload template if one exists
         if (WorkoutTemplateCache.Template is Workout workout)
         {
-            _hasLoadedTemplate = true;
-            ApplyWorkoutTemplate(workout, historicalWeight: null, collapseForQuickAdd: false);
+            ApplyWorkoutTemplate(
+                workout,
+                historicalWeight: null,
+                collapseForQuickAdd: false,
+                appliedExerciseName: workout.Name,
+                plannedExerciseName: GetPlanTrackingName(workout));
             WorkoutTemplateCache.Template = null;
         }
 
@@ -1157,6 +1162,7 @@ public class WorkoutViewModel : BaseViewModel
             gymLocation: "Default Gym"
         )
         {
+            PlannedExerciseName = GetSelectedRecommendationPlanReferenceForSave(),
             DurationSeconds = isTimedStrengthTarget ? parsedStrengthDurationSeconds : 0,
             MinReps = _plannedMinReps,
             MaxReps = _plannedMaxReps,
@@ -1218,7 +1224,12 @@ public class WorkoutViewModel : BaseViewModel
                 return;
             }
 
-            ApplyWorkoutTemplate(selectedRecommendation.Workout, GetLastUsedWeight(selectedRecommendation.Workout), collapseForQuickAdd: true);
+            ApplyWorkoutTemplate(
+                selectedRecommendation.Workout,
+                GetLastUsedWeight(selectedRecommendation.Workout),
+                collapseForQuickAdd: true,
+                appliedExerciseName: selectedRecommendation.Workout.Name,
+                plannedExerciseName: GetPlanTrackingName(selectedRecommendation.Workout));
             return;
         }
 
@@ -1269,6 +1280,7 @@ public class WorkoutViewModel : BaseViewModel
             type: workout.Type,
             gymLocation: workout.GymLocation)
         {
+            PlannedExerciseName = workout.PlannedExerciseName,
             MinReps = workout.MinReps,
             MaxReps = workout.MaxReps,
             TargetRpe = workout.TargetRpe,
@@ -1285,7 +1297,7 @@ public class WorkoutViewModel : BaseViewModel
 
     private static bool IsTemplateMatch(Workout left, Workout right)
     {
-        return string.Equals(left.Name, right.Name, StringComparison.OrdinalIgnoreCase) &&
+        return string.Equals(GetPlanTrackingName(left), GetPlanTrackingName(right), StringComparison.OrdinalIgnoreCase) &&
                string.Equals(left.MuscleGroup, right.MuscleGroup, StringComparison.OrdinalIgnoreCase) &&
                left.Type == right.Type;
     }
@@ -1299,10 +1311,22 @@ public class WorkoutViewModel : BaseViewModel
     private void ApplyWorkoutTemplate(WorkoutRecommendation recommendation, bool collapseForQuickAdd)
     {
         SetSelectedRecommendation(recommendation);
-        ApplyWorkoutTemplate(recommendation.Workout, recommendation.LastUsedWeight, collapseForQuickAdd, recommendation.RemainingSets);
+        ApplyWorkoutTemplate(
+            recommendation.Workout,
+            recommendation.LastUsedWeight,
+            collapseForQuickAdd,
+            recommendation.RemainingSets,
+            appliedExerciseName: recommendation.Workout.Name,
+            plannedExerciseName: GetPlanTrackingName(recommendation.Workout));
     }
 
-    private void ApplyWorkoutTemplate(Workout workout, double? historicalWeight, bool collapseForQuickAdd, int? remainingPlannedSets = null)
+    private void ApplyWorkoutTemplate(
+        Workout workout,
+        double? historicalWeight,
+        bool collapseForQuickAdd,
+        int? remainingPlannedSets = null,
+        string? appliedExerciseName = null,
+        string? plannedExerciseName = null)
     {
         CancelTimedStrengthCountdown(resetToTarget: false);
         _isApplyingRecommendation = true;
@@ -1337,6 +1361,7 @@ public class WorkoutViewModel : BaseViewModel
         DurationMinutesText = workout.DurationMinutes > 0 ? workout.DurationMinutes.ToString() : string.Empty;
         DistanceMilesText = workout.DistanceMiles > 0 ? workout.DistanceMiles.ToString("0.##") : string.Empty;
         StepsText = workout.Steps > 0 ? workout.Steps.ToString() : string.Empty;
+        UpdateSelectedRecommendationContext(appliedExerciseName ?? workout.Name, plannedExerciseName ?? workout.Name);
         ApplyBodyweightDefaultsIfNeeded();
         NotifyBodyweightStateChanged();
         OnPropertyChanged(nameof(QuickEditExerciseName));
@@ -1346,6 +1371,18 @@ public class WorkoutViewModel : BaseViewModel
         ExerciseSuggestions.Clear();
         SyncTimedStrengthCountdownWithTarget(resetRunningCountdown: false);
         _isApplyingRecommendation = false;
+    }
+
+    private string GetSelectedRecommendationPlanReferenceForSave()
+    {
+        if (_selectedRecommendation == null ||
+            string.IsNullOrWhiteSpace(_selectedRecommendationPlanReferenceName) ||
+            !string.Equals(Name, _selectedRecommendationAppliedExerciseName, StringComparison.Ordinal))
+        {
+            return string.Empty;
+        }
+
+        return _selectedRecommendationPlanReferenceName;
     }
 
     public void RefreshPlanRecommendations()
@@ -1477,8 +1514,7 @@ public class WorkoutViewModel : BaseViewModel
             return;
         }
 
-        var workout = _selectedRecommendation.Workout;
-        var stillMatches = string.Equals(Name, workout.Name, StringComparison.Ordinal);
+        var stillMatches = string.Equals(Name, _selectedRecommendationAppliedExerciseName, StringComparison.Ordinal);
 
         if (stillMatches)
         {
@@ -1533,6 +1569,12 @@ public class WorkoutViewModel : BaseViewModel
         }
 
         _selectedRecommendation = recommendation;
+        if (recommendation == null)
+        {
+            _selectedRecommendationAppliedExerciseName = string.Empty;
+            _selectedRecommendationPlanReferenceName = string.Empty;
+        }
+
         OnPropertyChanged(nameof(SelectedRecommendationItem));
         OnPropertyChanged(nameof(QuickAddWeightSummaryText));
         OnPropertyChanged(nameof(HasQuickAddWeightSummary));
@@ -1643,10 +1685,30 @@ public class WorkoutViewModel : BaseViewModel
     {
         return string.Join("|",
             workout.Day,
-            workout.Name,
+            GetPlanTrackingName(workout),
             workout.MuscleGroup,
             workout.Type,
             workout.PlanWeekNumber);
+    }
+
+    private static string GetPlanTrackingName(Workout workout)
+    {
+        return string.IsNullOrWhiteSpace(workout.PlannedExerciseName)
+            ? workout.Name
+            : workout.PlannedExerciseName.Trim();
+    }
+
+    private void UpdateSelectedRecommendationContext(string? appliedExerciseName, string? plannedExerciseName)
+    {
+        if (_selectedRecommendation == null)
+        {
+            _selectedRecommendationAppliedExerciseName = string.Empty;
+            _selectedRecommendationPlanReferenceName = string.Empty;
+            return;
+        }
+
+        _selectedRecommendationAppliedExerciseName = appliedExerciseName?.Trim() ?? string.Empty;
+        _selectedRecommendationPlanReferenceName = plannedExerciseName?.Trim() ?? string.Empty;
     }
 
     private double? GetLastUsedWeight(Workout workout)

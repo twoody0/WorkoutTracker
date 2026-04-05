@@ -1,5 +1,6 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
+using WorkoutTracker.Helpers;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 using WorkoutTracker.Views;
@@ -10,6 +11,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
 {
     private readonly IWorkoutScheduleService _scheduleService;
     private readonly IWorkoutPlanService _workoutPlanService;
+    private readonly Dictionary<string, string> _previewExerciseSubstitutions = new(StringComparer.OrdinalIgnoreCase);
     private int _selectedPreviewWeek = 1;
     private bool _showWeekTemplateHelp;
     private bool _showRpeHelp;
@@ -33,6 +35,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
 
     public bool ShowWeekSelector => SelectedPlan != null && (SelectedPlan.DurationInWeeks > 1 || SelectedPlan.HasWeeklyVariation);
     public bool ShowStartPlanButton => SelectedPlan != null && !IsSelectedPlanActive;
+    public bool ShowManageExerciseSubstitutionsButton => SelectedPlan != null;
     public bool IsSelectedPlanActive => SelectedPlan != null &&
         _scheduleService.ActivePlan != null &&
         string.Equals(_scheduleService.ActivePlan.Name, SelectedPlan.Name, StringComparison.OrdinalIgnoreCase);
@@ -46,7 +49,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
         get => _showRpeHelp;
         set => SetProperty(ref _showRpeHelp, value);
     }
-    public bool ShowRpeInfo => SelectedPlan?.GetWorkoutsForWeek(SelectedPreviewWeek).Any(workout => workout.HasTargetRpe) == true;
+    public bool ShowRpeInfo => GetPreviewWorkouts().Any(workout => workout.HasTargetRpe);
     public string RpeHelpText => "RPE means rate of perceived exertion on a 1-10 scale. Around 6 feels fairly easy, 8 is hard with a couple reps left, and 9-10 is near-max effort.";
 
     public string WeekTemplateHelpText => SelectedPlan == null
@@ -83,6 +86,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
     public ICommand EditDayCommand { get; }
     public ICommand ToggleWeekTemplateHelpCommand { get; }
     public ICommand ToggleRpeHelpCommand { get; }
+    public ICommand ManageExerciseSubstitutionsCommand { get; }
 
     public WorkoutPlanDetailsViewModel(IWorkoutScheduleService scheduleService, IWorkoutPlanService workoutPlanService)
     {
@@ -94,6 +98,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
         EditDayCommand = new Command<WorkoutPlanDayGroup>(EditDay);
         ToggleWeekTemplateHelpCommand = new Command(() => ShowWeekTemplateHelp = !ShowWeekTemplateHelp);
         ToggleRpeHelpCommand = new Command(() => ShowRpeHelp = !ShowRpeHelp);
+        ManageExerciseSubstitutionsCommand = new Command(async () => await ManageExerciseSubstitutionsAsync());
     }
 
     private async void EditDay(WorkoutPlanDayGroup? workoutGroup)
@@ -111,15 +116,20 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
 
         await page.Navigation.PushAsync(new EditDayPage(workoutGroup.Day, SelectedPlan, _scheduleService));
     }
+
     private async void ChangeWorkoutDay(WorkoutDisplay workoutDisplay)
     {
         if (workoutDisplay == null)
+        {
             return;
+        }
 
         var days = Enum.GetNames(typeof(DayOfWeek));
         var page = Application.Current?.Windows.FirstOrDefault()?.Page;
         if (page == null || SelectedPlan == null)
+        {
             return;
+        }
 
         string selectedDay = await page.DisplayActionSheet(
             "Move Workout To:",
@@ -129,17 +139,14 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
 
         if (!string.IsNullOrWhiteSpace(selectedDay) && Enum.TryParse(selectedDay, out DayOfWeek newDay))
         {
-            // Update the workout's DayOfWeek
             workoutDisplay.Workout.Day = newDay;
             if (SelectedPlan.IsCustom)
             {
                 _workoutPlanService.SavePlans();
             }
 
-            // Refresh the grouped workouts by day
             LoadPlan(SelectedPlan);
 
-            // Optionally notify user
             await page.DisplayAlert(
                 "Workout Moved",
                 $"{workoutDisplay.Workout.Name} is now scheduled for {newDay}.",
@@ -149,7 +156,14 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
 
     public void LoadPlan(WorkoutPlan plan)
     {
+        var currentPlanName = SelectedPlan?.Name;
         SelectedPlan = plan;
+
+        if (!string.Equals(currentPlanName, plan.Name, StringComparison.OrdinalIgnoreCase))
+        {
+            _previewExerciseSubstitutions.Clear();
+        }
+
         PreviewWeeks.Clear();
         for (var weekNumber = 1; weekNumber <= plan.DurationInWeeks; weekNumber++)
         {
@@ -164,6 +178,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
         OnPropertyChanged(nameof(SelectedPreviewWeek));
         OnPropertyChanged(nameof(ShowWeekSelector));
         OnPropertyChanged(nameof(ShowStartPlanButton));
+        OnPropertyChanged(nameof(ShowManageExerciseSubstitutionsButton));
         OnPropertyChanged(nameof(IsSelectedPlanActive));
         OnPropertyChanged(nameof(PreviewWeekSummary));
         OnPropertyChanged(nameof(WeekTemplateHelpText));
@@ -180,7 +195,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
             return;
         }
 
-        var workoutsByDay = SelectedPlan.GetWorkoutsForWeek(SelectedPreviewWeek)
+        var workoutsByDay = GetPreviewWorkouts()
             .GroupBy(workout => workout.Day)
             .ToDictionary(group => group.Key, group => group.AsEnumerable());
 
@@ -203,6 +218,77 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
 
         OnPropertyChanged(nameof(WorkoutGroups));
         OnPropertyChanged(nameof(ShowRpeInfo));
+    }
+
+    private async Task ManageExerciseSubstitutionsAsync()
+    {
+        if (SelectedPlan == null)
+        {
+            return;
+        }
+
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page == null)
+        {
+            return;
+        }
+
+        var exerciseOptions = GetExerciseOptions();
+        if (exerciseOptions.Count == 0)
+        {
+            await page.DisplayAlert("No Exercises Available", "There are no strength exercises available to replace in this plan.", "OK");
+            return;
+        }
+
+        var exerciseLabels = exerciseOptions
+            .ToDictionary(GetExerciseSelectionLabel, workout => workout, StringComparer.Ordinal);
+
+        var selectedExerciseLabel = await page.DisplayActionSheet(
+            "Replace Which Exercise?",
+            "Cancel",
+            null,
+            exerciseLabels.Keys.OrderBy(label => label).ToArray());
+
+        if (string.IsNullOrWhiteSpace(selectedExerciseLabel) ||
+            selectedExerciseLabel == "Cancel" ||
+            !exerciseLabels.TryGetValue(selectedExerciseLabel, out var selectedWorkout))
+        {
+            return;
+        }
+
+        var replacementOptions = BuildReplacementOptions(
+            selectedWorkout,
+            GetUnavailableAlternativeNames(GetOriginalExerciseName(selectedWorkout)));
+        if (replacementOptions.Count == 0)
+        {
+            await page.DisplayAlert("No Alternatives Found", $"No alternatives are available yet for {selectedWorkout.Name}.", "OK");
+            return;
+        }
+
+        var selectedReplacementLabel = await page.DisplayActionSheet(
+            $"Replace {selectedWorkout.Name} With",
+            "Cancel",
+            null,
+            replacementOptions.Keys.ToArray());
+
+        if (string.IsNullOrWhiteSpace(selectedReplacementLabel) ||
+            selectedReplacementLabel == "Cancel" ||
+            !replacementOptions.TryGetValue(selectedReplacementLabel, out var replacementExerciseName))
+        {
+            return;
+        }
+
+        var originalExerciseName = GetOriginalExerciseName(selectedWorkout);
+        if (IsSelectedPlanActive)
+        {
+            _scheduleService.ReplaceActivePlanExercise(originalExerciseName, replacementExerciseName);
+        }
+        else
+        {
+            ReplacePreviewExercise(originalExerciseName, replacementExerciseName);
+        }
+
+        RefreshWorkoutGroups();
     }
 
     private void ToggleExpand(WorkoutPlanDayGroup? workoutGroup)
@@ -233,7 +319,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
                 "Cancel");
 
             if (!confirm)
-                return; // User cancelled
+                return;
         }
 
         var alignFirstWorkoutDayToToday = false;
@@ -249,11 +335,16 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
 
         _scheduleService.AddPlanToWeeklySchedule(SelectedPlan, alignFirstWorkoutDayToToday);
 
-        // Refresh WorkoutPlansPage
+        foreach (var substitution in _previewExerciseSubstitutions)
+        {
+            _scheduleService.ReplaceActivePlanExercise(substitution.Key, substitution.Value);
+        }
+
+        _previewExerciseSubstitutions.Clear();
+
         var parentViewModel = App.Services.GetRequiredService<WorkoutPlanViewModel>();
         parentViewModel.RefreshActivePlan();
 
-        // Show success
         await page.DisplayAlert(
             "Plan Started",
             $"'{SelectedPlan.Name}' is now your active workout plan!",
@@ -284,4 +375,182 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
     private static int GetMondayFirstDayIndex(DayOfWeek day)
         => day == DayOfWeek.Sunday ? 6 : ((int)day - 1);
 
+    private IReadOnlyList<Workout> GetPreviewWorkouts()
+    {
+        if (SelectedPlan == null)
+        {
+            return [];
+        }
+
+        if (IsSelectedPlanActive)
+        {
+            return _scheduleService.GetPlanWorkoutsForPreview(SelectedPlan, SelectedPreviewWeek);
+        }
+
+        return SelectedPlan.GetWorkoutsForWeek(SelectedPreviewWeek)
+            .Select(CloneWorkout)
+            .Select(ApplyPreviewExerciseSubstitution)
+            .ToList();
+    }
+
+    private IReadOnlyList<Workout> GetExerciseOptions()
+    {
+        if (SelectedPlan == null)
+        {
+            return [];
+        }
+
+        if (IsSelectedPlanActive)
+        {
+            return _scheduleService.GetActivePlanExerciseOptions();
+        }
+
+        var uniqueExercises = new Dictionary<string, Workout>(StringComparer.OrdinalIgnoreCase);
+        foreach (var workout in SelectedPlan.Workouts.Where(workout => workout.Type == WorkoutType.WeightLifting))
+        {
+            var originalExerciseName = GetOriginalExerciseName(workout);
+            if (uniqueExercises.ContainsKey(originalExerciseName))
+            {
+                continue;
+            }
+
+            uniqueExercises[originalExerciseName] = ApplyPreviewExerciseSubstitution(CloneWorkout(workout));
+        }
+
+        return uniqueExercises.Values
+            .OrderBy(workout => workout.Name)
+            .ToList();
+    }
+
+    private HashSet<string> GetUnavailableAlternativeNames(string selectedOriginalExerciseName)
+    {
+        if (IsSelectedPlanActive)
+        {
+            return _scheduleService.GetActivePlanExerciseOptions()
+                .Where(workout =>
+                {
+                    var originalExerciseName = GetOriginalExerciseName(workout);
+                    return !string.Equals(originalExerciseName, workout.Name, StringComparison.OrdinalIgnoreCase) &&
+                           !string.Equals(originalExerciseName, selectedOriginalExerciseName, StringComparison.OrdinalIgnoreCase);
+                })
+                .Select(workout => workout.Name)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+
+        return _previewExerciseSubstitutions
+            .Where(pair => !string.Equals(pair.Key, selectedOriginalExerciseName, StringComparison.OrdinalIgnoreCase))
+            .Select(pair => pair.Value)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private void ReplacePreviewExercise(string originalExerciseName, string replacementExerciseName)
+    {
+        if (string.IsNullOrWhiteSpace(originalExerciseName) || string.IsNullOrWhiteSpace(replacementExerciseName))
+        {
+            return;
+        }
+
+        var normalizedOriginal = originalExerciseName.Trim();
+        var normalizedReplacement = replacementExerciseName.Trim();
+
+        if (string.Equals(normalizedOriginal, normalizedReplacement, StringComparison.OrdinalIgnoreCase))
+        {
+            _previewExerciseSubstitutions.Remove(normalizedOriginal);
+            return;
+        }
+
+        if (_previewExerciseSubstitutions.Any(pair =>
+                !string.Equals(pair.Key, normalizedOriginal, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(pair.Value, normalizedReplacement, StringComparison.OrdinalIgnoreCase)))
+        {
+            return;
+        }
+
+        _previewExerciseSubstitutions[normalizedOriginal] = normalizedReplacement;
+    }
+
+    private Workout ApplyPreviewExerciseSubstitution(Workout workout)
+    {
+        if (workout.Type != WorkoutType.WeightLifting)
+        {
+            return workout;
+        }
+
+        var originalExerciseName = GetOriginalExerciseName(workout);
+        if (_previewExerciseSubstitutions.TryGetValue(originalExerciseName, out var replacementExerciseName) &&
+            !string.IsNullOrWhiteSpace(replacementExerciseName) &&
+            !string.Equals(workout.Name, replacementExerciseName, StringComparison.OrdinalIgnoreCase))
+        {
+            workout.PlannedExerciseName = originalExerciseName;
+            workout.Name = replacementExerciseName.Trim();
+        }
+
+        return workout;
+    }
+
+    private static Workout CloneWorkout(Workout workout)
+    {
+        return new Workout(
+            name: workout.Name,
+            weight: workout.Weight,
+            reps: workout.Reps,
+            sets: workout.Sets,
+            muscleGroup: workout.MuscleGroup,
+            day: workout.Day,
+            startTime: workout.StartTime,
+            type: workout.Type,
+            gymLocation: workout.GymLocation)
+        {
+            PlannedExerciseName = workout.PlannedExerciseName,
+            MinReps = workout.MinReps,
+            MaxReps = workout.MaxReps,
+            TargetRpe = workout.TargetRpe,
+            TargetRestRange = workout.TargetRestRange,
+            EndTime = workout.EndTime,
+            Steps = workout.Steps,
+            DurationMinutes = workout.DurationMinutes,
+            DistanceMiles = workout.DistanceMiles,
+            DurationSeconds = workout.DurationSeconds,
+            PlanWeekNumber = workout.PlanWeekNumber,
+            IsWarmup = workout.IsWarmup
+        };
+    }
+
+    private static string GetExerciseSelectionLabel(Workout workout)
+    {
+        var originalExerciseName = GetOriginalExerciseName(workout);
+        return string.Equals(originalExerciseName, workout.Name, StringComparison.OrdinalIgnoreCase)
+            ? $"{workout.Name} ({workout.MuscleGroup})"
+            : $"{originalExerciseName} -> {workout.Name} ({workout.MuscleGroup})";
+    }
+
+    private static string GetOriginalExerciseName(Workout workout)
+    {
+        return string.IsNullOrWhiteSpace(workout.PlannedExerciseName)
+            ? workout.Name
+            : workout.PlannedExerciseName.Trim();
+    }
+
+    private static Dictionary<string, string> BuildReplacementOptions(Workout workout, ISet<string> unavailableAlternativeNames)
+    {
+        var options = new Dictionary<string, string>(StringComparer.Ordinal);
+        var originalExerciseName = GetOriginalExerciseName(workout);
+
+        if (!string.Equals(originalExerciseName, workout.Name, StringComparison.OrdinalIgnoreCase))
+        {
+            options[$"Reset to Original: {originalExerciseName}"] = originalExerciseName;
+        }
+
+        foreach (var alternative in ExerciseAlternativeCatalog.GetAlternatives(originalExerciseName, workout.MuscleGroup, workout.Type))
+        {
+            if (unavailableAlternativeNames.Contains(alternative))
+            {
+                continue;
+            }
+
+            options[alternative] = alternative;
+        }
+
+        return options;
+    }
 }

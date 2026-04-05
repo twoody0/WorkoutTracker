@@ -1100,7 +1100,7 @@ namespace WorkoutTracker.Services
             command.CommandText =
                 """
                 SELECT p.Name, p.Description, p.Category, p.DurationInWeeks, p.IsCustom,
-                       w.Name, w.MuscleGroup, w.GymLocation, w.Weight, w.Reps, w.Sets, w.MinReps, w.MaxReps, w.TargetRpe, w.TargetRestRange,
+                       w.Name, w.PlannedExerciseName, w.MuscleGroup, w.GymLocation, w.Weight, w.Reps, w.Sets, w.MinReps, w.MaxReps, w.TargetRpe, w.TargetRestRange,
                        w.StartTime, w.EndTime, w.Steps, w.DurationMinutes, w.DurationSeconds, w.DistanceMiles,
                        w.Type, w.Day, w.PlanWeekNumber, w.IsWarmup
                 FROM CustomWorkoutPlans p
@@ -1185,13 +1185,13 @@ namespace WorkoutTracker.Services
             command.CommandText = tableName == "CustomWorkoutPlanWorkouts"
                 ? $"""
                    INSERT INTO {tableName}
-                   (PlanName, Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DurationSeconds, DistanceMiles, Type, Day, PlanWeekNumber, IsWarmup)
-                   VALUES ($planName, $name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $minReps, $maxReps, $targetRpe, $targetRestRange, $startTime, $endTime, $steps, $durationMinutes, $durationSeconds, $distanceMiles, $type, $day, $planWeekNumber, $isWarmup);
+                   (PlanName, Name, PlannedExerciseName, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DurationSeconds, DistanceMiles, Type, Day, PlanWeekNumber, IsWarmup)
+                   VALUES ($planName, $name, $plannedExerciseName, $muscleGroup, $gymLocation, $weight, $reps, $sets, $minReps, $maxReps, $targetRpe, $targetRestRange, $startTime, $endTime, $steps, $durationMinutes, $durationSeconds, $distanceMiles, $type, $day, $planWeekNumber, $isWarmup);
                    """
                 : $"""
                    INSERT INTO {tableName}
-                   (Name, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DurationSeconds, DistanceMiles, Type, Day, PlanWeekNumber, IsWarmup)
-                   VALUES ($name, $muscleGroup, $gymLocation, $weight, $reps, $sets, $minReps, $maxReps, $targetRpe, $targetRestRange, $startTime, $endTime, $steps, $durationMinutes, $durationSeconds, $distanceMiles, $type, $day, $planWeekNumber, $isWarmup);
+                   (Name, PlannedExerciseName, MuscleGroup, GymLocation, Weight, Reps, Sets, MinReps, MaxReps, TargetRpe, TargetRestRange, StartTime, EndTime, Steps, DurationMinutes, DurationSeconds, DistanceMiles, Type, Day, PlanWeekNumber, IsWarmup)
+                   VALUES ($name, $plannedExerciseName, $muscleGroup, $gymLocation, $weight, $reps, $sets, $minReps, $maxReps, $targetRpe, $targetRestRange, $startTime, $endTime, $steps, $durationMinutes, $durationSeconds, $distanceMiles, $type, $day, $planWeekNumber, $isWarmup);
                    """;
 
             if (planName != null)
@@ -1206,6 +1206,7 @@ namespace WorkoutTracker.Services
         internal static void AddWorkoutParameters(SqliteCommand command, Workout workout)
         {
             command.Parameters.AddWithValue("$name", workout.Name);
+            command.Parameters.AddWithValue("$plannedExerciseName", workout.PlannedExerciseName ?? string.Empty);
             command.Parameters.AddWithValue("$muscleGroup", workout.MuscleGroup);
             command.Parameters.AddWithValue("$gymLocation", workout.GymLocation);
             command.Parameters.AddWithValue("$weight", workout.Weight);
@@ -1231,26 +1232,27 @@ namespace WorkoutTracker.Services
         {
             return new Workout(
                 name: reader.GetString(offset),
-                weight: reader.GetDouble(offset + 3),
-                reps: reader.GetInt32(offset + 4),
-                sets: reader.GetInt32(offset + 5),
-                muscleGroup: reader.GetString(offset + 1),
-                day: (DayOfWeek)reader.GetInt32(offset + 17),
-                startTime: DateTime.Parse(reader.GetString(offset + 10), null, DateTimeStyles.RoundtripKind),
-                type: (WorkoutType)reader.GetInt32(offset + 16),
-                gymLocation: reader.GetString(offset + 2))
+                weight: reader.GetDouble(offset + 4),
+                reps: reader.GetInt32(offset + 5),
+                sets: reader.GetInt32(offset + 6),
+                muscleGroup: reader.GetString(offset + 2),
+                day: (DayOfWeek)reader.GetInt32(offset + 18),
+                startTime: DateTime.Parse(reader.GetString(offset + 11), null, DateTimeStyles.RoundtripKind),
+                type: (WorkoutType)reader.GetInt32(offset + 17),
+                gymLocation: reader.GetString(offset + 3))
             {
-                MinReps = reader.IsDBNull(offset + 6) ? null : reader.GetInt32(offset + 6),
-                MaxReps = reader.IsDBNull(offset + 7) ? null : reader.GetInt32(offset + 7),
-                TargetRpe = reader.IsDBNull(offset + 8) ? null : reader.GetDouble(offset + 8),
-                TargetRestRange = reader.IsDBNull(offset + 9) ? string.Empty : reader.GetString(offset + 9),
-                EndTime = DateTime.Parse(reader.GetString(offset + 11), null, DateTimeStyles.RoundtripKind),
-                Steps = reader.GetInt32(offset + 12),
-                DurationMinutes = reader.GetInt32(offset + 13),
-                DurationSeconds = reader.IsDBNull(offset + 14) ? 0 : reader.GetInt32(offset + 14),
-                DistanceMiles = reader.GetDouble(offset + 15),
-                PlanWeekNumber = reader.IsDBNull(offset + 18) ? null : reader.GetInt32(offset + 18),
-                IsWarmup = !reader.IsDBNull(offset + 19) && reader.GetInt32(offset + 19) != 0
+                PlannedExerciseName = reader.IsDBNull(offset + 1) ? string.Empty : reader.GetString(offset + 1),
+                MinReps = reader.IsDBNull(offset + 7) ? null : reader.GetInt32(offset + 7),
+                MaxReps = reader.IsDBNull(offset + 8) ? null : reader.GetInt32(offset + 8),
+                TargetRpe = reader.IsDBNull(offset + 9) ? null : reader.GetDouble(offset + 9),
+                TargetRestRange = reader.IsDBNull(offset + 10) ? string.Empty : reader.GetString(offset + 10),
+                EndTime = DateTime.Parse(reader.GetString(offset + 12), null, DateTimeStyles.RoundtripKind),
+                Steps = reader.GetInt32(offset + 13),
+                DurationMinutes = reader.GetInt32(offset + 14),
+                DurationSeconds = reader.IsDBNull(offset + 15) ? 0 : reader.GetInt32(offset + 15),
+                DistanceMiles = reader.GetDouble(offset + 16),
+                PlanWeekNumber = reader.IsDBNull(offset + 19) ? null : reader.GetInt32(offset + 19),
+                IsWarmup = !reader.IsDBNull(offset + 20) && reader.GetInt32(offset + 20) != 0
             };
         }
     }
