@@ -167,7 +167,7 @@ public class WeeklyScheduleViewModel : BaseViewModel
         var exerciseOptions = _scheduleService.GetActivePlanExerciseOptions();
         if (exerciseOptions.Count == 0)
         {
-            await page.DisplayAlert("No Exercises Available", "There are no strength exercises available to replace in the active plan.", "OK");
+            await page.DisplayAlert("No Exercises Available", "There are no plan workouts available to replace in the active plan.", "OK");
             return;
         }
 

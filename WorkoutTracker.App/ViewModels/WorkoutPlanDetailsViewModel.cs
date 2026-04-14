@@ -236,7 +236,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
         var exerciseOptions = GetExerciseOptions();
         if (exerciseOptions.Count == 0)
         {
-            await page.DisplayAlert("No Exercises Available", "There are no strength exercises available to replace in this plan.", "OK");
+            await page.DisplayAlert("No Exercises Available", "There are no plan workouts available to replace in this plan.", "OK");
             return;
         }
 
@@ -406,7 +406,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
         }
 
         var uniqueExercises = new Dictionary<string, Workout>(StringComparer.OrdinalIgnoreCase);
-        foreach (var workout in SelectedPlan.Workouts.Where(workout => workout.Type == WorkoutType.WeightLifting))
+        foreach (var workout in SelectedPlan.Workouts)
         {
             var originalExerciseName = GetOriginalExerciseName(workout);
             if (uniqueExercises.ContainsKey(originalExerciseName))
@@ -471,11 +471,6 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
 
     private Workout ApplyPreviewExerciseSubstitution(Workout workout)
     {
-        if (workout.Type != WorkoutType.WeightLifting)
-        {
-            return workout;
-        }
-
         var originalExerciseName = GetOriginalExerciseName(workout);
         if (_previewExerciseSubstitutions.TryGetValue(originalExerciseName, out var replacementExerciseName) &&
             !string.IsNullOrWhiteSpace(replacementExerciseName) &&

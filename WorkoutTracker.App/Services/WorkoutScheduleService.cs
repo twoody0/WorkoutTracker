@@ -106,7 +106,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         }
 
         var uniqueExercises = new Dictionary<string, Workout>(StringComparer.OrdinalIgnoreCase);
-        foreach (var workout in ActivePlan.Workouts.Where(workout => workout.Type == WorkoutType.WeightLifting))
+        foreach (var workout in ActivePlan.Workouts)
         {
             var originalExerciseName = GetOriginalExerciseName(workout);
             if (uniqueExercises.ContainsKey(originalExerciseName))
@@ -274,11 +274,6 @@ public class WorkoutScheduleService : IWorkoutScheduleService
 
     private Workout ApplyActivePlanExerciseSubstitution(Workout workout)
     {
-        if (workout.Type != WorkoutType.WeightLifting)
-        {
-            return workout;
-        }
-
         var originalExerciseName = GetOriginalExerciseName(workout);
         if (_activePlanExerciseSubstitutions.TryGetValue(originalExerciseName, out var replacementExerciseName) &&
             !string.IsNullOrWhiteSpace(replacementExerciseName) &&

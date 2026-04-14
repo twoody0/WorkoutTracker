@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.Data.Sqlite;
+using WorkoutTracker.Helpers;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 
@@ -209,6 +210,17 @@ public class WorkoutPlanCatalogTests
                 File.Delete(tempDatabasePath);
             }
         }
+    }
+
+    [TestMethod]
+    public void ExerciseAlternativeCatalog_ReturnsCardioAlternativesForCardioWorkouts()
+    {
+        var briskWalkAlternatives = ExerciseAlternativeCatalog.GetAlternatives("Brisk Walk", "Cardio", WorkoutType.Cardio);
+        var bikeAlternatives = ExerciseAlternativeCatalog.GetAlternatives("Bike Intervals", "Cardio", WorkoutType.Cardio);
+
+        CollectionAssert.Contains(briskWalkAlternatives.ToList(), "Recovery Walk");
+        CollectionAssert.Contains(briskWalkAlternatives.ToList(), "Easy Bike Ride");
+        CollectionAssert.Contains(bikeAlternatives.ToList(), "Easy Bike Ride");
     }
 
     [TestMethod]

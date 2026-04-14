@@ -6,6 +6,17 @@ public static class ExerciseAlternativeCatalog
 {
     private static readonly Dictionary<string, string[]> ExactAlternatives = new(StringComparer.OrdinalIgnoreCase)
     {
+        ["Brisk Walk"] = ["Recovery Walk", "Run-Walk Session", "Easy Bike Ride"],
+        ["Optional Recovery Walk"] = ["Recovery Walk", "Brisk Walk", "Easy Bike Ride"],
+        ["Recovery Walk"] = ["Brisk Walk", "Optional Recovery Walk", "Easy Bike Ride"],
+        ["Run-Walk Session"] = ["Brisk Walk", "Run Session", "Continuous Run"],
+        ["Run Session"] = ["Run-Walk Session", "Continuous Run", "Brisk Walk"],
+        ["Continuous Run"] = ["Run Session", "Run-Walk Session", "Brisk Walk"],
+        ["Bike Intervals"] = ["Easy Bike Ride", "Elliptical Intervals", "Treadmill Intervals"],
+        ["Easy Bike Ride"] = ["Brisk Walk", "Recovery Walk", "Bike Intervals"],
+        ["Treadmill Intervals"] = ["Elliptical Intervals", "Bike Intervals", "Rowing Intervals"],
+        ["Elliptical Intervals"] = ["Treadmill Intervals", "Bike Intervals", "Rowing Intervals"],
+        ["Rowing Intervals"] = ["Bike Intervals", "Treadmill Intervals", "Elliptical Intervals"],
         ["Barbell Bench Press"] = ["Dumbbell Bench Press", "Machine Chest Press", "Push-Up"],
         ["Close-Grip Bench Press"] = ["Machine Chest Press", "Dip", "Push-Up"],
         ["Incline Bench Press"] = ["Incline Dumbbell Press", "Machine Chest Press", "Push-Up"],
@@ -90,7 +101,7 @@ public static class ExerciseAlternativeCatalog
 
     public static IReadOnlyList<string> GetAlternatives(string? exerciseName, string? muscleGroup, WorkoutType workoutType, int maxCount = 3)
     {
-        if (workoutType != WorkoutType.WeightLifting || string.IsNullOrWhiteSpace(exerciseName) || maxCount <= 0)
+        if (string.IsNullOrWhiteSpace(exerciseName) || maxCount <= 0)
         {
             return [];
         }
@@ -103,7 +114,7 @@ public static class ExerciseAlternativeCatalog
             AddDistinct(results, exactAlternatives, normalizedName);
         }
 
-        AddDistinct(results, GetPatternAlternatives(normalizedName), normalizedName);
+        AddDistinct(results, GetPatternAlternatives(normalizedName, workoutType), normalizedName);
 
         if (!string.IsNullOrWhiteSpace(muscleGroup) &&
             MuscleGroupFallbacks.TryGetValue(muscleGroup.Trim(), out var muscleGroupAlternatives))
@@ -114,9 +125,39 @@ public static class ExerciseAlternativeCatalog
         return results.Take(maxCount).ToArray();
     }
 
-    private static IEnumerable<string> GetPatternAlternatives(string exerciseName)
+    private static IEnumerable<string> GetPatternAlternatives(string exerciseName, WorkoutType workoutType)
     {
         var normalized = exerciseName.ToLowerInvariant();
+
+        if (workoutType == WorkoutType.Cardio)
+        {
+            if (normalized.Contains("walk"))
+            {
+                return ["Brisk Walk", "Recovery Walk", "Easy Bike Ride"];
+            }
+
+            if (normalized.Contains("run"))
+            {
+                return ["Run-Walk Session", "Run Session", "Continuous Run"];
+            }
+
+            if (normalized.Contains("bike"))
+            {
+                return ["Bike Intervals", "Easy Bike Ride", "Elliptical Intervals"];
+            }
+
+            if (normalized.Contains("row"))
+            {
+                return ["Rowing Intervals", "Bike Intervals", "Elliptical Intervals"];
+            }
+
+            if (normalized.Contains("elliptical") || normalized.Contains("treadmill") || normalized.Contains("interval"))
+            {
+                return ["Treadmill Intervals", "Elliptical Intervals", "Bike Intervals"];
+            }
+
+            return [];
+        }
 
         if (normalized.Contains("bench") || normalized.Contains("chest press"))
         {
