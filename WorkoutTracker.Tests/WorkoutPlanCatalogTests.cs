@@ -141,6 +141,42 @@ public class WorkoutPlanCatalogTests
     }
 
     [TestMethod]
+    public void WorkoutPlanService_UsesSpecificArmMuscleGroupsInBuiltInPlans()
+    {
+        var tempDatabasePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}-specific-arm-muscles.db");
+
+        try
+        {
+            var service = new WorkoutPlanService(tempDatabasePath);
+            var incorrectlyLabeledArmExercises = service.GetWorkoutPlans()
+                .Where(plan => !plan.IsCustom)
+                .SelectMany(plan => plan.Workouts)
+                .Where(workout => workout.Type == WorkoutType.WeightLifting)
+                .Where(workout =>
+                    string.Equals(workout.MuscleGroup, "Arms", StringComparison.OrdinalIgnoreCase) &&
+                    (workout.Name.Contains("curl", StringComparison.OrdinalIgnoreCase) ||
+                     workout.Name.Contains("triceps", StringComparison.OrdinalIgnoreCase) ||
+                     workout.Name.Contains("skull crusher", StringComparison.OrdinalIgnoreCase) ||
+                     workout.Name.Contains("close-grip", StringComparison.OrdinalIgnoreCase) ||
+                     workout.Name.Contains("diamond push-up", StringComparison.OrdinalIgnoreCase)))
+                .Select(workout => $"{workout.Name} ({workout.MuscleGroup})")
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(name => name)
+                .ToList();
+
+            Assert.AreEqual(0, incorrectlyLabeledArmExercises.Count, $"Built-in plans still use generic arm labels: {string.Join(", ", incorrectlyLabeledArmExercises)}");
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (File.Exists(tempDatabasePath))
+            {
+                File.Delete(tempDatabasePath);
+            }
+        }
+    }
+
+    [TestMethod]
     public void ExerciseCatalog_UsesCoreInsteadOfAbsMuscleGroup()
     {
         var exercises = LoadExerciseCatalog();

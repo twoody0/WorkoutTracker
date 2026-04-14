@@ -806,14 +806,14 @@ namespace WorkoutTracker.Services
         }
 
         private static Workout StrengthWorkout(string name, int reps, int sets, string muscleGroup, DayOfWeek day, string gymLocation = "", double? targetRpe = null, string targetRestRange = "")
-            => new(name, 0, reps, sets, muscleGroup, day, DateTime.Now, WorkoutType.WeightLifting, gymLocation)
+            => new(name, 0, reps, sets, NormalizePlanMuscleGroup(name, muscleGroup, WorkoutType.WeightLifting), day, DateTime.Now, WorkoutType.WeightLifting, gymLocation)
             {
                 TargetRpe = targetRpe,
                 TargetRestRange = targetRestRange
             };
 
         private static Workout RangeStrengthWorkout(string name, int minReps, int maxReps, int sets, string muscleGroup, DayOfWeek day, string gymLocation = "", double? targetRpe = null, string targetRestRange = "")
-            => new(name, 0, maxReps <= 5 ? minReps : maxReps, sets, muscleGroup, day, DateTime.Now, WorkoutType.WeightLifting, gymLocation)
+            => new(name, 0, maxReps <= 5 ? minReps : maxReps, sets, NormalizePlanMuscleGroup(name, muscleGroup, WorkoutType.WeightLifting), day, DateTime.Now, WorkoutType.WeightLifting, gymLocation)
             {
                 MinReps = minReps,
                 MaxReps = maxReps,
@@ -822,7 +822,7 @@ namespace WorkoutTracker.Services
             };
 
         private static Workout TimedStrengthWorkout(string name, int durationSeconds, int sets, string muscleGroup, DayOfWeek day, string gymLocation = "", double? targetRpe = null, string targetRestRange = "")
-            => new(name, 0, 0, sets, muscleGroup, day, DateTime.Now, WorkoutType.WeightLifting, gymLocation)
+            => new(name, 0, 0, sets, NormalizePlanMuscleGroup(name, muscleGroup, WorkoutType.WeightLifting), day, DateTime.Now, WorkoutType.WeightLifting, gymLocation)
             {
                 DurationSeconds = durationSeconds,
                 TargetRpe = targetRpe,
@@ -836,6 +836,35 @@ namespace WorkoutTracker.Services
                 DistanceMiles = distanceMiles,
                 Steps = steps
             };
+
+        private static string NormalizePlanMuscleGroup(string exerciseName, string muscleGroup, WorkoutType type)
+        {
+            if (type != WorkoutType.WeightLifting || !string.Equals(muscleGroup, "Arms", StringComparison.OrdinalIgnoreCase))
+            {
+                return muscleGroup;
+            }
+
+            var normalizedName = exerciseName.Trim();
+            if (string.IsNullOrWhiteSpace(normalizedName))
+            {
+                return muscleGroup;
+            }
+
+            if (normalizedName.Contains("curl", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Biceps";
+            }
+
+            if (normalizedName.Contains("triceps", StringComparison.OrdinalIgnoreCase) ||
+                normalizedName.Contains("skull crusher", StringComparison.OrdinalIgnoreCase) ||
+                normalizedName.Contains("close-grip", StringComparison.OrdinalIgnoreCase) ||
+                normalizedName.Contains("diamond push-up", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Triceps";
+            }
+
+            return muscleGroup;
+        }
 
         private static double? GetSuggestedTargetRpe(Workout workout)
         {
@@ -1230,15 +1259,19 @@ namespace WorkoutTracker.Services
 
         internal static Workout ReadWorkout(SqliteDataReader reader, int offset)
         {
+            var name = reader.GetString(offset);
+            var type = (WorkoutType)reader.GetInt32(offset + 17);
+            var muscleGroup = NormalizePlanMuscleGroup(name, reader.GetString(offset + 2), type);
+
             return new Workout(
-                name: reader.GetString(offset),
+                name: name,
                 weight: reader.GetDouble(offset + 4),
                 reps: reader.GetInt32(offset + 5),
                 sets: reader.GetInt32(offset + 6),
-                muscleGroup: reader.GetString(offset + 2),
+                muscleGroup: muscleGroup,
                 day: (DayOfWeek)reader.GetInt32(offset + 18),
                 startTime: DateTime.Parse(reader.GetString(offset + 11), null, DateTimeStyles.RoundtripKind),
-                type: (WorkoutType)reader.GetInt32(offset + 17),
+                type: type,
                 gymLocation: reader.GetString(offset + 3))
             {
                 PlannedExerciseName = reader.IsDBNull(offset + 1) ? string.Empty : reader.GetString(offset + 1),
