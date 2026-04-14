@@ -177,6 +177,41 @@ public class WorkoutPlanCatalogTests
     }
 
     [TestMethod]
+    public void WorkoutPlanService_UsesDayContextForSharedMovementMuscleGroups()
+    {
+        var tempDatabasePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}-contextual-muscle-groups.db");
+
+        try
+        {
+            var service = new WorkoutPlanService(tempDatabasePath);
+            var classicSplit = service.GetWorkoutPlans().First(plan => plan.Name == "Classic Body Part Split");
+            var arnoldSplit = service.GetWorkoutPlans().First(plan => plan.Name == "Arnold Split Mass Builder");
+
+            var classicBackDayFacePull = classicSplit.GetWorkoutsForWeek(1)
+                .Single(workout => workout.Day == DayOfWeek.Tuesday && workout.Name == "Face Pull");
+            var arnoldChestBackDayFacePull = arnoldSplit.GetWorkoutsForWeek(1)
+                .Single(workout => workout.Day == DayOfWeek.Thursday && workout.Name == "Face Pull");
+            var classicChestDayDip = classicSplit.GetWorkoutsForWeek(1)
+                .Single(workout => workout.Day == DayOfWeek.Monday && workout.Name == "Dip");
+            var classicArmDayCloseGripBench = classicSplit.GetWorkoutsForWeek(1)
+                .Single(workout => workout.Day == DayOfWeek.Thursday && workout.Name == "Close-Grip Bench Press");
+
+            Assert.AreEqual("Back", classicBackDayFacePull.MuscleGroup);
+            Assert.AreEqual("Back", arnoldChestBackDayFacePull.MuscleGroup);
+            Assert.AreEqual("Chest", classicChestDayDip.MuscleGroup);
+            Assert.AreEqual("Triceps", classicArmDayCloseGripBench.MuscleGroup);
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (File.Exists(tempDatabasePath))
+            {
+                File.Delete(tempDatabasePath);
+            }
+        }
+    }
+
+    [TestMethod]
     public void ExerciseCatalog_UsesCoreInsteadOfAbsMuscleGroup()
     {
         var exercises = LoadExerciseCatalog();

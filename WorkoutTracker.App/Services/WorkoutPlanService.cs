@@ -14,6 +14,21 @@ namespace WorkoutTracker.Services
         {
             WriteIndented = true
         };
+        private static readonly Dictionary<string, string[]> ContextualMuscleGroupCandidates = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Dip"] = ["Chest", "Triceps"],
+            ["Push-Up"] = ["Chest", "Triceps"],
+            ["Incline Push-Up"] = ["Chest", "Triceps"],
+            ["Wall Push-Up"] = ["Chest", "Triceps"],
+            ["Diamond Push-Ups"] = ["Triceps", "Chest"],
+            ["Close-Grip Bench Press"] = ["Triceps", "Chest"],
+            ["Pull-Up"] = ["Back", "Biceps"],
+            ["Face Pull"] = ["Back", "Shoulders"],
+            ["Rear Delt Fly"] = ["Back", "Shoulders"],
+            ["Reverse Pec Deck Fly"] = ["Back", "Shoulders"],
+            ["Band Pull-Apart"] = ["Back", "Shoulders"],
+            ["Pike Push-Up"] = ["Shoulders", "Triceps"]
+        };
 
         public WorkoutPlanService(string? databasePath = null)
         {
@@ -785,7 +800,11 @@ namespace WorkoutTracker.Services
         }
 
         private static List<Workout> CreatePlanWorkouts(params IEnumerable<Workout>[] weeklyTemplates)
-            => weeklyTemplates.SelectMany(template => template).ToList();
+        {
+            var workouts = weeklyTemplates.SelectMany(template => template).ToList();
+            ApplySmartPlanMuscleGroups(workouts);
+            return workouts;
+        }
 
         private static IEnumerable<Workout> Week(int weekNumber, params Workout[] workouts)
         {
@@ -864,6 +883,70 @@ namespace WorkoutTracker.Services
             }
 
             return muscleGroup;
+        }
+
+        private static void ApplySmartPlanMuscleGroups(IEnumerable<Workout> workouts)
+        {
+            var strengthWorkouts = workouts
+                .Where(workout => workout.Type == WorkoutType.WeightLifting)
+                .ToList();
+
+            foreach (var workout in strengthWorkouts)
+            {
+                workout.MuscleGroup = NormalizePlanMuscleGroup(workout.Name, workout.MuscleGroup, workout.Type);
+            }
+
+            foreach (var dayGroup in strengthWorkouts.GroupBy(workout => new { workout.PlanWeekNumber, workout.Day }))
+            {
+                var dayWorkouts = dayGroup.ToList();
+                foreach (var workout in dayWorkouts)
+                {
+                    workout.MuscleGroup = ResolveContextualMuscleGroup(workout, dayWorkouts);
+                }
+            }
+        }
+
+        private static string ResolveContextualMuscleGroup(Workout workout, IReadOnlyCollection<Workout> dayWorkouts)
+        {
+            var workoutName = workout.Name.Trim();
+            if (!ContextualMuscleGroupCandidates.TryGetValue(workoutName, out var candidateGroups) ||
+                candidateGroups.Length == 0)
+            {
+                return workout.MuscleGroup;
+            }
+
+            var scores = candidateGroups.ToDictionary(group => group, _ => 0, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var otherWorkout in dayWorkouts)
+            {
+                if (ReferenceEquals(otherWorkout, workout))
+                {
+                    continue;
+                }
+
+                foreach (var candidateGroup in candidateGroups)
+                {
+                    if (string.Equals(otherWorkout.MuscleGroup, candidateGroup, StringComparison.OrdinalIgnoreCase))
+                    {
+                        scores[candidateGroup]++;
+                    }
+                }
+            }
+
+            var maxScore = scores.Values.DefaultIfEmpty(0).Max();
+            if (maxScore <= 0)
+            {
+                return workout.MuscleGroup;
+            }
+
+            var topCandidates = scores
+                .Where(pair => pair.Value == maxScore)
+                .Select(pair => pair.Key)
+                .ToList();
+
+            return topCandidates.Count == 1
+                ? topCandidates[0]
+                : workout.MuscleGroup;
         }
 
         private static double? GetSuggestedTargetRpe(Workout workout)
@@ -1085,6 +1168,7 @@ namespace WorkoutTracker.Services
 
         public void AddWorkoutPlan(WorkoutPlan plan)
         {
+            ApplySmartPlanMuscleGroups(plan.Workouts);
             _plans.Add(plan);
             SavePlans();
         }
@@ -1162,6 +1246,11 @@ namespace WorkoutTracker.Services
                     plan.Workouts.Add(ReadWorkout(reader, 5));
                 }
             }
+
+            foreach (var plan in plansByName.Values)
+            {
+                ApplySmartPlanMuscleGroups(plan.Workouts);
+            }
         }
 
         private void MigrateLegacyJsonIfNeeded()
@@ -1178,6 +1267,7 @@ namespace WorkoutTracker.Services
 
                 foreach (var plan in savedPlans.Where(plan => plan.IsCustom && !string.IsNullOrWhiteSpace(plan.Name)))
                 {
+                    ApplySmartPlanMuscleGroups(plan.Workouts);
                     _plans.Add(plan);
                 }
 
