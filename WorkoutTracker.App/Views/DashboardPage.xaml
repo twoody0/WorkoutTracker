@@ -559,6 +559,17 @@
                             <Label Text="{Binding Weight, StringFormat='Weight: {0} lbs'}"
                                    FontSize="13"
                                    IsVisible="{Binding HasWeightTarget}" />
+                            <VerticalStackLayout Spacing="4"
+                                                 IsVisible="{Binding HasSetDetails}"
+                                                 BindableLayout.ItemsSource="{Binding SetDetails}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate>
+                                        <Label Text="{Binding Text}"
+                                               FontSize="13"
+                                               TextColor="{AppThemeBinding Light=#5D6A79, Dark=#A6B4C5}" />
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
                             <Label Text="{Binding DurationValueDisplay, StringFormat='Time: {0}'}"
                                    FontSize="13"
                                    IsVisible="{Binding HasDuration}" />

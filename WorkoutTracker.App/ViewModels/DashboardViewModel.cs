@@ -10,6 +10,7 @@ namespace WorkoutTracker.ViewModels;
 
 public sealed class DashboardWorkoutHistoryItem
 {
+    public required IReadOnlyList<DashboardWorkoutSetDetail> SetDetails { get; init; }
     public required Workout Workout { get; init; }
     public required string CaloriesSummary { get; init; }
     public bool HasCalories => !string.IsNullOrWhiteSpace(CaloriesSummary);
@@ -29,6 +30,12 @@ public sealed class DashboardWorkoutHistoryItem
     public bool HasDuration => Workout.HasDuration;
     public bool HasDistance => Workout.HasDistance;
     public bool HasSteps => Workout.HasSteps;
+    public bool HasSetDetails => SetDetails.Count > 0;
+}
+
+public sealed class DashboardWorkoutSetDetail
+{
+    public required string Text { get; init; }
 }
 
 public sealed class DashboardCalendarDayItem : BaseViewModel
@@ -589,19 +596,13 @@ public class DashboardViewModel : BaseViewModel
                 group =>
                 {
                     var orderedWorkouts = group
-                        .OrderByDescending(workout => workout.StartTime)
+                        .OrderBy(workout => workout.StartTime)
                         .ToList();
                     var firstWorkoutOfDay = group
                         .OrderBy(workout => workout.StartTime)
                         .FirstOrDefault();
 
-                    var items = orderedWorkouts
-                        .Select(workout => new DashboardWorkoutHistoryItem
-                        {
-                            Workout = workout,
-                            CaloriesSummary = GetWorkoutCaloriesSummary(workout, weightLbs)
-                        })
-                        .ToList();
+                    var items = BuildDashboardHistoryItems(orderedWorkouts, weightLbs);
 
                     var totalWeightLifted = orderedWorkouts
                         .Where(workout => workout.Type == WorkoutType.WeightLifting && workout.Reps > 0 && workout.Sets > 0)
@@ -626,6 +627,208 @@ public class DashboardViewModel : BaseViewModel
                         FirstWorkoutType = firstWorkoutOfDay?.Type
                     };
                 });
+    }
+
+    private static List<DashboardWorkoutHistoryItem> BuildDashboardHistoryItems(IReadOnlyList<Workout> orderedWorkouts, double bodyWeightLbs)
+    {
+        var items = new List<DashboardWorkoutHistoryItem>();
+        var currentGroup = new List<Workout>();
+
+        foreach (var workout in orderedWorkouts.OrderBy(workout => workout.StartTime))
+        {
+            if (currentGroup.Count == 0 || CanGroupWorkoutHistoryEntries(currentGroup[^1], workout))
+            {
+                currentGroup.Add(workout);
+                continue;
+            }
+
+            items.Add(CreateDashboardHistoryItem(currentGroup, bodyWeightLbs));
+            currentGroup = [workout];
+        }
+
+        if (currentGroup.Count > 0)
+        {
+            items.Add(CreateDashboardHistoryItem(currentGroup, bodyWeightLbs));
+        }
+
+        return items;
+    }
+
+    private static bool CanGroupWorkoutHistoryEntries(Workout previous, Workout current)
+    {
+        if (previous.Type != WorkoutType.WeightLifting || current.Type != WorkoutType.WeightLifting)
+        {
+            return false;
+        }
+
+        return string.Equals(previous.Name, current.Name, StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(previous.MuscleGroup, current.MuscleGroup, StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(previous.PlannedExerciseName, current.PlannedExerciseName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static DashboardWorkoutHistoryItem CreateDashboardHistoryItem(IReadOnlyList<Workout> groupedWorkouts, double bodyWeightLbs)
+    {
+        var firstWorkout = groupedWorkouts[0];
+        if (groupedWorkouts.Count == 1 || firstWorkout.Type != WorkoutType.WeightLifting)
+        {
+            return new DashboardWorkoutHistoryItem
+            {
+                Workout = firstWorkout,
+                CaloriesSummary = GetWorkoutCaloriesSummary(firstWorkout, bodyWeightLbs),
+                SetDetails = []
+            };
+        }
+
+        var representativeWorkout = CloneWorkout(firstWorkout);
+        representativeWorkout.StartTime = groupedWorkouts.Min(workout => workout.StartTime);
+        representativeWorkout.EndTime = groupedWorkouts.Max(workout => workout.EndTime);
+        representativeWorkout.Sets = groupedWorkouts.Sum(workout => Math.Max(1, workout.Sets));
+
+        var distinctRepDisplays = groupedWorkouts
+            .Select(GetWorkoutRepSignature)
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+        if (distinctRepDisplays.Count > 1)
+        {
+            representativeWorkout.Reps = 0;
+            representativeWorkout.MinReps = null;
+            representativeWorkout.MaxReps = null;
+        }
+
+        var distinctWeights = groupedWorkouts
+            .Select(workout => workout.Weight)
+            .Distinct()
+            .ToList();
+        if (distinctWeights.Count > 1)
+        {
+            representativeWorkout.Weight = 0;
+        }
+
+        var distinctTimedTargets = groupedWorkouts
+            .Select(workout => workout.DurationSeconds)
+            .Distinct()
+            .ToList();
+        if (distinctTimedTargets.Count > 1)
+        {
+            representativeWorkout.DurationSeconds = 0;
+            representativeWorkout.DurationMinutes = 0;
+        }
+
+        var setDetails = BuildSetDetails(groupedWorkouts);
+        return new DashboardWorkoutHistoryItem
+        {
+            Workout = representativeWorkout,
+            CaloriesSummary = GetWorkoutCaloriesSummary(representativeWorkout, bodyWeightLbs),
+            SetDetails = setDetails
+        };
+    }
+
+    private static IReadOnlyList<DashboardWorkoutSetDetail> BuildSetDetails(IReadOnlyList<Workout> groupedWorkouts)
+    {
+        var segments = new List<(string Signature, int Sets, string Summary)>();
+        foreach (var workout in groupedWorkouts)
+        {
+            var signature = GetWorkoutSetSignature(workout);
+            var summary = GetWorkoutSetSummary(workout);
+            var sets = Math.Max(1, workout.Sets);
+
+            if (segments.Count > 0 && string.Equals(segments[^1].Signature, signature, StringComparison.Ordinal))
+            {
+                var previous = segments[^1];
+                segments[^1] = (previous.Signature, previous.Sets + sets, previous.Summary);
+                continue;
+            }
+
+            segments.Add((signature, sets, summary));
+        }
+
+        if (segments.Count <= 1)
+        {
+            return [];
+        }
+
+        return segments
+            .Select(segment => new DashboardWorkoutSetDetail
+            {
+                Text = segment.Sets == 1
+                    ? $"1 set: {segment.Summary}"
+                    : $"{segment.Sets} sets: {segment.Summary}"
+            })
+            .ToList();
+    }
+
+    private static string GetWorkoutRepSignature(Workout workout)
+    {
+        return workout.HasRepRange
+            ? $"{workout.MinReps}-{workout.MaxReps}"
+            : workout.Reps.ToString(CultureInfo.InvariantCulture);
+    }
+
+    private static string GetWorkoutSetSignature(Workout workout)
+    {
+        return string.Join("|",
+            workout.Weight.ToString("0.###", CultureInfo.InvariantCulture),
+            GetWorkoutRepSignature(workout),
+            workout.DurationSeconds,
+            workout.DurationMinutes);
+    }
+
+    private static string GetWorkoutSetSummary(Workout workout)
+    {
+        if (workout.HasTimedTarget)
+        {
+            if (workout.HasWeightTarget)
+            {
+                return $"{workout.Weight:0.#} lb for {workout.DurationValueDisplay}";
+            }
+
+            return workout.DurationValueDisplay;
+        }
+
+        if (workout.HasWeightTarget && workout.HasRepTarget)
+        {
+            return $"{workout.Weight:0.#} lb x {workout.RepDisplay}";
+        }
+
+        if (workout.HasRepTarget)
+        {
+            return $"{workout.RepDisplay} reps";
+        }
+
+        if (workout.HasWeightTarget)
+        {
+            return $"{workout.Weight:0.#} lb";
+        }
+
+        return workout.Name;
+    }
+
+    private static Workout CloneWorkout(Workout workout)
+    {
+        return new Workout(
+            name: workout.Name,
+            weight: workout.Weight,
+            reps: workout.Reps,
+            sets: workout.Sets,
+            muscleGroup: workout.MuscleGroup,
+            day: workout.Day,
+            startTime: workout.StartTime,
+            type: workout.Type,
+            gymLocation: workout.GymLocation)
+        {
+            PlannedExerciseName = workout.PlannedExerciseName,
+            MinReps = workout.MinReps,
+            MaxReps = workout.MaxReps,
+            TargetRpe = workout.TargetRpe,
+            TargetRestRange = workout.TargetRestRange,
+            EndTime = workout.EndTime,
+            Steps = workout.Steps,
+            DurationMinutes = workout.DurationMinutes,
+            DistanceMiles = workout.DistanceMiles,
+            DurationSeconds = workout.DurationSeconds,
+            PlanWeekNumber = workout.PlanWeekNumber,
+            IsWarmup = workout.IsWarmup
+        };
     }
 
     private void ChangeCalendarMonth(int offset)
