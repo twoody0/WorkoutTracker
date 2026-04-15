@@ -1340,8 +1340,8 @@ public class WorkoutViewModel : BaseViewModel
             return;
         }
 
-        Name = ExerciseSearchQuery = Weight = ResistanceAdjustment = string.Empty;
-        Reps = "1";
+        ResistanceAdjustment = string.Empty;
+        Weight = GetDefaultWeightForExerciseName(Name);
         Sets = "1";
         DurationMinutesText = DistanceMilesText = StepsText = TimedStrengthSecondsText = string.Empty;
         ClearPlannedRepRange();
