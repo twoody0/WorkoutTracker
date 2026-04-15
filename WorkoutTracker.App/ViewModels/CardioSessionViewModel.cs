@@ -46,6 +46,7 @@ public class CardioWorkoutViewModel : BaseViewModel
     private double _plannedDistanceMiles;
     private double? _plannedTargetRpe;
     private int _plannedPlanWeekNumber;
+    private DayOfWeek _plannedDay = DateTime.Today.DayOfWeek;
 
     public CardioWorkoutViewModel(IWorkoutService workoutService, IStepCounterService stepCounterService)
     {
@@ -280,6 +281,7 @@ public class CardioWorkoutViewModel : BaseViewModel
         PlannedDistanceMiles = template.DistanceMiles;
         PlannedTargetRpe = template.TargetRpe;
         _plannedPlanWeekNumber = template.PlanWeekNumber.GetValueOrDefault();
+        _plannedDay = template.Day;
         UseStepTracking = true;
         WorkoutTemplateCache.Template = null;
     }
@@ -385,7 +387,7 @@ public class CardioWorkoutViewModel : BaseViewModel
             reps: 0,
             sets: 0,
             muscleGroup: "Cardio",
-            day: DateTime.Today.DayOfWeek,
+            day: completedPlannedWorkout ? _plannedDay : DateTime.Today.DayOfWeek,
             startTime: sessionStartedAt.LocalDateTime,
             type: WorkoutType.Cardio,
             gymLocation: "Outdoor")
@@ -407,6 +409,7 @@ public class CardioWorkoutViewModel : BaseViewModel
         SessionName = string.Empty;
         UseStepTracking = true;
         _plannedPlanWeekNumber = 0;
+        _plannedDay = DateTime.Today.DayOfWeek;
         OnPropertyChanged(nameof(StepTrackingStatusText));
 
         var currentPage = Shell.Current?.CurrentPage ?? Application.Current?.Windows.FirstOrDefault()?.Page;

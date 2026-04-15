@@ -27,6 +27,7 @@ public class WorkoutRecommendation : INotifyPropertyChanged
     public string DistanceDisplayText { get; init; } = string.Empty;
     public string TargetRpeText { get; init; } = string.Empty;
     public string TargetRestText { get; init; } = string.Empty;
+    public string ScheduleContextText { get; init; } = string.Empty;
     public int RemainingSets
     {
         get => _remainingSets;
@@ -70,6 +71,7 @@ public class WorkoutRecommendation : INotifyPropertyChanged
     public bool HasDistance => !string.IsNullOrWhiteSpace(DistanceDisplayText);
     public bool HasTargetRpe => !string.IsNullOrWhiteSpace(TargetRpeText);
     public bool HasTargetRest => !string.IsNullOrWhiteSpace(TargetRestText);
+    public bool HasScheduleContext => !string.IsNullOrWhiteSpace(ScheduleContextText);
     public string ActionButtonText => IsCardio ? "Track Workout" : "Use This Workout";
     public bool ShowUseButton => IsCardio || !IsSelected;
     public bool ShowDetails => IsCardio || !IsSelected;

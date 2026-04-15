@@ -167,6 +167,92 @@ public class WorkoutScheduleServiceTests
     }
 
     [TestMethod]
+    public void GetActivePlanWorkoutsForDate_ReturnsWorkoutsForRequestedDateAndWeek()
+    {
+        var service = CreateServiceWithPlans();
+        var plan = new WorkoutPlan("Date Aware Plan", "Plan with weekly variation", durationInWeeks: 4)
+        {
+            Workouts =
+            [
+                new Workout("Week 1 Monday Bench", 0, 8, 3, "Chest", DayOfWeek.Monday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym")
+                {
+                    PlanWeekNumber = 1
+                },
+                new Workout("Week 2 Tuesday Row", 0, 10, 3, "Back", DayOfWeek.Tuesday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym")
+                {
+                    PlanWeekNumber = 2
+                }
+            ]
+        };
+
+        service.AddPlanToWeeklySchedule(plan);
+        SetPrivateAutoProperty(service, nameof(WorkoutScheduleService.ActivePlanStartedOn), new DateTime(2026, 4, 6));
+
+        var requestedDate = new DateTime(2026, 4, 14);
+        var workouts = service.GetActivePlanWorkoutsForDate(requestedDate);
+
+        Assert.AreEqual(1, workouts.Count);
+        Assert.AreEqual("Week 2 Tuesday Row", workouts[0].Name);
+        Assert.AreEqual(DayOfWeek.Tuesday, workouts[0].Day);
+    }
+
+    [TestMethod]
+    public void MoveMissedWorkoutToDate_UsesNextRestDayForTodaysWorkoutWhenAvailable()
+    {
+        var service = CreateServiceWithPlans();
+        var plan = new WorkoutPlan("Catchup Plan", "Plan")
+        {
+            Workouts =
+            [
+                new Workout("Missed Bench", 0, 8, 3, "Chest", DayOfWeek.Monday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym"),
+                new Workout("Today Row", 0, 10, 3, "Back", DayOfWeek.Tuesday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym"),
+                new Workout("Wednesday Press", 0, 8, 3, "Shoulders", DayOfWeek.Wednesday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym"),
+                new Workout("Thursday Squat", 0, 5, 3, "Legs", DayOfWeek.Thursday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym")
+            ]
+        };
+
+        service.AddPlanToWeeklySchedule(plan);
+        SetPrivateAutoProperty(service, nameof(WorkoutScheduleService.ActivePlanStartedOn), new DateTime(2026, 4, 13));
+
+        var moved = service.MoveMissedWorkoutToDate(new DateTime(2026, 4, 13), new DateTime(2026, 4, 14));
+
+        Assert.IsTrue(moved);
+        Assert.AreEqual("Missed Bench", service.GetActivePlanWorkoutsForDate(new DateTime(2026, 4, 14)).Single().Name);
+        Assert.AreEqual("Today Row", service.GetActivePlanWorkoutsForDate(new DateTime(2026, 4, 15)).Single().Name);
+        Assert.AreEqual("Wednesday Press", service.GetActivePlanWorkoutsForDate(new DateTime(2026, 4, 16)).Single().Name);
+        Assert.AreEqual("Thursday Squat", service.GetActivePlanWorkoutsForDate(new DateTime(2026, 4, 17)).Single().Name);
+    }
+
+    [TestMethod]
+    public void MoveMissedWorkoutToDate_ShiftsScheduleForwardWhenNoRestDayExists()
+    {
+        var service = CreateServiceWithPlans();
+        var plan = new WorkoutPlan("Dense Plan", "Plan")
+        {
+            Workouts =
+            [
+                new Workout("Monday Lift", 0, 8, 3, "Chest", DayOfWeek.Monday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym"),
+                new Workout("Tuesday Lift", 0, 10, 3, "Back", DayOfWeek.Tuesday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym"),
+                new Workout("Wednesday Lift", 0, 10, 3, "Shoulders", DayOfWeek.Wednesday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym"),
+                new Workout("Thursday Lift", 0, 10, 3, "Legs", DayOfWeek.Thursday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym"),
+                new Workout("Friday Lift", 0, 10, 3, "Core", DayOfWeek.Friday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym"),
+                new Workout("Saturday Lift", 0, 10, 3, "Arms", DayOfWeek.Saturday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym"),
+                new Workout("Sunday Lift", 0, 10, 3, "Back", DayOfWeek.Sunday, DateTime.Today, WorkoutType.WeightLifting, "Main Gym")
+            ]
+        };
+
+        service.AddPlanToWeeklySchedule(plan);
+        SetPrivateAutoProperty(service, nameof(WorkoutScheduleService.ActivePlanStartedOn), new DateTime(2026, 4, 13));
+
+        var moved = service.MoveMissedWorkoutToDate(new DateTime(2026, 4, 14), new DateTime(2026, 4, 15));
+
+        Assert.IsTrue(moved);
+        Assert.AreEqual("Tuesday Lift", service.GetActivePlanWorkoutsForDate(new DateTime(2026, 4, 15)).Single().Name);
+        Assert.AreEqual("Wednesday Lift", service.GetActivePlanWorkoutsForDate(new DateTime(2026, 4, 16)).Single().Name);
+        Assert.AreEqual("Sunday Lift", service.GetActivePlanWorkoutsForDate(new DateTime(2026, 4, 20)).Single().Name);
+    }
+
+    [TestMethod]
     public void WorkoutPlan_GetWorkoutsForWeek_RepeatsTemplatesAcrossLongerPlan()
     {
         var plan = new WorkoutPlan("Rotating Plan", "Plan with weekly variation", durationInWeeks: 8)

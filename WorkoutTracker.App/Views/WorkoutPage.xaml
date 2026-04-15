@@ -24,6 +24,11 @@
                                    </DataTrigger>
                             </Border.Triggers>
                             <VerticalStackLayout Spacing="4">
+                                   <Label Text="{Binding ScheduleContextText}"
+                                          FontSize="11"
+                                          FontAttributes="Bold"
+                                          TextColor="{AppThemeBinding Light=#0F766E, Dark=#7DE6D7}"
+                                          IsVisible="{Binding HasScheduleContext}"/>
                                            <Grid ColumnDefinitions="*,Auto"
                                                  ColumnSpacing="8">
                                                   <Label Grid.Column="0"

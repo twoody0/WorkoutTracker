@@ -88,6 +88,8 @@ public class WorkoutViewModel : BaseViewModel
     private bool _isApplyingRecommendation;
     private List<Workout> _workoutHistory = new();
     private bool _hasScheduledPlanWorkoutsToday;
+    private bool _hasCarryoverPlanWorkouts;
+    private bool _showAutoCarryoverNotice;
     private WorkoutRecommendation? _selectedRecommendation;
     private bool _showRpeHelp;
     private bool _isWarmupSetSelected;
@@ -97,6 +99,8 @@ public class WorkoutViewModel : BaseViewModel
     private int _exerciseSuggestionRequestVersion;
     private long _lastLoadedWorkoutChangeVersion = -1;
     private string _lastPlanRecommendationSignature = string.Empty;
+    private string _currentCarryoverDecisionKey = string.Empty;
+    private string _handledCarryoverDecisionKey = string.Empty;
     private string _selectedRecommendationAppliedExerciseName = string.Empty;
     private string _selectedRecommendationPlanReferenceName = string.Empty;
     private int _timedStrengthCountdownRemainingSeconds;
@@ -996,6 +1000,70 @@ public class WorkoutViewModel : BaseViewModel
         RefreshPlanRecommendations();
     }
 
+    public bool NeedsMissedWorkoutCatchupChoice()
+    {
+        return _hasCarryoverPlanWorkouts &&
+               _hasScheduledPlanWorkoutsToday &&
+               !string.IsNullOrWhiteSpace(_currentCarryoverDecisionKey) &&
+               !string.Equals(_handledCarryoverDecisionKey, _currentCarryoverDecisionKey, StringComparison.Ordinal);
+    }
+
+    public bool ConsumeAutoUsingMissedWorkoutCatchupNotice()
+    {
+        if (!_showAutoCarryoverNotice)
+        {
+            return false;
+        }
+
+        _showAutoCarryoverNotice = false;
+        return true;
+    }
+
+    public string GetMissedWorkoutCatchupMessage()
+    {
+        var activePlanName = _workoutScheduleService.ActivePlan?.Name ?? "your active plan";
+        return $"You missed yesterday's workout from '{activePlanName}'. If you do it today, today's planned workout and the following days will each shift forward until the next rest day absorbs the change.";
+    }
+
+    public void UseMissedWorkoutCatchupToday()
+    {
+        if (string.IsNullOrWhiteSpace(_currentCarryoverDecisionKey))
+        {
+            return;
+        }
+
+        _handledCarryoverDecisionKey = _currentCarryoverDecisionKey;
+        if (_workoutScheduleService.MoveMissedWorkoutToDate(DateTime.Today.AddDays(-1), DateTime.Today))
+        {
+            RefreshPlanRecommendations();
+        }
+    }
+
+    public void KeepTodaysPlannedWorkout()
+    {
+        if (string.IsNullOrWhiteSpace(_currentCarryoverDecisionKey))
+        {
+            return;
+        }
+
+        _handledCarryoverDecisionKey = _currentCarryoverDecisionKey;
+    }
+
+    public void AutoMoveMissedWorkoutToTodayIfNeeded()
+    {
+        if (!_hasCarryoverPlanWorkouts || _hasScheduledPlanWorkoutsToday)
+        {
+            return;
+        }
+
+        if (_workoutScheduleService.MoveMissedWorkoutToDate(DateTime.Today.AddDays(-1), DateTime.Today))
+        {
+            _showAutoCarryoverNotice = true;
+            _handledCarryoverDecisionKey = _currentCarryoverDecisionKey;
+            RefreshPlanRecommendations();
+        }
+    }
+
     public void SelectFirstRecommendedWorkout()
     {
         var defaultRecommendation = RecommendedPlanWorkouts.FirstOrDefault(recommendation => recommendation.IsWeightLifting);
@@ -1156,7 +1224,7 @@ public class WorkoutViewModel : BaseViewModel
             reps: isTimedStrengthTarget ? 0 : parsedReps,
             sets: parsedSets,
             muscleGroup: SelectedMuscleGroup,
-            day: DateTime.Today.DayOfWeek,
+            day: _selectedRecommendation?.Workout.Day ?? DateTime.Today.DayOfWeek,
             startTime: DateTime.Now,
             type: WorkoutType.WeightLifting,
             gymLocation: "Default Gym"
@@ -1395,49 +1463,16 @@ public class WorkoutViewModel : BaseViewModel
         SetSelectedRecommendation(null);
         RecommendedPlanWorkouts.Clear();
 
-        var todaysPlannedWorkouts = _workoutScheduleService.GetActivePlanWorkoutsForDay(DateTime.Today.DayOfWeek)
-            .ToList();
-        var completedPlanWorkoutSets = BuildCompletedPlanWorkoutSets(todaysPlannedWorkouts);
+        var today = DateTime.Today;
+        var todaysPlannedWorkouts = _workoutScheduleService.GetActivePlanWorkoutsForDate(today).ToList();
+        var yesterdaysCarryoverWorkouts = GetCarryoverPlanWorkouts(today).ToList();
+        var carryoverDecisionKey = BuildCarryoverDecisionKey(todaysPlannedWorkouts, yesterdaysCarryoverWorkouts);
 
         _hasScheduledPlanWorkoutsToday = todaysPlannedWorkouts.Count > 0;
+        _hasCarryoverPlanWorkouts = yesterdaysCarryoverWorkouts.Count > 0;
+        _currentCarryoverDecisionKey = carryoverDecisionKey;
 
-        foreach (var workout in todaysPlannedWorkouts)
-        {
-            var workoutKey = GetWorkoutKey(workout);
-            var completedSetsForWorkout = 0;
-            if (completedPlanWorkoutSets.TryGetValue(workoutKey, out var completedSetCount) && completedSetCount > 0)
-            {
-                completedSetsForWorkout = Math.Min(completedSetCount, Math.Max(0, workout.Sets));
-                completedPlanWorkoutSets[workoutKey] = completedSetCount - completedSetsForWorkout;
-            }
-
-            var remainingSets = workout.Type == WorkoutType.WeightLifting
-                ? Math.Max(0, workout.Sets - completedSetsForWorkout)
-                : 0;
-
-            if (workout.Type == WorkoutType.WeightLifting && remainingSets <= 0)
-            {
-                continue;
-            }
-
-            var lastUsedWeight = GetLastUsedWeight(workout);
-
-            RecommendedPlanWorkouts.Add(new WorkoutRecommendation
-            {
-                Workout = workout,
-                LastUsedWeight = lastUsedWeight,
-                RepDisplayText = GetRecommendationRepText(workout),
-                DurationDisplayText = GetRecommendationDurationText(workout),
-                DistanceDisplayText = GetRecommendationDistanceText(workout),
-                TargetRpeText = workout.HasTargetRpe ? $"RPE: {workout.TargetRpeDisplay}" : string.Empty,
-                TargetRestText = workout.HasTargetRestRange ? $"Rest: {workout.TargetRestRange}" : string.Empty,
-                WeightDisplayPrefix = GetRecommendationWeightPrefix(),
-                WeightDisplayValue = GetRecommendationWeightValue(workout, lastUsedWeight),
-                WeightHelperText = GetRecommendationWeightHelperText(workout.Name),
-                PlannedSets = workout.Sets,
-                RemainingSets = remainingSets
-            });
-        }
+        AddPlanRecommendations(todaysPlannedWorkouts, today, string.Empty);
 
         OnPropertyChanged(nameof(HasRecommendedPlanWorkouts));
         OnPropertyChanged(nameof(ShowCompactPlanSuggestions));
@@ -1480,6 +1515,78 @@ public class WorkoutViewModel : BaseViewModel
         }
     }
 
+    private IEnumerable<Workout> GetCarryoverPlanWorkouts(DateTime referenceDate)
+    {
+        if (_workoutScheduleService.ActivePlan == null)
+        {
+            return [];
+        }
+
+        var carryoverDate = referenceDate.AddDays(-1);
+        if (_workoutScheduleService.ActivePlanStartedOn.HasValue &&
+            carryoverDate.Date < _workoutScheduleService.ActivePlanStartedOn.Value.Date)
+        {
+            return [];
+        }
+
+        return _workoutScheduleService.GetActivePlanWorkoutsForDate(carryoverDate)
+            .Where(workout =>
+            {
+                var completedSets = GetCompletedPlanWorkoutSetCount(workout, carryoverDate, referenceDate);
+                return workout.Type == WorkoutType.Cardio
+                    ? completedSets <= 0
+                    : completedSets < Math.Max(1, workout.Sets);
+            });
+    }
+
+    private static string BuildCarryoverDecisionKey(IReadOnlyList<Workout> todaysPlannedWorkouts, IReadOnlyList<Workout> carryoverPlanWorkouts)
+    {
+        return string.Join("||",
+            DateTime.Today.ToString("yyyy-MM-dd"),
+            string.Join("::", todaysPlannedWorkouts.Select(GetWorkoutKey)),
+            string.Join("::", carryoverPlanWorkouts.Select(GetWorkoutKey)));
+    }
+
+    private void AddPlanRecommendations(IEnumerable<Workout> plannedWorkouts, DateTime plannedDate, string scheduleContextText)
+    {
+        foreach (var workout in plannedWorkouts)
+        {
+            var completedSetsForWorkout = GetCompletedPlanWorkoutSetCount(workout, plannedDate, DateTime.Today);
+            var remainingSets = workout.Type == WorkoutType.WeightLifting
+                ? Math.Max(0, workout.Sets - completedSetsForWorkout)
+                : 0;
+
+            if (workout.Type == WorkoutType.WeightLifting && remainingSets <= 0)
+            {
+                continue;
+            }
+
+            if (workout.Type == WorkoutType.Cardio && completedSetsForWorkout > 0)
+            {
+                continue;
+            }
+
+            var lastUsedWeight = GetLastUsedWeight(workout);
+
+            RecommendedPlanWorkouts.Add(new WorkoutRecommendation
+            {
+                Workout = workout,
+                LastUsedWeight = lastUsedWeight,
+                RepDisplayText = GetRecommendationRepText(workout),
+                DurationDisplayText = GetRecommendationDurationText(workout),
+                DistanceDisplayText = GetRecommendationDistanceText(workout),
+                TargetRpeText = workout.HasTargetRpe ? $"RPE: {workout.TargetRpeDisplay}" : string.Empty,
+                TargetRestText = workout.HasTargetRestRange ? $"Rest: {workout.TargetRestRange}" : string.Empty,
+                WeightDisplayPrefix = GetRecommendationWeightPrefix(),
+                WeightDisplayValue = GetRecommendationWeightValue(workout, lastUsedWeight),
+                WeightHelperText = GetRecommendationWeightHelperText(workout.Name),
+                PlannedSets = workout.Sets,
+                RemainingSets = remainingSets,
+                ScheduleContextText = scheduleContextText
+            });
+        }
+    }
+
     private Dictionary<string, int> BuildCompletedPlanWorkoutSets(IEnumerable<Workout> todaysPlannedWorkouts)
     {
         var plannedWorkoutKeys = todaysPlannedWorkouts
@@ -1496,15 +1603,19 @@ public class WorkoutViewModel : BaseViewModel
     }
 
     private int GetCompletedPlanWorkoutSetCount(Workout workout)
+        => GetCompletedPlanWorkoutSetCount(workout, DateTime.Today, DateTime.Today);
+
+    private int GetCompletedPlanWorkoutSetCount(Workout workout, DateTime plannedDate, DateTime completionWindowEndDate)
     {
         var workoutKey = GetWorkoutKey(workout);
 
         return _workoutHistory
             .Where(historyWorkout =>
-                historyWorkout.StartTime.Date == DateTime.Today &&
+                historyWorkout.StartTime.Date >= plannedDate.Date &&
+                historyWorkout.StartTime.Date <= completionWindowEndDate.Date &&
                 !historyWorkout.IsWarmup &&
                 string.Equals(GetWorkoutKey(historyWorkout), workoutKey, StringComparison.OrdinalIgnoreCase))
-            .Sum(historyWorkout => Math.Max(1, historyWorkout.Sets));
+            .Sum(historyWorkout => historyWorkout.Type == WorkoutType.Cardio ? 1 : Math.Max(1, historyWorkout.Sets));
     }
 
     private void SyncSelectedRecommendationState()
@@ -2715,12 +2826,28 @@ public class WorkoutViewModel : BaseViewModel
     private string BuildPlanRecommendationSignature()
     {
         var activePlanName = _workoutScheduleService.ActivePlan?.Name?.Trim() ?? string.Empty;
-        var todaysPlannedWorkouts = _workoutScheduleService.GetActivePlanWorkoutsForDay(DateTime.Today.DayOfWeek);
+        var todaysPlannedWorkouts = _workoutScheduleService.GetActivePlanWorkoutsForDate(DateTime.Today);
+        var carryoverPlanWorkouts = GetCarryoverPlanWorkouts(DateTime.Today);
 
         return string.Join("||",
             DateTime.Today.DayOfWeek,
             activePlanName,
             string.Join("::", todaysPlannedWorkouts.Select(workout => string.Join("|",
+                workout.Day,
+                workout.Type,
+                workout.Name?.Trim(),
+                workout.MuscleGroup?.Trim(),
+                workout.Sets,
+                workout.Reps,
+                workout.DurationMinutes,
+                workout.DurationSeconds,
+                workout.DistanceMiles,
+                workout.Steps,
+                workout.PlanWeekNumber,
+                workout.TargetRpe,
+                workout.TargetRestRange?.Trim()))),
+            string.Join("::", carryoverPlanWorkouts.Select(workout => string.Join("|",
+                "carryover",
                 workout.Day,
                 workout.Type,
                 workout.Name?.Trim(),

@@ -84,6 +84,9 @@ public class WorkoutScheduleService : IWorkoutScheduleService
     }
 
     public IReadOnlyList<Workout> GetActivePlanWorkoutsForDay(DayOfWeek day)
+        => GetActivePlanWorkoutsForDate(GetReferenceDateForRequestedDay(day));
+
+    public IReadOnlyList<Workout> GetActivePlanWorkoutsForDate(DateTime date)
     {
         if (ActivePlan == null)
         {
@@ -92,9 +95,16 @@ public class WorkoutScheduleService : IWorkoutScheduleService
 
         EnsureActivePlanScheduleIsCurrent();
 
-        return ActivePlan.GetWorkoutsForWeek(GetPlanWeekNumberForDate(DateTime.Today))
+        if (_activePlanScheduleWeekNumber == GetPlanWeekNumberForDate(date))
+        {
+            return _weeklySchedule[date.DayOfWeek]
+                .Select(CloneWorkout)
+                .ToList();
+        }
+
+        return ActivePlan.GetWorkoutsForWeek(GetPlanWeekNumberForDate(date))
             .Select(workout => ApplyActivePlanExerciseSubstitution(CloneWorkout(workout, _activePlanDayOffset)))
-            .Where(workout => workout.Day == day)
+            .Where(workout => workout.Day == date.DayOfWeek)
             .ToList();
     }
 
@@ -192,6 +202,69 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         }
 
         PopulateWeeklyScheduleForActivePlanWeek(1);
+    }
+
+    public bool MoveMissedWorkoutToDate(DateTime missedDate, DateTime targetDate)
+    {
+        if (ActivePlan == null)
+        {
+            return false;
+        }
+
+        EnsureActivePlanScheduleIsCurrent();
+
+        var missedWorkouts = GetActivePlanWorkoutsForDate(missedDate)
+            .Select(CloneWorkout)
+            .ToList();
+        if (missedWorkouts.Count == 0)
+        {
+            return false;
+        }
+
+        var targetDay = targetDate.DayOfWeek;
+        var missedWeekNumber = GetPlanWeekNumberForDate(missedDate);
+        var targetWeekNumber = GetPlanWeekNumberForDate(targetDate);
+        var todaysWorkouts = _weeklySchedule[targetDay]
+            .Select(CloneWorkout)
+            .ToList();
+
+        if (todaysWorkouts.Count == 0)
+        {
+            if (missedWeekNumber == targetWeekNumber)
+            {
+                ReplaceScheduledDay(missedDate.DayOfWeek, []);
+            }
+
+            ReplaceScheduledDay(targetDay, missedWorkouts);
+            SaveState();
+            return true;
+        }
+
+        if (TryFindNextRestDay(targetDay, out var restDay))
+        {
+            if (missedWeekNumber == targetWeekNumber)
+            {
+                ReplaceScheduledDay(missedDate.DayOfWeek, []);
+            }
+
+            ShiftScheduledDaysForwardToRestDay(targetDay, restDay);
+            ReplaceScheduledDay(targetDay, missedWorkouts);
+            SaveState();
+            return true;
+        }
+
+        if (missedWeekNumber == targetWeekNumber)
+        {
+            _activePlanDayOffset++;
+            PopulateWeeklyScheduleForActivePlanWeek(targetWeekNumber);
+            return true;
+        }
+
+        _activePlanDayOffset++;
+        PopulateWeeklyScheduleForActivePlanWeek(targetWeekNumber);
+        ReplaceScheduledDay(targetDay, missedWorkouts);
+        SaveState();
+        return true;
     }
 
     public WorkoutPlan? GetSuggestedNextPlan()
@@ -335,6 +408,63 @@ public class WorkoutScheduleService : IWorkoutScheduleService
 
         var dayOffset = Math.Max(0, (date.Date - ActivePlanStartedOn.Value.Date).Days);
         return (dayOffset / 7) + 1;
+    }
+
+    private static DateTime GetReferenceDateForRequestedDay(DayOfWeek requestedDay)
+    {
+        var today = DateTime.Today;
+        var delta = (int)requestedDay - (int)today.DayOfWeek;
+        return today.AddDays(delta);
+    }
+
+    private bool TryFindNextRestDay(DayOfWeek startDay, out DayOfWeek restDay)
+    {
+        var orderedDays = Enum.GetValues<DayOfWeek>()
+            .OrderBy(GetMondayFirstDayIndex)
+            .ToList();
+        var startIndex = orderedDays.IndexOf(startDay);
+        for (var index = startIndex + 1; index < orderedDays.Count; index++)
+        {
+            var candidateDay = orderedDays[index];
+            if (_weeklySchedule[candidateDay].Count == 0)
+            {
+                restDay = candidateDay;
+                return true;
+            }
+        }
+
+        restDay = default;
+        return false;
+    }
+
+    private void ReplaceScheduledDay(DayOfWeek day, IEnumerable<Workout> workouts)
+    {
+        _weeklySchedule[day].Clear();
+        foreach (var workout in workouts)
+        {
+            var clonedWorkout = CloneWorkout(workout);
+            clonedWorkout.Day = day;
+            _weeklySchedule[day].Add(clonedWorkout);
+        }
+    }
+
+    private void ShiftScheduledDaysForwardToRestDay(DayOfWeek startDay, DayOfWeek restDay)
+    {
+        var orderedDays = Enum.GetValues<DayOfWeek>()
+            .OrderBy(GetMondayFirstDayIndex)
+            .ToList();
+        var startIndex = orderedDays.IndexOf(startDay);
+        var restIndex = orderedDays.IndexOf(restDay);
+
+        for (var index = restIndex; index > startIndex; index--)
+        {
+            var sourceDay = orderedDays[index - 1];
+            var targetDay = orderedDays[index];
+            var sourceWorkouts = _weeklySchedule[sourceDay]
+                .Select(CloneWorkout)
+                .ToList();
+            ReplaceScheduledDay(targetDay, sourceWorkouts);
+        }
     }
 
     private void RestoreState()
@@ -613,7 +743,9 @@ public interface IWorkoutScheduleService
     void RemoveWorkoutFromDay(DayOfWeek day, Workout workout);
     IReadOnlyDictionary<DayOfWeek, List<Workout>> GetWeeklySchedule();
     IReadOnlyList<Workout> GetActivePlanWorkoutsForDay(DayOfWeek day);
+    IReadOnlyList<Workout> GetActivePlanWorkoutsForDate(DateTime date);
     IReadOnlyList<Workout> GetActivePlanExerciseOptions();
+    bool MoveMissedWorkoutToDate(DateTime missedDate, DateTime targetDate);
     IReadOnlyList<Workout> GetPlanWorkoutsForPreview(WorkoutPlan plan, int weekNumber);
     void ReplaceActivePlanExercise(string originalExerciseName, string replacementExerciseName);
     void RestartActivePlan();

@@ -23,6 +23,7 @@ public partial class WorkoutPage : ContentPage
     private readonly IBodyWeightService _bodyWeightService;
     private bool _hasCheckedForInitialBodyWeight;
     private bool _isShowingInitialBodyWeightPrompt;
+    private bool _isShowingMissedWorkoutPrompt;
     private WorkoutViewModel? _pendingInitialBodyWeightViewModel;
 
     public WorkoutPage(WorkoutViewModel vm, IBodyWeightService bodyWeightService)
@@ -53,16 +54,26 @@ public partial class WorkoutPage : ContentPage
 
             await vm.EnsureWorkoutHistoryFreshAsync();
             vm.EnsurePlanRecommendationsFresh();
+            vm.AutoMoveMissedWorkoutToTodayIfNeeded();
+
             if (vm.SelectedRecommendationItem == null && !vm.IsManualWorkoutEntryActive)
             {
                 EnsureDefaultRecommendationSelected();
             }
 
+            var missedWorkoutPromptDelay = OperatingSystem.IsAndroid()
+                ? TimeSpan.FromMilliseconds(250)
+                : TimeSpan.FromMilliseconds(100);
+
+            Dispatcher.DispatchDelayed(
+                missedWorkoutPromptDelay,
+                () => _ = ShowMissedWorkoutPromptIfNeededAsync(vm));
+
             if (shouldShowInitialBodyWeightPrompt)
             {
                 var promptDelay = OperatingSystem.IsAndroid()
-                    ? TimeSpan.FromMilliseconds(900)
-                    : TimeSpan.FromMilliseconds(250);
+                    ? TimeSpan.FromMilliseconds(1100)
+                    : TimeSpan.FromMilliseconds(350);
 
                 Dispatcher.DispatchDelayed(
                     promptDelay,
@@ -73,6 +84,51 @@ public partial class WorkoutPage : ContentPage
         AttachEntryCompletedHandlers(this);
         AttachNumericEntryFocusHandlers(this);
         UpdateRecommendationsHeight();
+    }
+
+    private async Task ShowMissedWorkoutPromptIfNeededAsync(WorkoutViewModel vm)
+    {
+        if (_isShowingMissedWorkoutPrompt || !IsLoaded || Shell.Current?.CurrentPage != this)
+        {
+            return;
+        }
+
+        _isShowingMissedWorkoutPrompt = true;
+        try
+        {
+            if (vm.ConsumeAutoUsingMissedWorkoutCatchupNotice())
+            {
+                await DisplayAlert(
+                    "Missed Workout Moved",
+                    "Yesterday's missed workout was moved to today. The rest of this week's plan was pushed forward until the next rest day.",
+                    "OK");
+                return;
+            }
+
+            if (!vm.NeedsMissedWorkoutCatchupChoice())
+            {
+                return;
+            }
+
+            var useCatchupToday = await DisplayAlert(
+                "Missed Workout",
+                vm.GetMissedWorkoutCatchupMessage(),
+                "Do Missed Workout",
+                "Stay on Today's Plan");
+
+            if (useCatchupToday)
+            {
+                vm.UseMissedWorkoutCatchupToday();
+            }
+            else
+            {
+                vm.KeepTodaysPlannedWorkout();
+            }
+        }
+        finally
+        {
+            _isShowingMissedWorkoutPrompt = false;
+        }
     }
 
     protected override void OnSizeAllocated(double width, double height)
