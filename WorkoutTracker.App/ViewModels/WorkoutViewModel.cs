@@ -59,6 +59,7 @@ public class WorkoutViewModel : BaseViewModel
     private readonly IWorkoutLibraryService _workoutLibraryService;
     private readonly IWorkoutScheduleService _workoutScheduleService;
     private readonly IBodyWeightService _bodyWeightService;
+    private readonly IWorkoutReminderService _workoutReminderService;
 
     private string _selectedMuscleGroup = string.Empty;
     private string _exerciseSearchQuery = string.Empty;
@@ -115,12 +116,14 @@ public class WorkoutViewModel : BaseViewModel
         IWorkoutService workoutService,
         IWorkoutLibraryService workoutLibraryService,
         IWorkoutScheduleService workoutScheduleService,
-        IBodyWeightService bodyWeightService)
+        IBodyWeightService bodyWeightService,
+        IWorkoutReminderService workoutReminderService)
     {
         _workoutService = workoutService;
         _workoutLibraryService = workoutLibraryService;
         _workoutScheduleService = workoutScheduleService;
         _bodyWeightService = bodyWeightService;
+        _workoutReminderService = workoutReminderService;
 
         MuscleGroups = new List<string> { "Back", "Arms", "Biceps", "Chest", "Core", "Legs", "Shoulders", "Triceps" };
         ExerciseOptions = new ObservableCollection<string>();
@@ -1025,7 +1028,7 @@ public class WorkoutViewModel : BaseViewModel
         return $"You missed yesterday's workout from '{activePlanName}'. If you do it today, today's planned workout and the following days will each shift forward until the next rest day absorbs the change.";
     }
 
-    public void UseMissedWorkoutCatchupToday()
+    public async void UseMissedWorkoutCatchupToday()
     {
         if (string.IsNullOrWhiteSpace(_currentCarryoverDecisionKey))
         {
@@ -1036,6 +1039,7 @@ public class WorkoutViewModel : BaseViewModel
         if (_workoutScheduleService.MoveMissedWorkoutToDate(DateTime.Today.AddDays(-1), DateTime.Today))
         {
             RefreshPlanRecommendations();
+            await _workoutReminderService.RefreshWorkoutReminderAsync();
         }
     }
 
@@ -1049,7 +1053,7 @@ public class WorkoutViewModel : BaseViewModel
         _handledCarryoverDecisionKey = _currentCarryoverDecisionKey;
     }
 
-    public void AutoMoveMissedWorkoutToTodayIfNeeded()
+    public async void AutoMoveMissedWorkoutToTodayIfNeeded()
     {
         if (!_hasCarryoverPlanWorkouts || _hasScheduledPlanWorkoutsToday)
         {
@@ -1061,6 +1065,7 @@ public class WorkoutViewModel : BaseViewModel
             _showAutoCarryoverNotice = true;
             _handledCarryoverDecisionKey = _currentCarryoverDecisionKey;
             RefreshPlanRecommendations();
+            await _workoutReminderService.RefreshWorkoutReminderAsync();
         }
     }
 
@@ -1249,6 +1254,7 @@ public class WorkoutViewModel : BaseViewModel
     {
         var selectedRecommendation = _selectedRecommendation;
         await _workoutService.AddWorkout(workout);
+        await _workoutReminderService.RefreshWorkoutReminderAsync();
         _workoutHistory.Add(workout);
         HasWorkouts = true;
 

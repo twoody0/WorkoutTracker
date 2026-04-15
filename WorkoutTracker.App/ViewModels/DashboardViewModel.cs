@@ -142,6 +142,7 @@ public class DashboardViewModel : BaseViewModel
     private readonly IBodyWeightService _bodyWeightService;
     private readonly IThemeService _themeService;
     private readonly IWorkoutScheduleService _scheduleService;
+    private readonly IWorkoutReminderService _workoutReminderService;
     private readonly ObservableCollection<DashboardCalendarDayItem> _calendarDays = new();
 
     private ObservableCollection<DashboardWorkoutHistoryItem> _workouts = new();
@@ -182,13 +183,15 @@ public class DashboardViewModel : BaseViewModel
         IAuthService authService,
         IBodyWeightService bodyWeightService,
         IThemeService themeService,
-        IWorkoutScheduleService scheduleService)
+        IWorkoutScheduleService scheduleService,
+        IWorkoutReminderService workoutReminderService)
     {
         _workoutService = workoutService;
         _authService = authService;
         _bodyWeightService = bodyWeightService;
         _themeService = themeService;
         _scheduleService = scheduleService;
+        _workoutReminderService = workoutReminderService;
 
         LoadWorkoutsCommand = new Command(async () => await LoadWorkoutsAsync());
         ShowPreviousWorkoutCommand = new Command(ShowPreviousWorkout);
@@ -370,6 +373,12 @@ public class DashboardViewModel : BaseViewModel
 
     public string ThemeButtonText => IsDarkTheme ? "Use Light Mode" : "Use Dark Mode";
 
+    public bool IsWorkoutReminderEnabled => _workoutReminderService.IsReminderEnabled;
+
+    public string WorkoutReminderSummary => IsWorkoutReminderEnabled
+        ? "Friendly reminders are on for planned workout days."
+        : "Friendly reminders are off.";
+
     public ObservableCollection<DashboardCalendarDayItem> CalendarDays => _calendarDays;
 
     public string CurrentCalendarMonthLabel => _visibleCalendarMonth.ToString("MMMM yyyy", CultureInfo.InvariantCulture);
@@ -428,6 +437,22 @@ public class DashboardViewModel : BaseViewModel
         OnPropertyChanged(nameof(BodyWeightButtonText));
         await LoadWorkoutsAsync();
         return true;
+    }
+
+    public async Task SetWorkoutReminderEnabledAsync(bool isEnabled)
+    {
+        if (!isEnabled)
+        {
+            await _workoutReminderService.SetReminderEnabledAsync(false);
+        }
+        else
+        {
+            var permissionGranted = await _workoutReminderService.RequestPermissionIfNeededAsync();
+            await _workoutReminderService.SetReminderEnabledAsync(permissionGranted);
+        }
+
+        OnPropertyChanged(nameof(IsWorkoutReminderEnabled));
+        OnPropertyChanged(nameof(WorkoutReminderSummary));
     }
 
     private async Task LoadWorkoutsAsync()

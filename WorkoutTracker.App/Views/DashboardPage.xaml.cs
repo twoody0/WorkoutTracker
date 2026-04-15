@@ -89,6 +89,50 @@ public partial class DashboardPage : ContentPage
         }
     }
 
+    private async void OnWorkoutReminderToggled(object sender, ToggledEventArgs e)
+    {
+        if (BindingContext is not DashboardViewModel vm)
+        {
+            return;
+        }
+
+        if (sender is not Switch reminderSwitch)
+        {
+            return;
+        }
+
+        if (e.Value)
+        {
+            var enable = await DisplayAlert(
+                "Workout Reminders",
+                "Turn on friendly workout reminders? We'll use your usual workout time and only remind you on planned workout days if you still have not logged a workout.",
+                "Turn On",
+                "Cancel");
+
+            if (!enable)
+            {
+                reminderSwitch.Toggled -= OnWorkoutReminderToggled;
+                reminderSwitch.IsToggled = false;
+                reminderSwitch.Toggled += OnWorkoutReminderToggled;
+                return;
+            }
+        }
+
+        await vm.SetWorkoutReminderEnabledAsync(e.Value);
+
+        if (e.Value && !vm.IsWorkoutReminderEnabled)
+        {
+            await DisplayAlert(
+                "Notifications Off",
+                "Workout reminders stayed off because notification permission was not granted.",
+                "OK");
+
+            reminderSwitch.Toggled -= OnWorkoutReminderToggled;
+            reminderSwitch.IsToggled = false;
+            reminderSwitch.Toggled += OnWorkoutReminderToggled;
+        }
+    }
+
     private void OnCalendarSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (BindingContext is not DashboardViewModel vm)

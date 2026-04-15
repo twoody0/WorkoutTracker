@@ -72,6 +72,30 @@
                 </Border>
             </Grid>
 
+            <Border Stroke="{AppThemeBinding Light=#D6DEE8, Dark=#2A3442}"
+                    BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141B24}"
+                    StrokeShape="RoundRectangle 22"
+                    Padding="16">
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="12">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Workout Reminders"
+                               FontAttributes="Bold"
+                               FontSize="18" />
+                        <Label Text="{Binding WorkoutReminderSummary}"
+                               LineBreakMode="WordWrap" />
+                        <Label Text="We'll only remind you on workout days if your usual workout time has passed and nothing has been logged yet."
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light=#5E6B7B, Dark=#A4B2C5}"
+                               LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+                    <Switch Grid.Column="1"
+                            VerticalOptions="Center"
+                            IsToggled="{Binding IsWorkoutReminderEnabled, Mode=OneWay}"
+                            Toggled="OnWorkoutReminderToggled" />
+                </Grid>
+            </Border>
+
             <Grid ColumnDefinitions="*,*"
                   ColumnSpacing="12">
                 <Border Grid.Column="0"

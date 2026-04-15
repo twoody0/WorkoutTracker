@@ -32,6 +32,13 @@ public static class MauiProgram
 
         // Existing services
         builder.Services.AddSingleton<IWorkoutService, WorkoutService>();
+        #if ANDROID
+        builder.Services.AddSingleton<IWorkoutReminderService, WorkoutTracker.Platforms.Android.WorkoutReminderPlatformService>();
+        #elif IOS
+        builder.Services.AddSingleton<IWorkoutReminderService, WorkoutTracker.Platforms.iOS.WorkoutReminderPlatformService>();
+        #else
+        builder.Services.AddSingleton<IWorkoutReminderService, WorkoutReminderServiceNull>();
+        #endif
 
         // Register platform-specific step source.
         #if ANDROID

@@ -13,6 +13,7 @@ public class WeeklyScheduleViewModel : BaseViewModel
 
     private readonly IWorkoutScheduleService _scheduleService;
     private readonly IWorkoutService _workoutService;
+    private readonly IWorkoutReminderService _workoutReminderService;
     private readonly Dictionary<DayOfWeek, WeeklyScheduleDayGroup> _dayGroupsByDay = new();
     private string? _lastCompletedPlanPromptKey;
     private int _lastLoadedScheduleVersion = -1;
@@ -28,10 +29,14 @@ public class WeeklyScheduleViewModel : BaseViewModel
     public string ActivePlanTimelineSummary => _scheduleService.GetActivePlanTimelineSummary();
     public bool HasActivePlan => _scheduleService.ActivePlan != null;
 
-    public WeeklyScheduleViewModel(IWorkoutScheduleService scheduleService, IWorkoutService workoutService)
+    public WeeklyScheduleViewModel(
+        IWorkoutScheduleService scheduleService,
+        IWorkoutService workoutService,
+        IWorkoutReminderService workoutReminderService)
     {
         _scheduleService = scheduleService;
         _workoutService = workoutService;
+        _workoutReminderService = workoutReminderService;
         ChangeWorkoutDayCommand = new Command<Workout>(ChangeWorkoutDay);
         EditDayCommand = new Command<DayOfWeek>(EditDay);
         ToggleDayCommand = new Command<WeeklyScheduleDayGroup>(ToggleDay);
@@ -254,6 +259,7 @@ public class WeeklyScheduleViewModel : BaseViewModel
         {
             _scheduleService.RestartActivePlan();
             LoadSchedule();
+            await _workoutReminderService.RefreshWorkoutReminderAsync();
             await page.DisplayAlert("Plan Restarted", $"'{_scheduleService.ActivePlan?.Name}' has been restarted.", "OK");
             return;
         }
@@ -269,6 +275,7 @@ public class WeeklyScheduleViewModel : BaseViewModel
         {
             _scheduleService.AddPlanToWeeklySchedule(suggestedPlan);
             LoadSchedule();
+            await _workoutReminderService.RefreshWorkoutReminderAsync();
             await page.DisplayAlert(
                 "Suggested Plan Started",
                 $"You're now on '{suggestedPlan.Name}', a follow-up to the plan you completed.",

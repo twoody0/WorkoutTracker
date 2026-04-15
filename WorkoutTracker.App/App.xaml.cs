@@ -27,12 +27,20 @@ public partial class App : Application
             {
                 window.Created += (_, _) =>
                 {
-                    MainThread.BeginInvokeOnMainThread(async () => await shell.ResumeActiveCardioSessionIfNeededAsync());
+                    MainThread.BeginInvokeOnMainThread(async () =>
+                    {
+                        await shell.ResumeActiveCardioSessionIfNeededAsync();
+                        await Services.GetRequiredService<IWorkoutReminderService>().RefreshWorkoutReminderAsync();
+                    });
                 };
 
                 window.Resumed += (_, _) =>
                 {
-                    MainThread.BeginInvokeOnMainThread(async () => await shell.ResumeActiveCardioSessionIfNeededAsync());
+                    MainThread.BeginInvokeOnMainThread(async () =>
+                    {
+                        await shell.ResumeActiveCardioSessionIfNeededAsync();
+                        await Services.GetRequiredService<IWorkoutReminderService>().RefreshWorkoutReminderAsync();
+                    });
                 };
             }
 

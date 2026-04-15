@@ -31,6 +31,7 @@ public class CardioWorkoutViewModel : BaseViewModel
 
     private readonly IWorkoutService _workoutService;
     private readonly IStepCounterService _stepCounterService;
+    private readonly IWorkoutReminderService _workoutReminderService;
     private CancellationTokenSource? _sessionLoopCancellation;
     private DateTimeOffset? _sessionStartedAtUtc;
     private int _sessionSteps;
@@ -48,10 +49,14 @@ public class CardioWorkoutViewModel : BaseViewModel
     private int _plannedPlanWeekNumber;
     private DayOfWeek _plannedDay = DateTime.Today.DayOfWeek;
 
-    public CardioWorkoutViewModel(IWorkoutService workoutService, IStepCounterService stepCounterService)
+    public CardioWorkoutViewModel(
+        IWorkoutService workoutService,
+        IStepCounterService stepCounterService,
+        IWorkoutReminderService workoutReminderService)
     {
         _workoutService = workoutService;
         _stepCounterService = stepCounterService;
+        _workoutReminderService = workoutReminderService;
         _stepCounterService.StepsUpdated += OnStepsUpdated;
         _useStepTracking = true;
         CardioNameSuggestions = new ObservableCollection<string>(CommonCardioNames);
@@ -401,6 +406,7 @@ public class CardioWorkoutViewModel : BaseViewModel
         };
 
         await _workoutService.AddWorkout(workout);
+        await _workoutReminderService.RefreshWorkoutReminderAsync();
 
         _sessionStartedAtUtc = null;
         SessionSteps = 0;

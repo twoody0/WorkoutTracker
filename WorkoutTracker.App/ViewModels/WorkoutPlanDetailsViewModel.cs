@@ -11,6 +11,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
 {
     private readonly IWorkoutScheduleService _scheduleService;
     private readonly IWorkoutPlanService _workoutPlanService;
+    private readonly IWorkoutReminderService _workoutReminderService;
     private readonly Dictionary<string, string> _previewExerciseSubstitutions = new(StringComparer.OrdinalIgnoreCase);
     private int _selectedPreviewWeek = 1;
     private bool _showWeekTemplateHelp;
@@ -88,10 +89,14 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
     public ICommand ToggleRpeHelpCommand { get; }
     public ICommand ManageExerciseSubstitutionsCommand { get; }
 
-    public WorkoutPlanDetailsViewModel(IWorkoutScheduleService scheduleService, IWorkoutPlanService workoutPlanService)
+    public WorkoutPlanDetailsViewModel(
+        IWorkoutScheduleService scheduleService,
+        IWorkoutPlanService workoutPlanService,
+        IWorkoutReminderService workoutReminderService)
     {
         _scheduleService = scheduleService;
         _workoutPlanService = workoutPlanService;
+        _workoutReminderService = workoutReminderService;
         ToggleExpandCommand = new Command<WorkoutPlanDayGroup>(ToggleExpand);
         StartPlanCommand = new Command(StartPlan);
         ChangeWorkoutDayCommand = new Command<WorkoutDisplay>(ChangeWorkoutDay);
@@ -344,6 +349,7 @@ public class WorkoutPlanDetailsViewModel : BaseViewModel
 
         var parentViewModel = App.Services.GetRequiredService<WorkoutPlanViewModel>();
         parentViewModel.RefreshActivePlan();
+        await _workoutReminderService.RefreshWorkoutReminderAsync();
 
         await page.DisplayAlert(
             "Plan Started",
