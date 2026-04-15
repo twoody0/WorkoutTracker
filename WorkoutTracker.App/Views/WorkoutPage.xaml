@@ -1232,7 +1232,7 @@
 
                             <VerticalStackLayout Spacing="10"
                                                  HorizontalOptions="Center"
-                                                 IsVisible="{Binding ShowStrengthFields}">
+                                                 IsVisible="{Binding ShowManualStrengthExerciseDetails}">
                                     <Grid ColumnDefinitions="*,*,*"
                                           ColumnSpacing="12"
                                           HorizontalOptions="Fill"
@@ -1716,7 +1716,7 @@
                                     IsEnabled="{Binding CanAddWorkout}"/>
                             <HorizontalStackLayout Spacing="8"
                                                    HorizontalOptions="Center"
-                                                   IsVisible="{Binding ShowStrengthFields}">
+                                                   IsVisible="{Binding ShowWarmupSetOption}">
                                    <HorizontalStackLayout.GestureRecognizers>
                                           <TapGestureRecognizer Command="{Binding ToggleWarmupSetCommand}"/>
                                    </HorizontalStackLayout.GestureRecognizers>

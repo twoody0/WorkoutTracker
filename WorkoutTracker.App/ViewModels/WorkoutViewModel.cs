@@ -187,6 +187,11 @@ public class WorkoutViewModel : BaseViewModel
     public bool ShowAdvancedEditorContent => ShowWorkoutEditor && ShowAdvancedEditorSection;
     public bool ShowStrengthFields => !IsManualCardio;
     public bool ShowCardioFields => IsManualCardio;
+    public bool HasSelectedManualStrengthExercise => ShowStrengthFields &&
+        !string.IsNullOrWhiteSpace(SelectedMuscleGroup) &&
+        !string.IsNullOrWhiteSpace(Name);
+    public bool ShowManualStrengthExerciseDetails => ShowStrengthFields && HasSelectedManualStrengthExercise;
+    public bool ShowWarmupSetOption => IsQuickAddMode ? ShowStrengthFields : ShowManualStrengthExerciseDetails;
     public string ExercisePickerTitle => IsManualCardio ? "Select cardio workout" : "Select exercise";
     public bool HasSelectedStrengthMuscleGroup => !IsManualCardio && !string.IsNullOrWhiteSpace(SelectedMuscleGroup);
     public bool CanEditExerciseName => ShowStrengthFields && HasSelectedStrengthMuscleGroup;
@@ -719,6 +724,9 @@ public class WorkoutViewModel : BaseViewModel
                 OnPropertyChanged(nameof(HasSelectedStrengthMuscleGroup));
                 OnPropertyChanged(nameof(CanEditExerciseName));
                 OnPropertyChanged(nameof(ExerciseNamePlaceholder));
+                OnPropertyChanged(nameof(HasSelectedManualStrengthExercise));
+                OnPropertyChanged(nameof(ShowManualStrengthExerciseDetails));
+                OnPropertyChanged(nameof(ShowWarmupSetOption));
             }
         }
     }
@@ -765,6 +773,9 @@ public class WorkoutViewModel : BaseViewModel
                 NotifyBodyweightStateChanged();
                 SyncSelectedRecommendationState();
                 OnPropertyChanged(nameof(StrengthTargetValue));
+                OnPropertyChanged(nameof(HasSelectedManualStrengthExercise));
+                OnPropertyChanged(nameof(ShowManualStrengthExerciseDetails));
+                OnPropertyChanged(nameof(ShowWarmupSetOption));
                 OnPropertyChanged(nameof(CanAddWorkout));
                 OnPropertyChanged(nameof(CanSaveWarmupSet));
             }
@@ -2097,6 +2108,9 @@ public class WorkoutViewModel : BaseViewModel
         OnPropertyChanged(nameof(ShowStrengthTargetEditorsWithOptionalLoad));
         OnPropertyChanged(nameof(ShowStrengthFields));
         OnPropertyChanged(nameof(ShowCardioFields));
+        OnPropertyChanged(nameof(HasSelectedManualStrengthExercise));
+        OnPropertyChanged(nameof(ShowManualStrengthExerciseDetails));
+        OnPropertyChanged(nameof(ShowWarmupSetOption));
         OnPropertyChanged(nameof(ExercisePickerTitle));
         OnPropertyChanged(nameof(UsesTimedStrengthTarget));
         NotifyTimedStrengthCountdownStateChanged();
