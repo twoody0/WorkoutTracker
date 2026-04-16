@@ -70,10 +70,19 @@ public static class ExerciseAlternativeCatalog
         ["Calf Raise"] = ["Standing Calf Raise", "Seated Calf Raise", "Step-Up"],
         ["Standing Calf Raise"] = ["Seated Calf Raise", "Calf Raise", "Step-Up"],
         ["Seated Calf Raise"] = ["Standing Calf Raise", "Calf Raise", "Step-Up"],
-        ["Plank"] = ["Dead Bug", "Pallof Press", "Bird Dog"],
-        ["Dead Bug"] = ["Plank", "Bird Dog", "Pallof Press"],
-        ["Bird Dog"] = ["Dead Bug", "Plank", "Pallof Press"],
-        ["Pallof Press"] = ["Plank", "Dead Bug", "Bird Dog"],
+        ["Plank"] = ["Dead Bug", "Pallof Press", "Bird Dog", "Ab Rollout"],
+        ["Crunches"] = ["Sit-Up", "Reverse Crunch", "Cable Crunch", "Toe Touches"],
+        ["Sit-Up"] = ["Incline Sit-Up", "Crunches", "Reverse Crunch", "Cable Crunch"],
+        ["Incline Sit-Up"] = ["Sit-Up", "Cable Crunch", "Russian Twists", "Toe Touches"],
+        ["Russian Twists"] = ["Cable Woodchopper", "Toe Touches", "Sit-Up", "Incline Sit-Up"],
+        ["Bicycle Crunches"] = ["Reverse Crunch", "Toe Touches", "Crunches", "Sit-Up"],
+        ["Reverse Crunch"] = ["Bicycle Crunches", "Hanging Knee Raise", "Sit-Up", "Toe Touches"],
+        ["Cable Crunch"] = ["Sit-Up", "Incline Sit-Up", "Crunches", "Reverse Crunch"],
+        ["Ab Rollout"] = ["Plank", "Dead Bug", "Hanging Leg Raise", "Cable Crunch"],
+        ["Toe Touches"] = ["Crunches", "Bicycle Crunches", "Sit-Up", "Reverse Crunch"],
+        ["Dead Bug"] = ["Plank", "Bird Dog", "Pallof Press", "Reverse Crunch"],
+        ["Bird Dog"] = ["Dead Bug", "Plank", "Pallof Press", "Cable Crunch"],
+        ["Pallof Press"] = ["Plank", "Dead Bug", "Bird Dog", "Russian Twists"],
         ["Farmer Carry"] = ["Suitcase Carry", "Plank", "Pallof Press"],
         ["Suitcase Carry"] = ["Farmer Carry", "Plank", "Pallof Press"],
         ["Single-Leg Balance Hold"] = ["Tandem Stance Hold", "Heel-to-Toe Walk", "Step-Up"],
@@ -92,7 +101,7 @@ public static class ExerciseAlternativeCatalog
         ["Arms"] = ["Hammer Curl", "Cable Triceps Pushdown", "EZ-Bar Curl"],
         ["Biceps"] = ["Hammer Curl", "EZ-Bar Curl", "Cable Curl"],
         ["Triceps"] = ["Cable Triceps Pushdown", "Overhead Triceps Extension", "Dip"],
-        ["Core"] = ["Plank", "Dead Bug", "Pallof Press"],
+        ["Core"] = ["Plank", "Sit-Up", "Cable Crunch", "Dead Bug"],
         ["Cardio"] = ["Bike Intervals", "Row", "Brisk Walk"]
     };
 
@@ -217,6 +226,14 @@ public static class ExerciseAlternativeCatalog
         if (normalized.Contains("plank") || normalized.Contains("dead bug") || normalized.Contains("bird dog") || normalized.Contains("pallof"))
         {
             return ["Plank", "Dead Bug", "Pallof Press"];
+        }
+
+        if (normalized.Contains("sit-up") || normalized.Contains("sit up") ||
+            normalized.Contains("crunch") || normalized.Contains("twist") ||
+            normalized.Contains("woodchopper") || normalized.Contains("rollout") ||
+            normalized.Contains("toe touch"))
+        {
+            return ["Sit-Up", "Crunches", "Russian Twists"];
         }
 
         if (normalized.Contains("carry") || normalized.Contains("balance hold") || normalized.Contains("stance hold"))

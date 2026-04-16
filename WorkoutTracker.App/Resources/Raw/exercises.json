@@ -144,6 +144,14 @@
         "MuscleGroup": "Core"
     },
     {
+        "Name": "Sit-Up",
+        "MuscleGroup": "Core"
+    },
+    {
+        "Name": "Incline Sit-Up",
+        "MuscleGroup": "Core"
+    },
+    {
         "Name": "Hanging Leg Raise",
         "MuscleGroup": "Core"
     },
@@ -160,7 +168,15 @@
         "MuscleGroup": "Core"
     },
     {
+        "Name": "Reverse Crunch",
+        "MuscleGroup": "Core"
+    },
+    {
         "Name": "Cable Woodchopper",
+        "MuscleGroup": "Core"
+    },
+    {
+        "Name": "Cable Crunch",
         "MuscleGroup": "Core"
     },
     {
@@ -169,6 +185,10 @@
     },
     {
         "Name": "Flutter Kicks",
+        "MuscleGroup": "Core"
+    },
+    {
+        "Name": "Toe Touches",
         "MuscleGroup": "Core"
     },
     {

@@ -237,6 +237,41 @@ public class WorkoutPlanCatalogTests
     }
 
     [TestMethod]
+    public void ExerciseCatalog_IncludesExpandedCoreExerciseOptions()
+    {
+        var exercises = LoadExerciseCatalog();
+        var expectedCoreExercises = new[]
+        {
+            "Sit-Up",
+            "Incline Sit-Up",
+            "Reverse Crunch",
+            "Cable Crunch",
+            "Toe Touches"
+        };
+
+        foreach (var exerciseName in expectedCoreExercises)
+        {
+            Assert.IsTrue(
+                exercises.Any(exercise =>
+                    string.Equals(exercise.Name, exerciseName, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(exercise.MuscleGroup, "Core", StringComparison.OrdinalIgnoreCase)),
+                $"Expected core exercise '{exerciseName}' to exist in the exercise catalog.");
+        }
+    }
+
+    [TestMethod]
+    public void ExerciseAlternativeCatalog_ReturnsAlternativesForExpandedCoreExercises()
+    {
+        var inclineSitUpAlternatives = ExerciseAlternativeCatalog.GetAlternatives("Incline Sit-Up", "Core", WorkoutType.WeightLifting);
+        var cableCrunchAlternatives = ExerciseAlternativeCatalog.GetAlternatives("Cable Crunch", "Core", WorkoutType.WeightLifting);
+
+        CollectionAssert.Contains(inclineSitUpAlternatives.ToList(), "Sit-Up");
+        CollectionAssert.Contains(inclineSitUpAlternatives.ToList(), "Cable Crunch");
+        CollectionAssert.Contains(cableCrunchAlternatives.ToList(), "Sit-Up");
+        CollectionAssert.Contains(cableCrunchAlternatives.ToList(), "Crunches");
+    }
+
+    [TestMethod]
     public void WorkoutPlanService_IncludesHighVolumeUpperBodyOptions()
     {
         var tempDatabasePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}-high-volume-plans.db");
@@ -313,6 +348,41 @@ public class WorkoutPlanCatalogTests
             Assert.IsTrue(atHomePlan.Workouts.Any(workout => workout.Name == "Bodyweight Good Morning"));
             Assert.IsTrue(atHomePlan.Workouts.Any(workout => workout.Name == "Band Pull-Apart"));
             Assert.IsTrue(atHomePlan.Workouts.All(workout => string.Equals(workout.GymLocation, "Home", StringComparison.OrdinalIgnoreCase)));
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (File.Exists(tempDatabasePath))
+            {
+                File.Delete(tempDatabasePath);
+            }
+        }
+    }
+
+    [TestMethod]
+    public void WorkoutPlanService_IncludesChestTricepsBackBicepsSplitPlan()
+    {
+        var tempDatabasePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}-chest-tris-back-bis-plan.db");
+
+        try
+        {
+            var service = new WorkoutPlanService(tempDatabasePath);
+            var splitPlan = service.GetWorkoutPlans().FirstOrDefault(plan => plan.Name == "Chest/Triceps Back/Biceps Split Builder");
+
+            Assert.IsNotNull(splitPlan);
+            Assert.AreEqual(8, splitPlan.DurationInWeeks);
+            Assert.AreEqual(4, splitPlan.WeeklyVariationCount);
+
+            var weekOne = splitPlan.GetWorkoutsForWeek(1);
+            Assert.IsTrue(weekOne.Any(workout => workout.Day == DayOfWeek.Monday && string.Equals(workout.MuscleGroup, "Chest", StringComparison.OrdinalIgnoreCase)));
+            Assert.IsTrue(weekOne.Any(workout => workout.Day == DayOfWeek.Monday && string.Equals(workout.MuscleGroup, "Triceps", StringComparison.OrdinalIgnoreCase)));
+            Assert.IsTrue(weekOne.Any(workout => workout.Day == DayOfWeek.Tuesday && string.Equals(workout.MuscleGroup, "Back", StringComparison.OrdinalIgnoreCase)));
+            Assert.IsTrue(weekOne.Any(workout => workout.Day == DayOfWeek.Tuesday && string.Equals(workout.MuscleGroup, "Biceps", StringComparison.OrdinalIgnoreCase)));
+            Assert.IsTrue(weekOne.Any(workout => workout.Day == DayOfWeek.Wednesday && string.Equals(workout.MuscleGroup, "Legs", StringComparison.OrdinalIgnoreCase)));
+            Assert.IsTrue(weekOne.Any(workout => workout.Day == DayOfWeek.Friday && string.Equals(workout.MuscleGroup, "Shoulders", StringComparison.OrdinalIgnoreCase)));
+            Assert.IsTrue(weekOne.Any(workout => workout.Day == DayOfWeek.Saturday && string.Equals(workout.MuscleGroup, "Biceps", StringComparison.OrdinalIgnoreCase)));
+            Assert.IsTrue(weekOne.Any(workout => workout.Day == DayOfWeek.Saturday && string.Equals(workout.MuscleGroup, "Triceps", StringComparison.OrdinalIgnoreCase)));
+            Assert.IsTrue(weekOne.Any(workout => workout.Day == DayOfWeek.Saturday && string.Equals(workout.MuscleGroup, "Core", StringComparison.OrdinalIgnoreCase)));
         }
         finally
         {
